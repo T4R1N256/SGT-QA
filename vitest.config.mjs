@@ -1,12 +1,12 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
-// Pruebas del renderer: archivos *.test.js / *.test.jsx junto al código que prueban
+// Pruebas de SGT (renderer), de la tienda y de las utilidades compartidas: *.test.js / *.test.jsx junto al código
 // El plugin de React usa el mismo JSX automático que la app
 export default defineConfig({
   plugins: [react()],
   test: {
-    include: ['src/renderer/**/*.test.{js,jsx}'],
+    include: ['src/{renderer,tienda,compartido}/**/*.test.{js,jsx}'],
     environment: 'jsdom',
   },
 })

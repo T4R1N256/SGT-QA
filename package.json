@@ -7,14 +7,16 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "lint": "eslint src/renderer --fix",
+    "lint": "eslint src/renderer src/tienda src/compartido --fix",
     "format": "prettier --write src/renderer/**/*.{js,jsx,css}",
     "dist": "npm run build && electron-builder --publish never",
     "dist:linux": "npm run build && electron-builder --linux --publish never",
     "dist:win": "npm run build && electron-builder --win --publish never",
     "dist:mac": "npm run build && electron-builder --mac --publish never",
-    "lint:check": "eslint src/renderer",
+    "lint:check": "eslint src/renderer src/tienda src/compartido",
     "test": "vitest run",
+    "dev:tienda": "vite --config vite.tienda.config.mjs",
+    "build:tienda": "vite build --config vite.tienda.config.mjs",
     "test:watch": "vitest"
   },
   "build": {

@@ -6,8 +6,19 @@
  */
 require_once __DIR__ . '/config/validar.php';
 
+$path = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// La tienda en línea (/api/tienda/...) usa su propia cookie de sesión:
+// un cliente nunca comparte sesión con un empleado de SGT
+$esTienda = str_starts_with($path, '/api/tienda/');
+
 ini_set('session.gc_maxlifetime', 86400); // 24 hours
-session_set_cookie_params(['lifetime' => 86400]);
+if ($esTienda) {
+    session_name('SGT_TIENDA');
+    session_set_cookie_params(['lifetime' => 86400, 'httponly' => true, 'samesite' => 'Lax']);
+} else {
+    session_set_cookie_params(['lifetime' => 86400]);
+}
 session_start();
 
 
@@ -28,8 +39,13 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 // Vite en desarrollo y el servidor local con el que Electron sirve la app compilada (APP_ORIGIN, puerto variable)
 $allowed = array_filter(['http://localhost:5173', 'http://localhost:8000', getenv('APP_ORIGIN') ?: null]);
 
-// Las peticiones sin Origin (mismo origen, terminal, pruebas) no son CORS y no necesitan cabecera
-if ($origin !== '') {
+// Mismo origen: la página la sirve el mismo host que el API (la tienda detrás de nginx o del proxy de Vite).
+// El navegador manda Origin incluso así (por ejemplo, en un POST), pero no es una petición CORS
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$mismoOrigen = $host !== '' && in_array($origin, ["http://$host", "https://$host"], true);
+
+// Las peticiones sin Origin (terminal, pruebas) o del mismo origen no son CORS y no necesitan cabecera
+if ($origin !== '' && !$mismoOrigen) {
     if (!in_array($origin, $allowed, true)) {
         http_response_code(403);
         exit;
@@ -43,7 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 function esAutorizado(): bool
 {
@@ -261,6 +276,10 @@ switch (true) {
     case $path === '/api/getRestock':
         requerirAdmin();
         require_once __DIR__ . '/routes/restockRoute.php';
+        break;
+
+    case $esTienda: // Tienda en línea: su propio router, rutas públicas y de clientes
+        require_once __DIR__ . '/routes/tienda/index.php';
         break;
 
     case $path === '/api/getConfig': // Pública: el nombre de la tienda se muestra en el login

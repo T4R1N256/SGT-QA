@@ -30,6 +30,22 @@ class Configuracion
     }//-- Fin funcion leer configuracion
 
 
+    // Funcion para leer la tasa de IVA en porcentaje (16.0 si no está configurada)
+    public static function tasaIVA(): float
+    {
+        try {
+            $connection = new Conexion;
+            $tasa = $connection->query('SELECT Tasa_IVA FROM ' . self::TABLE . ' WHERE ID_Configuracion = 1')->fetchColumn();
+            $connection = NULL;
+
+            return $tasa === false ? 16.0 : (float) $tasa;
+
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion tasa de IVA
+
+
     // Funcion para actualizar la configuración de la tienda
     // $datos trae solo los campos que cambian
     public static function updateConfiguracion(array $datos)

@@ -27,6 +27,9 @@ jobs:
       - name: Pruebas
         run: npm test
 
+      - name: Compilar la tienda
+        run: npm run build:tienda
+
   backend:
     name: Backend (PHPUnit + MariaDB)
     runs-on: ubuntu-latest
@@ -68,3 +71,35 @@ jobs:
           DB_NAME: sgtdb_test
           DB_USER: sgt_test
           DB_PASS: sgt_test
+
+  tienda:
+    name: Tienda (Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Igual que en el equipo del profesor: solo Docker
+      - name: Levantar con docker compose
+        run: |
+          cp .env.example .env
+          docker compose up --build -d
+
+      - name: Esperar al API de la tienda
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsS http://localhost:8080/api/tienda/config && exit 0
+            sleep 3
+          done
+          exit 1
+
+      - name: Revisar la tienda
+        run: |
+          curl -fsS http://localhost:8080/ | grep -q '<div id="root">'
+          curl -fsS http://localhost:8080/producto/1 | grep -q '<div id="root">'
+          curl -fsS http://localhost:8080/api/tienda/config | grep -q '"tasa_iva":16'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/getAllProducts)" = 404
+          docker compose logs backend | grep -q 'Catálogo de la tienda cargado: 12 categorías y 180 productos'
+
+      - name: Logs de los contenedores
+        if: failure()
+        run: docker compose logs

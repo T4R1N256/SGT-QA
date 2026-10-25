@@ -6,6 +6,9 @@ final class ClienteApi
 {
     private string $cookies;
 
+    // Cabeceras extra en cada petición (por ejemplo, Origin)
+    public array $encabezados = [];
+
     public function __construct(private string $url)
     {
         $this->cookies = tempnam(sys_get_temp_dir(), 'sgt-cookies-');
@@ -25,7 +28,7 @@ final class ClienteApi
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_COOKIEJAR => $this->cookies,
             CURLOPT_COOKIEFILE => $this->cookies,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json', ...$this->encabezados],
         ]);
         if ($datos !== null) {
             curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($datos));
@@ -35,6 +38,19 @@ final class ClienteApi
         $codigo = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         return [$codigo, json_decode((string) $cuerpo, true)];
+    }
+
+    // Nombres de las cookies que guardó este cliente (por ejemplo, la de sesión)
+    public function nombresCookies(): array
+    {
+        $nombres = [];
+        foreach (file($this->cookies, FILE_IGNORE_NEW_LINES) as $linea) {
+            $campos = explode("\t", $linea);
+            if (count($campos) === 7) {
+                $nombres[] = $campos[5];
+            }
+        }
+        return $nombres;
     }
 
     public function get(string $ruta): array
