@@ -1,7 +1,7 @@
 <?php
 // Datos de demostración para desarrollo y QA
 // Se cargan desde seeder.php solo si SEED_DEMO=1 y la tabla Producto está vacía
-// Incluye productos en los tres estados (Disponible, Stock bajo, Sin stock) y un usuario empleado
+// Incluye productos en los tres estados (Disponible, Stock bajo, Agotado) y un usuario empleado
 
 
 require_once __DIR__ . '/../models/producto.php';

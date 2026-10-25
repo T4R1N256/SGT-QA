@@ -15,6 +15,7 @@ final class SeguridadTest extends ApiTestCase
             'getAllSuppliers' => ['/api/getAllSuppliers'],
             'getCashRegister' => ['/api/getCashRegister'],
             'getAllVentas' => ['/api/getAllVentas'],
+            'getVenta' => ['/api/getVenta?id=1'],
         ];
     }
 

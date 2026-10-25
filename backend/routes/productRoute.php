@@ -10,7 +10,7 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
         return;
     }
 
-    // Se permite registrar un producto con 0 existencias (queda "Sin stock"); no se permiten negativos (regla 6)
+    // Se permite registrar un producto con 0 existencias (queda "Agotado"); no se permiten negativos (regla 6)
     $data = leerJson();
     $Nombre_Producto = campoTexto($data, 'Nombre_Producto');
     $Precio = campoDinero($data, 'Precio', true, 0.01);
@@ -157,4 +157,28 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
 
 
 
-}//-- Termina ruta modifyProduct 
+    //-- Termina ruta modifyProduct
+
+} elseif ($path === '/api/deleteProduct') { // Ruta para dar de baja un producto (baja lógica, RF06)
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+        http_response_code(405);
+        echo json_encode(['ok' => false, 'error' => 'Método no permitido']);
+        return;
+    }
+
+    $data = leerJson();
+    $ID_Producto = campoEntero($data, 'ID_Producto', true, 1);
+
+    require_once __DIR__ . '/../models/producto.php';
+
+    if (Producto::desactivarProducto($ID_Producto) !== 1) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'mensaje' => 'No se encontró el producto']);
+        return;
+    }
+
+    http_response_code(200);
+    echo json_encode(['ok' => true, 'mensaje' => 'Producto eliminado correctamente']);
+
+}//-- Termina ruta deleteProduct 

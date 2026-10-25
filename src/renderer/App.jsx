@@ -11,6 +11,7 @@ import {
   Inventory,
   Categorias,
   Proveedores,
+  Configuracion,
 } from './pages'
 import AppLayout from './components/AppLayout'
 
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/proveedores" element={<RutaAdmin><Proveedores /></RutaAdmin>} />
           <Route path="/inventory"  element={<RutaAdmin><Inventory /></RutaAdmin>} />
           <Route path="/users"      element={<RutaAdmin><Users /></RutaAdmin>} />
+          <Route path="/configuracion" element={<RutaAdmin><Configuracion /></RutaAdmin>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

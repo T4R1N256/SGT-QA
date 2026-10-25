@@ -87,6 +87,10 @@ Electron arranca el servidor PHP automáticamente (usando el PHP del sistema), e
 
 El seeder crea esta cuenta automáticamente en el primer arranque si no existe.
 
+### Tickets de venta
+
+Cada venta genera su ticket en PDF (80 mm) en `Documentos/SGT/Tickets/ticket-<folio>.pdf` y lo abre con el visor del sistema para imprimirlo. Si el sistema no tiene carpeta Documentos, se guarda en `<carpeta personal>/SGT/Tickets`. Los datos de la tienda que aparecen en el ticket se editan en **Catálogo → Configuración** (solo admin). En el navegador, sin Electron, el ticket se abre en una ventana nueva.
+
 ### Datos de demostración
 
 Con `SEED_DEMO=1` en el `.env`, el seeder carga 7 categorías, 6 proveedores y 32 productos (en los estados disponible, stock bajo y sin stock) y un usuario empleado. Solo se cargan si la tabla de productos está vacía.

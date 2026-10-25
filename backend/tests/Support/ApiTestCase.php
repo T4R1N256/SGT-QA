@@ -68,7 +68,14 @@ abstract class ApiTestCase extends TestCase
 
     // Completa una venta. $productos es [ID_Producto => Cantidad]
     // Si no se da el monto, se calcula con los precios de la base de datos (lo que haría la pantalla de Ventas)
-    protected function vender(ClienteApi $cliente, array $productos, string $formaPago = 'efectivo', ?float $monto = null): array
+    // Si no se da el pago, el cliente paga exacto
+    protected function vender(
+        ClienteApi $cliente,
+        array $productos,
+        string $formaPago = 'efectivo',
+        ?float $monto = null,
+        ?float $pago = null
+    ): array
     {
         if ($monto === null) {
             $centavos = 0;
@@ -86,6 +93,7 @@ abstract class ApiTestCase extends TestCase
 
         return $cliente->patch('/api/completeSale', [
             'Monto' => $monto,
+            'Pago_Recibido' => $pago ?? $monto,
             'Forma_Pago' => $formaPago,
             'productos' => $lista,
         ]);

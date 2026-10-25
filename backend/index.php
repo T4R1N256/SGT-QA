@@ -145,6 +145,11 @@ switch (true) {
         require_once __DIR__ . '/routes/productRoute.php';
         break;
 
+    case $path === '/api/deleteProduct':
+        requerirAdmin();
+        require_once __DIR__ . '/routes/productRoute.php';
+        break;
+
     case $path === '/api/createCategory':
         requerirAdmin();
         require_once __DIR__ . '/routes/categoryRoute.php';
@@ -237,6 +242,20 @@ switch (true) {
     case $path === '/api/cancelSale':
         requerirAutorizacion();
         require_once __DIR__ . '/routes/saleRoute.php';
+        break;
+
+    case $path === '/api/getVenta':
+        requerirAutorizacion();
+        require_once __DIR__ . '/routes/saleRoute.php';
+        break;
+
+    case $path === '/api/getConfig': // Pública: el nombre de la tienda se muestra en el login
+        require_once __DIR__ . '/routes/configRoute.php';
+        break;
+
+    case $path === '/api/updateConfig':
+        requerirAdmin();
+        require_once __DIR__ . '/routes/configRoute.php';
         break;
 
     case $path === '/api/getAllVentas':

@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getProducts, openSale, cancelSale, completeSale } from '../api/api'
+import { getProducts, openSale, cancelSale, completeSale, getVenta } from '../api/api'
 import { useFetch } from '../hooks/useFetch'
 import { ActionButton } from '../components'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { useAuth } from '../context/AuthContext'
 import { useNotify } from '../context/NotificationContext.jsx'
 import { calcularCambio, totalCarrito } from '../utils/money'
+import { filtrarProductos } from '../utils/productos'
+import { imprimirTicket } from '../pdf/imprimir'
 import {
   TrashIcon,
   PlusIcon,
   BanknotesIcon,
   XMarkIcon,
   LockClosedIcon,
+  PrinterIcon,
 } from '@heroicons/react/20/solid'
 
 const CART_COLUMNS = [
@@ -29,6 +32,15 @@ const KBD =
   'inline-flex items-center justify-center min-w-fit p-1 rounded border-none bg-white text-gray-900 text-[10px] font-bold font-mono shadow-sm leading-none'
 
 const SALES_KEY = 'venta-pendiente'
+const ULTIMA_VENTA_KEY = 'ultima-venta'
+
+function leerUltimaVenta() {
+  try {
+    return Number(sessionStorage.getItem(ULTIMA_VENTA_KEY)) || null
+  } catch {
+    return null
+  }
+}
 
 function readSalesState() {
   try {
@@ -57,6 +69,8 @@ export default function Sales() {
   const [pago, setPago] = useState(persisted?.pago ?? '')
   const [formaPago, setFormaPago] = useState(persisted?.formaPago ?? 'efectivo')
   const [activeResultIndex, setActiveResultIndex] = useState(0)
+  // Folio de la última venta, para reimprimir su ticket
+  const [ultimaVenta, setUltimaVenta] = useState(leerUltimaVenta)
 
   const searchInputRef = useRef(null)
   const pagoInputRef = useRef(null)
@@ -103,22 +117,17 @@ export default function Sales() {
   }, [productsData])
 
   const total = useMemo(() => totalCarrito(cart), [cart])
+  // Con tarjeta o transferencia se cobra el total exacto: no se captura pago ni hay cambio
+  const enEfectivo = formaPago === 'efectivo'
   const pagoNum = parseFloat(pago)
-  const cambio = Number.isFinite(pagoNum) ? calcularCambio(pagoNum, total) : 0
-  const pagoSuficiente = Number.isFinite(pagoNum) && cambio >= 0 && total > 0
+  const cambio = enEfectivo && Number.isFinite(pagoNum) ? calcularCambio(pagoNum, total) : 0
+  const pagoSuficiente = total > 0 && (!enEfectivo || (Number.isFinite(pagoNum) && cambio >= 0))
 
-  const resultados = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return []
-    const products = productsData?.productos ?? []
-    return products
-      .filter(
-        (p) =>
-          p.Estado !== 'Sin stock' &&
-          (p.Nombre_Producto ?? '').toLowerCase().includes(q)
-      )
-      .slice(0, 8)
-  }, [productsData, searchQuery])
+  // Búsqueda por nombre o categoría, sin acentos; los agotados no aparecen
+  const resultados = useMemo(
+    () => filtrarProductos(productsData?.productos, searchQuery),
+    [productsData, searchQuery]
+  )
 
   useEffect(() => {
     setActiveResultIndex(0)
@@ -187,6 +196,7 @@ export default function Sales() {
     if (!pagoSuficiente) return
     const payload = {
       Monto: Number(total.toFixed(2)),
+      Pago_Recibido: enEfectivo ? Number(pagoNum.toFixed(2)) : undefined,
       Forma_Pago: formaPago,
       productos: cart.map((it) => ({
         ID_Producto: it.ID_Producto,
@@ -208,11 +218,40 @@ export default function Sales() {
     setSearchQuery('')
     setShowResults(false)
     refetchProducts()
-    notify({
-      title: 'Venta completada',
-      type: 'success',
-      message: `Total: ${formatMoney(total)}\nCambio: ${formatMoney(cambio)}`,
-    })
+    guardarUltimaVenta(res.ID_Venta)
+
+    // Regla 8: cada venta genera su ticket
+    const ticket = res.venta
+      ? await imprimirTicket(res.venta)
+      : { ok: false, mensaje: 'el servidor no regresó los datos de la venta' }
+    const resumen = `Folio: ${res.ID_Venta}\nTotal: ${formatMoney(Number(res.Monto))}\nCambio: ${formatMoney(Number(res.venta?.Cambio ?? 0))}`
+    notify(
+      ticket.ok
+        ? { title: 'Venta completada', type: 'success', message: `${resumen}${ticket.ruta ? `\nTicket: ${ticket.ruta}` : ''}` }
+        : {
+            title: 'Venta completada sin ticket',
+            type: 'warning',
+            message: `${resumen}\nNo se pudo generar el ticket: ${ticket.mensaje}. Usa "Reimprimir último ticket".`,
+          }
+    )
+  }
+
+  function guardarUltimaVenta(ID_Venta) {
+    setUltimaVenta(ID_Venta)
+    try {
+      sessionStorage.setItem(ULTIMA_VENTA_KEY, String(ID_Venta))
+    } catch {
+      // sin almacenamiento: solo se pierde la reimpresión al recargar
+    }
+  }
+
+  async function reimprimirUltimoTicket() {
+    if (!ultimaVenta) return
+    const res = await getVenta(ultimaVenta)
+    const ticket = res.ok ? await imprimirTicket(res.venta) : res
+    if (!ticket.ok) {
+      notify({ type: 'error', message: `No se pudo reimprimir el ticket: ${ticket.mensaje}` })
+    }
   }
 
   useEffect(() => {
@@ -262,6 +301,11 @@ export default function Sales() {
         clearCart()
         return
       }
+      if (e.key === 'F9') {
+        e.preventDefault()
+        reimprimirUltimoTicket()
+        return
+      }
 
       if (e.key === 'Delete' && !isTextInput && selectedItem != null) {
         e.preventDefault()
@@ -284,7 +328,7 @@ export default function Sales() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caja, showResults, searchQuery, selectedItem, resultados, activeResultIndex, pagoSuficiente, total, cart, formaPago, pago])
+  }, [caja, showResults, searchQuery, selectedItem, resultados, activeResultIndex, pagoSuficiente, total, cart, formaPago, pago, ultimaVenta])
 
   function handleSearchKeyDown(e) {
     if (e.key === 'ArrowDown') {
@@ -420,11 +464,13 @@ export default function Sales() {
             ref={pagoInputRef}
             type="text"
             inputMode="decimal"
-            value={pago}
+            value={enEfectivo ? pago : total.toFixed(2)}
             onChange={(e) => setPago(e.target.value)}
             onKeyDown={handlePagoKeyDown}
+            disabled={!enEfectivo}
+            title={enEfectivo ? undefined : 'Con tarjeta o transferencia se cobra el total exacto'}
             placeholder="0.00"
-            className="px-3 py-2 rounded-lg border border-gray-300 text-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-3 py-2 rounded-lg border border-gray-300 text-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:text-gray-500"
           />
         </div>
 
@@ -493,6 +539,18 @@ export default function Sales() {
               </span>
             </ActionButton>
           </div>
+
+          <ActionButton
+            onClick={reimprimirUltimoTicket}
+            disabled={!ultimaVenta}
+            className="w-auto rounded-lg font-normal text-xs"
+          >
+            <span className="flex items-center gap-1.5 justify-center">
+              <PrinterIcon className="w-3.5 h-3.5" />
+              Reimprimir último ticket
+              <kbd className={KBD}>F9</kbd>
+            </span>
+          </ActionButton>
         </div>
       </div>
     </div>

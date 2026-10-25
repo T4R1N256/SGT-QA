@@ -12,6 +12,20 @@ require_once __DIR__ . '/../models/venta.php';
 const FORMAS_PAGO = ['efectivo', 'tarjeta', 'transferencia'];
 
 
+// Funcion para armar los datos del ticket de una venta finalizada: venta, productos, cajero y datos de la tienda
+function datosTicket(int $ID_Venta): ?array
+{
+    require_once __DIR__ . '/../models/configuracion.php';
+
+    $venta = Venta::readTicket($ID_Venta);
+    if (!$venta) {
+        return null;
+    }
+    $venta['tienda'] = Configuracion::readConfiguracion();
+    return $venta;
+}
+
+
 if ($path === '/api/openSale') { // Ruta para abrir venta
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -46,6 +60,8 @@ if ($path === '/api/openSale') { // Ruta para abrir venta
     $Forma_Pago = campoOpcion($data, 'Forma_Pago', FORMAS_PAGO);
     // Total que el cajero le cobró al cliente; debe coincidir con los precios de la base de datos
     $Monto = campoDinero($data, 'Monto');
+    // RF04: en efectivo se registra cuánto entregó el cliente; con tarjeta o transferencia se paga el total exacto
+    $Pago_Recibido = campoDinero($data, 'Pago_Recibido', $Forma_Pago === 'efectivo');
 
     if (!isset($data['productos']) || !is_array($data['productos']) || count($data['productos']) === 0) {
         throw new ErrorValidacion('La venta no tiene productos');
@@ -78,6 +94,9 @@ if ($path === '/api/openSale') { // Ruta para abrir venta
             if (!$producto) {
                 throw new ErrorApi("El producto $ID_Producto no existe", 404);
             }
+            if (!(int) $producto['Activo']) {
+                throw new ErrorApi("{$producto['Nombre_Producto']} ya no está a la venta", 409);
+            }
             // Reglas 1 y 6: no se vende más de lo que hay
             if ((int) $producto['Cantidad'] < $Cantidad) {
                 throw new ErrorApi(
@@ -92,6 +111,11 @@ if ($path === '/api/openSale') { // Ruta para abrir venta
             throw new ErrorApi('El total no coincide con los precios actuales. Revisa la venta e intenta de nuevo.', 409);
         }
 
+        $pagoCentavos = $Forma_Pago === 'efectivo' ? aCentavos($Pago_Recibido) : $totalCentavos;
+        if ($pagoCentavos < $totalCentavos) {
+            throw new ErrorValidacion('El pago no alcanza para cubrir el total');
+        }
+
         // La venta abierta de esta sesión; si se perdió la sesión, se crea una nueva
         $ID_Venta = (int) ($_SESSION['ID_Venta'] ?? 0);
         if (!$ID_Venta || !Venta::ventaEnProceso($connection, $ID_Venta, $caja['ID_Caja'])) {
@@ -104,7 +128,17 @@ if ($path === '/api/openSale') { // Ruta para abrir venta
         }
 
         $Monto_Total = $totalCentavos / 100;
-        Venta::completeVenta($connection, $ID_Venta, date('Y-m-d'), date('H:i:s'), $Monto_Total, $Forma_Pago);
+        Venta::completeVenta(
+            $connection,
+            $ID_Venta,
+            date('Y-m-d'),
+            date('H:i:s'),
+            $Monto_Total,
+            $pagoCentavos / 100,
+            ($pagoCentavos - $totalCentavos) / 100,
+            $Forma_Pago,
+            (int) $_SESSION['ID_Usuario']
+        );
 
         $connection->commit();
         unset($_SESSION['ID_Venta']);
@@ -120,9 +154,32 @@ if ($path === '/api/openSale') { // Ruta para abrir venta
         'mensaje' => 'Venta completada correctamente',
         'ID_Venta' => $ID_Venta,
         'Monto' => $Monto_Total,
+        // Datos para generar el ticket en PDF (regla 8)
+        'venta' => datosTicket($ID_Venta),
     ]);
 
     //-- Fin case completeSale
+
+} elseif ($path === '/api/getVenta') { // Ruta para obtener los datos del ticket de una venta (reimpresión)
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        http_response_code(405);
+        echo json_encode(['ok' => false, 'mensaje' => 'Método no permitido']);
+        return;
+    }
+
+    $venta = datosTicket(campoEntero($_GET, 'id', true, 1));
+
+    if (!$venta) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'mensaje' => 'No se encontró la venta']);
+        return;
+    }
+
+    http_response_code(200);
+    echo json_encode(['ok' => true, 'venta' => $venta]);
+
+    //-- Fin case getVenta
 
 } elseif ($path === '/api/cancelSale') { // Ruta para cancelar venta
 

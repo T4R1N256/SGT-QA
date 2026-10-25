@@ -15,6 +15,7 @@ const CATALOGO = [
   { label: 'Categorías', to: '/categorias', adminOnly: true },
   { label: 'Proveedores', to: '/proveedores', adminOnly: true },
   { label: 'Usuarios', to: '/users', adminOnly: true },
+  { label: 'Configuración', to: '/configuracion', adminOnly: true },
 ]
 
 function NavItem({ to, label }) {

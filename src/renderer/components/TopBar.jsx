@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react'
+import { getConfig } from '../api/api'
 //import logo from "../assets/logo.png"; // para el logo de la tienda, en su caso
 
 export default function TopBar() {
   const [dateTime, setDateTime] = useState(new Date().toLocaleString())
+  // Nombre de la tienda configurado por el admin (el mismo del ticket)
+  const [nombreTienda, setNombreTienda] = useState('')
+
+  useEffect(() => {
+    getConfig().then((res) => {
+      if (res.ok) setNombreTienda(res.configuracion.Nombre_Tienda)
+    })
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -18,7 +27,7 @@ export default function TopBar() {
           <span className="font-bold w-full">Estado de caja: TEST</span>
         </div>
         <div className="text-center w-auto">
-          <span className="font-extrabold text-3xl">Abarrotes "La bamba"</span>
+          <span className="font-extrabold text-3xl">{nombreTienda}</span>
         </div>
         <div className="text-right font-bold w-fit">{dateTime}</div>
       </header>

@@ -83,28 +83,48 @@ final class VentasTest extends ApiTestCase
         $this->assertSame('Stock bajo', $this->valor('SELECT Estado FROM Producto WHERE ID_Producto = 5'));
 
         $this->vender($this->cajero, [5 => 5]);
-        $this->assertSame('Sin stock', $this->valor('SELECT Estado FROM Producto WHERE ID_Producto = 5'));
+        $this->assertSame('Agotado', $this->valor('SELECT Estado FROM Producto WHERE ID_Producto = 5'));
     }
 
     /** @return array<string, array{array}> */
     public static function ventasInvalidas(): array
     {
+        $uno = [['ID_Producto' => 1, 'Cantidad' => 1]];
         return [
-            'cantidad cero' => [['Monto' => 0, 'Forma_Pago' => 'efectivo', 'productos' => [['ID_Producto' => 1, 'Cantidad' => 0]]]],
-            'cantidad negativa' => [['Monto' => -32.5, 'Forma_Pago' => 'efectivo', 'productos' => [['ID_Producto' => 1, 'Cantidad' => -1]]]],
-            'forma de pago desconocida' => [['Monto' => 32.5, 'Forma_Pago' => 'vales', 'productos' => [['ID_Producto' => 1, 'Cantidad' => 1]]]],
-            'sin productos' => [['Monto' => 0, 'Forma_Pago' => 'efectivo', 'productos' => []]],
-            'sin monto' => [['Forma_Pago' => 'efectivo', 'productos' => [['ID_Producto' => 1, 'Cantidad' => 1]]]],
+            'cantidad cero' => [
+                ['Monto' => 32.5, 'Pago_Recibido' => 32.5, 'Forma_Pago' => 'efectivo', 'productos' => [['ID_Producto' => 1, 'Cantidad' => 0]]],
+                'Cantidad debe ser mayor o igual a 1',
+            ],
+            'cantidad negativa' => [
+                ['Monto' => 32.5, 'Pago_Recibido' => 32.5, 'Forma_Pago' => 'efectivo', 'productos' => [['ID_Producto' => 1, 'Cantidad' => -1]]],
+                'Cantidad debe ser mayor o igual a 1',
+            ],
+            'forma de pago desconocida' => [
+                ['Monto' => 32.5, 'Pago_Recibido' => 32.5, 'Forma_Pago' => 'vales', 'productos' => $uno],
+                'Forma pago debe ser',
+            ],
+            'sin productos' => [
+                ['Monto' => 0, 'Pago_Recibido' => 0, 'Forma_Pago' => 'efectivo', 'productos' => []],
+                'no tiene productos',
+            ],
+            'sin monto' => [
+                ['Pago_Recibido' => 32.5, 'Forma_Pago' => 'efectivo', 'productos' => $uno],
+                'Monto es obligatorio',
+            ],
+            'efectivo sin pago recibido' => [
+                ['Monto' => 32.5, 'Forma_Pago' => 'efectivo', 'productos' => $uno],
+                'Pago recibido es obligatorio',
+            ],
         ];
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('ventasInvalidas')]
-    public function testDatosInvalidosResponden400(array $datos): void
+    public function testDatosInvalidosResponden400(array $datos, string $mensaje): void
     {
         [$codigo, $cuerpo] = $this->cajero->patch('/api/completeSale', $datos);
 
         $this->assertSame(400, $codigo);
-        $this->assertFalse($cuerpo['ok']);
+        $this->assertStringContainsString($mensaje, $cuerpo['mensaje']);
         $this->assertSame(40, $this->existencia(1));
     }
 
