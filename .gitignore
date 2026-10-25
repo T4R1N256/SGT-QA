@@ -162,3 +162,7 @@ binaries/
 
 # Pruebas del backend
 backend/.phpunit.cache/
+
+# Resultados de las pruebas en el navegador (Playwright)
+test-results/
+playwright-report/

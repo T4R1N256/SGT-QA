@@ -114,30 +114,68 @@ El ID del empleado es `2` en una base de datos nueva. Si ya había usuarios, el 
 
 ## Tienda en línea
 
-Módulo web para clientes, con el mismo backend y la misma base de datos que SGT. Con Docker no hace falta Node, PHP ni MariaDB en el equipo:
+Módulo web para clientes, con el mismo backend y la misma base de datos que SGT. El análisis está en [`ANALISIS_TIENDA.md`](ANALISIS_TIENDA.md), el plan en [`PLAN_TIENDA.md`](PLAN_TIENDA.md) y la verificación final en [`docs/QA_TIENDA.md`](docs/QA_TIENDA.md).
+
+### Levantarla con Docker
+
+Solo se necesita Docker; no hace falta Node, PHP ni MariaDB en el equipo:
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-La tienda queda en **http://localhost:8080**. El cliente explora el catálogo sin cuenta: inicio con categorías y destacados, páginas de categoría, búsqueda sin distinguir acentos (con filtros, orden y paginación) y detalle de cada producto. El carrito se guarda en el navegador y el servidor lo revisa en cada cambio: precios vigentes, existencias, productos dados de baja y el desglose del IVA (los precios ya lo incluyen). Para comprar se necesita una cuenta de cliente (nombre, apellidos, correo, teléfono y contraseña): si el cliente continúa sin sesión, la tienda le pide ingresar o registrarse y lo regresa a su compra con el carrito intacto. Los clientes son independientes de los usuarios de SGT y tienen su propia sesión. Después del carrito, la compra sigue tres pasos: **datos de entrega** (validados campo por campo y prellenados con la última dirección), **resumen** (productos, IVA, total y entrega, con opción de corregir) y **pago**. Al confirmar se crea un pedido *pendiente de pago* con folio, sin descontar existencias. La pantalla de pago muestra los métodos, pero el botón **Pagar** solo avisa que el pago en línea no está disponible: no hay campos de tarjeta ni conexión con bancos o pasarelas. Los pedidos se pueden consultar en **Mi cuenta**. La primera vez el backend aplica las migraciones y, con `SEED_TIENDA=1` (valor por defecto de `.env.example`), carga un catálogo de prueba de 12 categorías y 180 productos. El catálogo solo se carga si la tabla de productos está vacía.
+La tienda queda en **http://localhost:8080**. La primera vez, el backend aplica las migraciones y, con `SEED_TIENDA=1` (valor por defecto de `.env.example`), carga un catálogo de prueba de 12 categorías y 180 productos y un cliente de prueba. Solo se cargan si la tabla de productos está vacía.
 
 | Contenedor | Qué hace |
 |---|---|
-| `db` | MariaDB |
+| `db` | MariaDB (los datos se conservan en un volumen) |
 | `backend` | PHP: el API de SGT y el de la tienda (`/api/tienda/...`), en el `8001` |
 | `web` | Compila la tienda y la sirve con nginx en el `8080`. Reenvía `/api/tienda/` al backend; el resto del API de SGT no se expone |
 
+### Cuentas de prueba
+
+| Para qué | Usuario | Contraseña |
+|---|---|---|
+| Comprar en la tienda | `cliente@ejemplo.mx` | `prueba123` |
+| Administrar productos en SGT (app de escritorio) | ID `1` | `passadmin` |
+
+También se puede crear una cuenta nueva desde **Ingresar → Crea una**.
+
+### Qué hace
+
+1. **Explorar sin cuenta:** inicio con categorías y destacados, páginas de categoría, búsqueda sin distinguir acentos (con filtros, orden y paginación) y detalle de cada producto con su disponibilidad.
+2. **Carrito:** se guarda en el navegador y el servidor lo revisa en cada cambio: precios vigentes, existencias, productos dados de baja y el desglose del IVA (los precios ya lo incluyen; el envío es gratis).
+3. **Cuenta:** para comprar se necesita una. Si el cliente continúa sin sesión, la tienda le pide ingresar o registrarse y lo regresa a su compra con el carrito intacto. Los clientes son independientes de los usuarios de SGT y tienen su propia sesión.
+4. **Datos de entrega:** se validan campo por campo y se prellenan con la última dirección usada.
+5. **Resumen:** productos, IVA, total y entrega, con opción de corregir. Al confirmar se crea un pedido *pendiente de pago* con folio, sin descontar existencias.
+6. **Pago:** muestra los métodos, pero **Pagar** solo avisa que el pago en línea no está disponible. No hay campos de tarjeta ni conexión con bancos o pasarelas.
+7. **Mi cuenta:** los pedidos del cliente, con enlace para regresar al pago.
+
 La tienda muestra los productos activos de SGT. La descripción que ve el cliente se captura en SGT, en **Inventario** (campo *Descripción*).
 
-Para trabajar en la tienda con recarga en caliente, con el backend de Docker levantado:
+### Desarrollo
+
+Con el backend de Docker levantado, para trabajar en la tienda con recarga en caliente:
 
 ```bash
 npm run dev:tienda       # http://localhost:5174, reenvía /api al backend del 8001
 ```
 
 Para usar otro backend: `TIENDA_API=http://localhost:8000 npm run dev:tienda`.
+
+### Pruebas en el navegador
+
+Las pruebas de Playwright (`e2e/tienda`) recorren el flujo completo contra la tienda de Docker: las condiciones N1–N11 y las situaciones P1–P15 del análisis. Para cambiar existencias, precios y bajas entran a SGT como admin por el API del `8001`, con productos creados para la prueba. Cada prueba falla si la página tiene errores de JavaScript o si el navegador se conecta a cualquier sitio fuera de la tienda.
+
+```bash
+docker compose up --build -d
+npm ci
+npx playwright install chromium     # una sola vez
+npm run test:e2e:tienda
+```
+
+Para otra instancia: `TIENDA_URL=http://localhost:5174 SGT_API=http://localhost:8001 npm run test:e2e:tienda`.
 
 ---
 
@@ -215,6 +253,7 @@ src/
     components/ Componentes UI reutilizables
     pages/      Páginas por ruta
   tienda/       Tienda en línea: app React independiente de Electron (vite.tienda.config.mjs)
+                catalogo/, carrito/, cuenta/, compra/, componentes/, api/
   compartido/   Dinero y formatos, usados por SGT y por la tienda
 backend/        PHP 8 sin framework — router único en index.php
   config/       Esquema base database.sql, migraciones, seeder, datos demo y catálogo de la tienda
@@ -222,6 +261,7 @@ backend/        PHP 8 sin framework — router único en index.php
   routes/       Controladores por módulo (routes/tienda/: API de la tienda)
   tests/        Pruebas PHPUnit (Unit y Api)
 docker/web/     Imagen de la tienda (Node para compilar, nginx para servir)
+e2e/tienda/     Pruebas de la tienda en el navegador (Playwright)
 resources/      Binarios empaquetados (en .gitignore — descargar por separado)
 ```
 
@@ -267,11 +307,13 @@ Los valores por defecto (`127.0.0.1:3306`, base `sgtdb_test`, usuario `sgt_test`
 
 ### CI
 
-`.github/workflows/ci.yml` corre el lint, las dos suites de pruebas y la compilación de la tienda en cada PR y en cada push a `main`. El job **Tienda (Docker)** levanta todo con `docker compose up --build` y revisa que la tienda y su API respondan en el `8080`. `build.yml` genera los instaladores (ver *Instaladores en el CI*).
+`.github/workflows/ci.yml` corre el lint, las dos suites de pruebas y la compilación de la tienda en cada PR y en cada push a `main`. El job **Tienda (Docker)** levanta todo con `docker compose up --build`, revisa con `curl` el API de la tienda en el `8080` y corre las pruebas de Playwright. `build.yml` genera los instaladores (ver *Instaladores en el CI*).
 
 ### QA
 
 El resultado de la verificación final contra el SRS (requisitos funcionales, reglas de negocio y no funcionales) está en [`docs/QA_CHECKLIST.md`](docs/QA_CHECKLIST.md).
+
+La verificación de la tienda en línea contra sus requisitos (R01–R20, N1–N11 y P1–P15) está en [`docs/QA_TIENDA.md`](docs/QA_TIENDA.md).
 
 ---
 
@@ -292,6 +334,7 @@ npm run lint:check       # ESLint sin modificar archivos (lo que corre el CI)
 npm run format           # Prettier
 npm run dev:tienda       # tienda en línea en modo desarrollo (5174)
 npm run build:tienda     # compila la tienda en dist-tienda/
+npm run test:e2e:tienda  # pruebas de la tienda en el navegador (con Docker levantado)
 docker-compose down      # detener contenedores (los datos persisten)
 docker-compose down -v   # detener y borrar el volumen de base de datos
 ```

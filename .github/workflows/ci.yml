@@ -118,6 +118,34 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/getAllProducts)" = 404
           docker compose logs backend | grep -q 'Catálogo de la tienda cargado: 12 categorías y 180 productos'
 
+      # Pruebas en el navegador (N1–N11, P1–P15) contra la misma tienda de Docker
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias de Node
+        run: npm ci
+        env:
+          # Las pruebas de la tienda no necesitan el binario de Electron
+          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+      - name: Instalar Chromium para Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Pruebas en el navegador
+        run: npm run test:e2e:tienda
+
+      - name: Reporte de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
       - name: Logs de los contenedores
         if: failure()
         run: docker compose logs

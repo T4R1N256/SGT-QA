@@ -46,6 +46,15 @@ final class CatalogoTiendaTest extends ApiTestCase
         $this->assertSame(0, (int) $this->valor("SELECT COUNT(*) FROM Producto WHERE (Cantidad = 0) <> (Estado = 'Agotado')"));
     }
 
+    public function testCreaUnClienteDePruebaQuePuedeIngresar(): void
+    {
+        [$codigo, $cuerpo] = $this->cliente()->post('/api/tienda/ingresar', ['correo' => 'cliente@ejemplo.mx', 'password' => 'prueba123']);
+
+        $this->assertSame(200, $codigo);
+        $this->assertSame('Cliente', $cuerpo['cliente']['nombre']);
+        $this->assertStringContainsString('Cliente de prueba de la tienda: cliente@ejemplo.mx / prueba123', $this->salida);
+    }
+
     public function testNoSeVuelveACargarNiSeMezclaConLosDatosDemo(): void
     {
         $salida = BaseDatosPrueba::ejecutarSeeder(['SEED_TIENDA' => '1', 'SEED_DEMO' => '1']);
