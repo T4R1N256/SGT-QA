@@ -249,6 +249,13 @@ switch (true) {
         require_once __DIR__ . '/routes/saleRoute.php';
         break;
 
+    case $path === '/api/createRestock':
+    case $path === '/api/getAllRestocks':
+    case $path === '/api/getRestock':
+        requerirAdmin();
+        require_once __DIR__ . '/routes/restockRoute.php';
+        break;
+
     case $path === '/api/getConfig': // Pública: el nombre de la tienda se muestra en el login
         require_once __DIR__ . '/routes/configRoute.php';
         break;

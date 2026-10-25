@@ -5,6 +5,7 @@ import LogoutButton from './LogoutButton'
 const PRINCIPAL = [
   { label: 'Inicio', to: '/dashboard' },
   { label: 'Inventario', to: '/inventory', adminOnly: true },
+  { label: 'Surtir', to: '/surtir', adminOnly: true },
   { label: 'Ventas', to: '/sales' },
   { label: 'Caja', to: '/caja' },
   { label: 'Historial', to: '/historial' },

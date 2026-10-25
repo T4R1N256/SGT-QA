@@ -121,6 +121,22 @@ function campoDinero(array $data, string $campo, bool $requerido = true, float $
 }
 
 
+// Fecha en formato AAAA-MM-DD (por ejemplo, para filtrar por rango)
+function campoFecha(array $data, string $campo, bool $requerido = true): ?string
+{
+    $valor = campoTexto($data, $campo, $requerido, 10);
+    if ($valor === null || $valor === '') {
+        return null;
+    }
+
+    $fecha = DateTime::createFromFormat('!Y-m-d', $valor);
+    if (!$fecha || $fecha->format('Y-m-d') !== $valor) {
+        throw new ErrorValidacion(nombreCampo($campo) . ' debe ser una fecha AAAA-MM-DD');
+    }
+    return $valor;
+}
+
+
 // Valor que debe ser una de las opciones permitidas
 function campoOpcion(array $data, string $campo, array $opciones, bool $requerido = true): ?string
 {
