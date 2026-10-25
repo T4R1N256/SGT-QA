@@ -1,5 +1,9 @@
-// En Electron el API está en un puerto libre que da el preload; en el navegador (desarrollo) se usa VITE_API_URL o el 8000
-const ROOT = (window.electronAPI?.apiURL ?? import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '')
+// En desarrollo manda VITE_API_URL (backend de Docker o PHP local). La app compilada usa el puerto libre
+// en el que el proceso principal levantó PHP, que llega por el preload
+const urlAPI = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL ?? window.electronAPI?.apiURL)
+  : (window.electronAPI?.apiURL ?? import.meta.env.VITE_API_URL)
+const ROOT = (urlAPI ?? 'http://localhost:8000/api').replace(/\/$/, '')
 
 async function request(path, options = {}) {
   try {

@@ -69,12 +69,15 @@ function spawnPHP(puerto) {
   apiURL = `http://localhost:${puerto}/api`
   if (phpProcess.pid) fs.writeFileSync(rutaEstadoPHP(), JSON.stringify({ pid: phpProcess.pid, puerto }))
 
+  phpProcess.on('error', (err) => console.error('[PHP] No se pudo iniciar:', err.message))
   phpProcess.stderr.on('data', (d) => console.log('[PHP]', d.toString().trim()))
   phpProcess.on('close', (code) => console.log('[PHP] cerrado con código:', code))
 }
 
 async function waitPHP(tries = 20) {
   for (let i = 0; i < tries; i++) {
+    // No se pudo lanzar (no hay PHP) o ya terminó: no tiene caso seguir esperando
+    if (!phpProcess?.pid || phpProcess.exitCode !== null) break
     try {
       const res = await fetch(`${apiURL}/ping`)
       if (res.ok) {
@@ -269,8 +272,16 @@ app.whenReady().then(async () => {
     }
 
     await cerrarPHPHuerfano()
-    spawnPHP(await puertoLibre())
-    await waitPHP()
+    // En la app instalada PHP usa un puerto libre. En desarrollo se queda en el 8000, como dice el README
+    // (con Docker, el renderer usa el backend del contenedor por VITE_API_URL)
+    spawnPHP(app.isPackaged ? await puertoLibre() : 8000)
+    try {
+      await waitPHP()
+    } catch (e) {
+      // En desarrollo con Docker no hace falta el PHP del sistema: el renderer usa el backend del contenedor
+      if (app.isPackaged) throw e
+      console.warn('[PHP] No arrancó el PHP local; la app usará el backend de VITE_API_URL (Docker)')
+    }
 
     runSeeders()
   } catch (e) {

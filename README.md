@@ -76,7 +76,10 @@ VITE_API_URL=http://localhost:8000/api
 npm run dev
 ```
 
-Electron arranca el servidor PHP automáticamente (usando el PHP del sistema), ejecuta el seeder y abre la ventana. Los cambios en el renderer se recargan en caliente.
+Electron arranca un servidor PHP en el puerto `8000` con el PHP del sistema, ejecuta el seeder y abre la ventana. Los cambios en el renderer se recargan en caliente.
+
+- **API:** en desarrollo la app usa la URL de `VITE_API_URL`. Con Docker es el backend del contenedor (`8001`); sin Docker, el PHP local (`8000`).
+- **Con Docker no hace falta PHP en el equipo:** si no está instalado, la app abre igual y usa el backend del contenedor.
 
 ### Credenciales por defecto
 
@@ -104,6 +107,22 @@ Con `SEED_DEMO=1` en el `.env`, el seeder carga 7 categorías, 6 proveedores y 3
 | Empleado Demo | `2` | `empleado123` |
 
 El ID del empleado es `2` en una base de datos nueva. Si ya había usuarios, el seeder imprime el ID que le tocó.
+
+---
+
+## Probar la app instalada (sin compilar)
+
+Cada ejecución del workflow **Build** deja los instaladores como artefactos durante 14 días. Para descargarlos: *Actions → Build →* la ejecución más reciente en verde *→ Artifacts*.
+
+| Sistema | Artefacto | Cómo abrirla |
+|---|---|---|
+| Windows 10/11 | `sgt-win` | Ejecutar `SGT-1.0.0-win.exe` (instalador) o descomprimir `SGT-1.0.0-win.zip` y abrir `SGT.exe` |
+| Linux x64 | `sgt-linux` | Descomprimir `SGT-1.0.0-linux.tar.gz` y ejecutar `./sgt` dentro de la carpeta |
+
+No necesita PHP, MariaDB ni internet. El primer arranque tarda unos segundos más mientras prepara la base de datos. Las credenciales iniciales están en *Credenciales por defecto*. La base empieza vacía, sin datos de demostración.
+
+- **Windows:** el instalador no está firmado, así que SmartScreen puede mostrar "Windows protegió tu PC". Elegir *Más información → Ejecutar de todas formas*.
+- **Linux:** si no abre y en la terminal aparece un error del *sandbox* (pasa en Ubuntu 24.04 y otras distribuciones que restringen los espacios de nombres), ejecutar `./sgt --no-sandbox`.
 
 ---
 
