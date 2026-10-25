@@ -66,7 +66,8 @@ Todas las rutas van bajo `/api/tienda/`, con un router propio y con **sesión se
 | Ruta | Acceso | Para qué |
 |---|---|---|
 | `GET categorias` | Pública | Categorías activas, con cuántos productos tiene cada una |
-| `GET productos?q&categoria&disponibles&orden&pagina` | Pública | Catálogo con búsqueda, filtros, orden y paginación |
+| `GET destacados` | Pública | Un producto disponible de cada categoría, para el inicio |
+| `GET productos?q&categoria&disponibles&orden&pagina` | Pública | Catálogo con búsqueda, filtros, orden (`nombre`, `precio_asc`, `precio_desc`) y paginación de 12 en 12 |
 | `GET producto?id` | Pública | Detalle de un producto |
 | `POST carrito/revisar` | Pública | Recibe el carrito del navegador. Regresa las líneas con el precio vigente, los avisos (agotado, ajustado, dado de baja) y el desglose de subtotal, IVA y total |
 | `POST registro`, `POST ingresar`, `POST salir`, `GET cuenta` | Pública o con sesión de cliente | Cuentas de cliente |
@@ -120,10 +121,10 @@ El equipo del profesor no necesita Node, PHP ni MariaDB: solo Docker.
 **Listo cuando:** `docker compose up --build` muestra la tienda vacía en `:8080` y el API responde.
 
 ### Fase T1: Catálogo · M (R02–R04, R19)
-- [ ] API: categorías, productos (búsqueda sin acentos, filtros, orden, paginación) y detalle.
-- [ ] Páginas: inicio (categorías y algunos productos), categoría, resultados de búsqueda y detalle de producto. El detalle muestra nombre, descripción, categoría, precio con IVA incluido y disponibilidad: Disponible, Pocas piezas o Agotado.
-- [ ] Producto inexistente (P14) y errores del API (P15).
-- [ ] SGT: campo "Descripción" en Inventario.
+- [x] API: categorías, productos (búsqueda sin acentos, filtros, orden, paginación) y detalle.
+- [x] Páginas: inicio (categorías y algunos productos), categoría, resultados de búsqueda y detalle de producto. El detalle muestra nombre, descripción, categoría, precio con IVA incluido y disponibilidad: Disponible, Pocas piezas o Agotado.
+- [x] Producto inexistente (P14) y errores del API (P15).
+- [x] SGT: campo "Descripción" en Inventario.
 
 **Listo cuando:** se cumplen N1–N4, P14 y P15.
 

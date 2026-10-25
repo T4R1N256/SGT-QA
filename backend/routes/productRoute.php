@@ -19,6 +19,8 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
     $Cantidad_Minima = campoEntero($data, 'Cantidad_Minima');
     $ID_Categoria = campoEntero($data, 'ID_Categoria', true, 1);
     $ID_Proveedor = campoEntero($data, 'ID_Proveedor', true, 1);
+    // Descripción para la tienda en línea (opcional)
+    $Descripcion = campoTexto($data, 'Descripcion', false, 500) ?? '';
 
     require_once __DIR__ . '/../models/producto.php';
 
@@ -32,7 +34,8 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
         $Estado,
         $Cantidad_Minima,
         $ID_Categoria,
-        $ID_Proveedor
+        $ID_Proveedor,
+        $Descripcion
     );
 
     if ($res) {
@@ -113,6 +116,8 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
     $Cantidad_Minima = campoEntero($data, 'Cantidad_Minima', false);
     $ID_Categoria = campoEntero($data, 'ID_Categoria', false, 1);
     $ID_Proveedor = campoEntero($data, 'ID_Proveedor', false, 1);
+    // Si viene vacía se borra; si no viene se conserva
+    $Descripcion = campoTexto($data, 'Descripcion', false, 500);
 
     require_once __DIR__ . '/../models/producto.php';
 
@@ -131,6 +136,7 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
     $Cantidad_Minima = $Cantidad_Minima ?? $infoActual['Cantidad_Minima'];
     $ID_Categoria = $ID_Categoria ?? $infoActual['ID_Categoria'];
     $ID_Proveedor = $ID_Proveedor ?? $infoActual['ID_Proveedor'];
+    $Descripcion = $Descripcion ?? $infoActual['Descripcion'];
 
     $Estado = Producto::calcularEstado((int) $Cantidad, (int) $Cantidad_Minima);
 
@@ -143,7 +149,8 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
         $Estado,
         $Cantidad_Minima,
         $ID_Categoria,
-        $ID_Proveedor
+        $ID_Proveedor,
+        $Descripcion
     );
 
     if ($res !== 1) {

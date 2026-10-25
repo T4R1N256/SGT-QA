@@ -47,6 +47,7 @@ final class ProductosTest extends ApiTestCase
             'mínimo negativo' => [['Cantidad_Minima' => -2], 400],
             'sin nombre' => [['Nombre_Producto' => '   '], 400],
             'cantidad con decimales' => [['Cantidad' => 2.5], 400],
+            'descripción de más de 500 caracteres' => [['Descripcion' => str_repeat('a', 501)], 400],
         ];
     }
 
@@ -86,6 +87,46 @@ final class ProductosTest extends ApiTestCase
 
         $this->assertSame(400, $codigo);
         $this->assertSame(40, $this->existencia(1));
+    }
+
+    public function testLaDescripcionEsOpcionalAlCrear(): void
+    {
+        // La descripción es la que ve el cliente en la tienda en línea (fase T1)
+        $admin = $this->comoAdmin();
+
+        $admin->post('/api/createProduct', $this->datosProducto());
+        $this->assertSame('', $this->ultimoProducto()['Descripcion']);
+
+        $admin->post('/api/createProduct', $this->datosProducto(['Descripcion' => '  Bolsa de 1 kg <nueva>  ']));
+        $this->assertSame('Bolsa de 1 kg <nueva>', $this->ultimoProducto()['Descripcion']);
+    }
+
+    public function testModificarLaDescripcionLaCambiaLaConservaOLaBorra(): void
+    {
+        $admin = $this->comoAdmin();
+        $descripcion = fn() => $this->valor('SELECT Descripcion FROM Producto WHERE ID_Producto = 1');
+
+        $admin->patch('/api/modifyProduct', ['ID_Producto' => 1, 'Descripcion' => 'Grano largo']);
+        $this->assertSame('Grano largo', $descripcion());
+
+        $admin->patch('/api/modifyProduct', ['ID_Producto' => 1, 'Precio' => 40]);
+        $this->assertSame('Grano largo', $descripcion());
+
+        $admin->patch('/api/modifyProduct', ['ID_Producto' => 1, 'Descripcion' => '']);
+        $this->assertSame('', $descripcion());
+    }
+
+    public function testLaListaYElDetalleTraenLaDescripcion(): void
+    {
+        $admin = $this->comoAdmin();
+        $admin->patch('/api/modifyProduct', ['ID_Producto' => 1, 'Descripcion' => 'Grano largo']);
+
+        [, $lista] = $admin->get('/api/getAllProducts');
+        [, $detalle] = $admin->get('/api/getProduct?id=1');
+
+        $producto = array_values(array_filter($lista['productos'], fn($p) => (int) $p['ID_Producto'] === 1))[0];
+        $this->assertSame('Grano largo', $producto['Descripcion']);
+        $this->assertSame('Grano largo', $detalle['producto']['Descripcion']);
     }
 
     public function testModificarProductoInexistenteResponde404(): void

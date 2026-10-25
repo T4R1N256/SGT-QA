@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useId, useState, useRef } from 'react'
 import {
   getProducts,
   getProduct,
@@ -9,13 +9,7 @@ import {
   getProveedores,
 } from '../api/api'
 import { useFetch } from '../hooks/useFetch'
-import {
-  ActionButton,
-  ConfirmModal,
-  FormModal,
-  FormAlert,
-  fieldInputClass,
-} from '../components'
+import { ActionButton, ConfirmModal, FormModal, FormAlert, fieldInputClass } from '../components'
 import { sanitize } from '../utils/sanitize'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
@@ -33,8 +27,12 @@ const PRODUCT_COLUMNS = [
 
 const UNIDADES = ['pieza', 'kg', 'litro']
 
+// La descripción es la que ve el cliente en la tienda en línea
+const DESCRIPCION_MAX = 500
+
 const EMPTY_PRODUCT = {
   nombre: '',
+  descripcion: '',
   precio: '',
   cantidad: '',
   unidad: '',
@@ -46,6 +44,8 @@ const EMPTY_PRODUCT = {
 function parseProduct(form) {
   return {
     nombre: sanitize(form.nombre),
+    // Se guarda tal cual (React escapa al mostrar): sanitize convertiría "&" en "&amp;"
+    descripcion: form.descripcion.trim(),
     precio: parseFloat(form.precio),
     cantidad: parseInt(form.cantidad, 10),
     unidad: form.unidad,
@@ -58,6 +58,7 @@ function parseProduct(form) {
 function buildProductPayload(parsed) {
   return {
     Nombre_Producto: parsed.nombre,
+    Descripcion: parsed.descripcion,
     Precio: parsed.precio,
     Cantidad: parsed.cantidad,
     Unidad_Medida: parsed.unidad,
@@ -81,12 +82,15 @@ function validateProduct(parsed) {
     return 'Todos los campos son obligatorios'
   if (precio <= 0) return 'El precio debe ser mayor a 0'
   if (cantidad < 0 || cantidadMinima < 0) return 'Las cantidades no pueden ser negativas'
+  if (parsed.descripcion.length > DESCRIPCION_MAX)
+    return `La descripción no puede tener más de ${DESCRIPCION_MAX} caracteres`
   return null
 }
 
 function productToForm(p) {
   return {
     nombre: p.Nombre_Producto,
+    descripcion: p.Descripcion ?? '',
     precio: String(p.Precio),
     cantidad: String(p.Cantidad),
     unidad: p.Unidad_Medida,
@@ -103,6 +107,8 @@ function visibleOptions(items, idField, currentValue) {
 }
 
 function ProductForm({ data, setData, response, setResponse, categorias, proveedores }) {
+  // El formulario está en dos modales (nuevo y editar): cada uno necesita su propio id
+  const idDescripcion = useId()
   function onChange(field) {
     return (e) => {
       setResponse(null)
@@ -132,6 +138,24 @@ function ProductForm({ data, setData, response, setResponse, categorias, proveed
             value={data.nombre}
             onChange={onChange('nombre')}
           />
+        </div>
+
+        <div className="col-span-2">
+          <label htmlFor={idDescripcion} className="block text-xs font-semibold text-gray-700 mb-1">
+            Descripción (tienda en línea)
+          </label>
+          <textarea
+            id={idDescripcion}
+            className={`${cls('descripcion')} resize-none`}
+            rows={3}
+            maxLength={DESCRIPCION_MAX}
+            placeholder="Lo que verá el cliente en la tienda (opcional)"
+            value={data.descripcion}
+            onChange={onChange('descripcion')}
+          />
+          <p className="mt-0.5 text-right text-[11px] text-gray-500">
+            {data.descripcion.length}/{DESCRIPCION_MAX}
+          </p>
         </div>
 
         <div>
