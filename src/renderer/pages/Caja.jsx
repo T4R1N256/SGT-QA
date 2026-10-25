@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ActionButton, FormAlert, FormModal } from '../components'
 import { useAuth } from '../context/AuthContext'
 import { useNotify } from '../context/NotificationContext.jsx'
@@ -46,7 +46,7 @@ export default function Caja() {
   // Efectivo contado menos efectivo esperado (en centavos exactos)
   const diferencia = calcularCambio(parseFloat(montoFinal) || 0, efectivoEsperado)
 
-  async function fetchVentas() {
+  const fetchVentas = useCallback(async () => {
     setLoadingVentas(true)
     const [ventasRes, montoRes] = await Promise.all([getAllVentas(), getMontoFinal()])
     setLoadingVentas(false)
@@ -64,11 +64,11 @@ export default function Caja() {
       setSaldoInicial(Number(montoRes.Monto_Inicial))
       setEfectivoEsperado(Number(montoRes.Efectivo_Esperado))
     }
-  }
+  }, [setCaja])
 
   useEffect(() => {
     if (estado === 'abierta') fetchVentas()
-  }, [estado])
+  }, [estado, fetchVentas])
 
   async function abrirCaja() {
     const monto = parseFloat(montoApertura)

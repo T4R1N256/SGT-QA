@@ -3,7 +3,7 @@
 
 import { formatoMoneda } from '../pdf/TicketPDF'
 import { formatoFecha, textoPeriodo } from './fechas'
-import { capitalize } from './format'
+import { capitalize, cuenta, formatoNumero } from './format'
 
 export const TIPOS_REPORTE = [
   { id: 'ventas', label: 'Ventas', titulo: 'Reporte de ventas' },
@@ -12,23 +12,11 @@ export const TIPOS_REPORTE = [
   { id: 'resumen', label: 'Resumen', titulo: 'Resumen del periodo' },
 ]
 
-const numero = new Intl.NumberFormat('es-MX')
-
-export function formatoNumero(valor) {
-  const n = Number(valor)
-  return numero.format(Number.isFinite(n) ? n : 0)
-}
-
 export function formatoPorcentaje(valor) {
   return valor == null ? '—' : `${Number(valor).toFixed(1)} %`
 }
 
 const dineroOGuion = (monto) => (monto == null ? '—' : formatoMoneda(monto))
-
-// 1 producto, 2 productos
-export function cuenta(n, singular, plural = `${singular}s`) {
-  return `${formatoNumero(n)} ${Number(n) === 1 ? singular : plural}`
-}
 
 // Columna de una tabla: 'texto', 'numero' (alineado a la derecha) o 'estado' (Disponible, Stock bajo, Agotado)
 const columna = (titulo, tipo = 'texto') => ({ titulo, tipo })

@@ -1,4 +1,5 @@
-
+import * as mariadb from './mariadb'
+import { puertoLibre } from './puertos'
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const { spawn, execFileSync } = require('child_process')
 const path = require('node:path')
@@ -6,7 +7,6 @@ const fs = require('node:fs')
 const http = require('node:http')
 
 let phpProcess = null
-let mysqlProcess = null
 
 // Regla 4: el sistema no se puede cerrar con la caja abierta. El renderer avisa por IPC ('caja:estado')
 let cajaAbierta = false
@@ -14,16 +14,11 @@ let cajaAbierta = false
 // URL con la que se carga el renderer compilado (ver servirRenderer)
 let rendererURL = null
 
-// Local MySQL credentials — only used in the packaged app (127.0.0.1 only, never exposed)
-const LOCAL_DB_PORT = '3307'
-const LOCAL_DB_NAME = 'sgtdb'
-const LOCAL_DB_USER = 'sgt_root'
-const LOCAL_DB_PASS = 'pass.2$asdf7'
+// URL del API: PHP escucha en un puerto libre que se le pasa al renderer por el preload
+let apiURL = null
 
 // Helpers
-function getPlatform() {
-  return process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'mac' : 'linux'
-}
+const getPlatform = mariadb.plataforma
 
 function getPhpBinary() {
   if (!app.isPackaged) return 'php'
@@ -32,186 +27,64 @@ function getPhpBinary() {
   return path.join(process.resourcesPath, 'php', platform, binary)
 }
 
-function getMysqldBinary() {
-  const platform = getPlatform()
-  const binary = platform === 'win' ? 'mariadbd.exe' : 'mariadbd'
-  return path.join(process.resourcesPath, 'mysql', platform, 'bin', binary)
-}
-
-function getMysqlClientBinary() {
-  const platform = getPlatform()
-  const binary = platform === 'win' ? 'mariadb.exe' : 'mariadb'
-  return path.join(process.resourcesPath, 'mysql', platform, 'bin', binary)
-}
-
-function getMysqlBaseDir() {
-  return path.join(process.resourcesPath, 'mysql', getPlatform())
-}
-
-// Linux/macOS: mysqld is dynamically linked — point the linker at our bundled libs
-function getMysqlEnv() {
-  const env = { ...process.env }
-  const libDir = path.join(getMysqlBaseDir(), 'lib')
-  const platform = getPlatform()
-  if (platform === 'linux') {
-    env.LD_LIBRARY_PATH = libDir + (process.env.LD_LIBRARY_PATH ? `:${process.env.LD_LIBRARY_PATH}` : '')
-  } else if (platform === 'mac') {
-    env.DYLD_FALLBACK_LIBRARY_PATH = libDir + (process.env.DYLD_FALLBACK_LIBRARY_PATH ? `:${process.env.DYLD_FALLBACK_LIBRARY_PATH}` : '')
-  }
-  return env
-}
-
 function getBackendPath() {
   if (!app.isPackaged) return path.join(__dirname, '../../backend')
   return path.join(process.resourcesPath, 'backend')
 }
 
-function getDataDir() {
-  // userData persists across app updates and is writable — unlike resourcesPath
-  return path.join(app.getPath('userData'), 'mysql_data')
-}
-
-// ── MySQL ─────────────────────────────────────────────────────────────────────
-
-function initMySQLDataDir() {
-  const dataDir = getDataDir()
-  if (fs.existsSync(path.join(dataDir, 'mysql'))) return
-
-  console.log('[MySQL] Primera ejecución: inicializando directorio de datos...')
-  fs.mkdirSync(dataDir, { recursive: true })
-
-  const platform = getPlatform()
-  const baseDir = getMysqlBaseDir()
-
-  if (platform === 'win') {
-    const mariadbd = path.join(baseDir, 'bin', 'mariadbd.exe')
-    const shareDir = path.join(baseDir, 'share')
-
-    const sqlFiles = [
-      'mariadb_system_tables.sql',
-      'mariadb_system_tables_data.sql',
-      'mariadb_performance_tables.sql',
-      'mariadb_sys_schema.sql',
-    ]
-
-    let sql = 'CREATE DATABASE IF NOT EXISTS mysql;\nUSE mysql;\n'
-    for (const file of sqlFiles) {
-      sql += fs.readFileSync(path.join(shareDir, file), 'utf8') + '\n'
-    }
-
-    execFileSync(mariadbd, [
-      '--bootstrap',
-      `--datadir=${dataDir}`,
-      `--basedir=${baseDir}`,
-    ], {
-      input: sql,
-      env: getMysqlEnv(),
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
-  } else {
-    const installScript = path.join(baseDir, 'scripts', 'mariadb-install-db')
-    execFileSync(installScript, [
-      `--datadir=${dataDir}`,
-      `--basedir=${baseDir}`,
-      '--auth-root-authentication-method=normal',
-    ], { stdio: 'pipe', env: getMysqlEnv() })
-  }
-}
-
-function spawnMySQL() {
-  const dataDir = getDataDir()
-
-  mysqlProcess = spawn(getMysqldBinary(), [
-    `--datadir=${dataDir}`,
-    `--basedir=${getMysqlBaseDir()}`,
-    `--port=${LOCAL_DB_PORT}`,
-    '--bind-address=127.0.0.1',
-    `--socket=${path.join(dataDir, 'mysql.sock')}`,
-    '--console',
-  ], { windowsHide: true, env: getMysqlEnv() })
-
-  mysqlProcess.on('error', (err) => console.error('[MySQL] ERROR AL LANZAR PROCESO:', err))
-  mysqlProcess.stdout.on('data', (d) => console.log('[MySQL stdout]', d.toString().trim()))
-  mysqlProcess.stderr.on('data', (d) => console.log('[MySQL stderr]', d.toString().trim()))
-  mysqlProcess.on('close', (code, signal) => console.log(`[MySQL] cerrado código=${code} signal=${signal}`))
-}
-
-async function waitMySQL(tries = 30) {
-  const args = ['-u', 'root', `--port=${LOCAL_DB_PORT}`, '--host=127.0.0.1', '-e', 'SELECT 1']
-  for (let i = 0; i < tries; i++) {
-    try {
-      execFileSync(getMysqlClientBinary(), args, { stdio: 'pipe', env: getMysqlEnv() })
-      console.log('[MySQL] listo.')
-      return
-    } catch (_) { /* todavía arrancando */ }
-    await new Promise((r) => setTimeout(r, 500))
-  }
-  throw new Error('[MySQL] no respondió después de varios intentos')
-}
-
-// Imports the schema and creates the application user — first run only
-function setupDatabase() {
-  console.log('[MySQL] Configurando base de datos...')
-  const clientArgs = ['-u', 'root', `--port=${LOCAL_DB_PORT}`, '--host=127.0.0.1']
-
-  execFileSync(getMysqlClientBinary(), clientArgs, {
-    input: `CREATE DATABASE IF NOT EXISTS \`${LOCAL_DB_NAME}\`;`,
-    stdio: ['pipe', 'pipe', 'pipe'],
-    env: getMysqlEnv(),
-  })
-
-  const schemaSQL = fs.readFileSync(
-    path.join(getBackendPath(), 'config', 'database.sql'), 'utf8'
-  )
-  execFileSync(getMysqlClientBinary(), [...clientArgs, LOCAL_DB_NAME], {
-    input: schemaSQL,
-    stdio: ['pipe', 'pipe', 'pipe'],
-    env: getMysqlEnv(),
-  })
-
-  const userSQL = [
-    `CREATE OR REPLACE USER '${LOCAL_DB_USER}'@'127.0.0.1' IDENTIFIED BY '${LOCAL_DB_PASS}';`,
-    `CREATE OR REPLACE USER '${LOCAL_DB_USER}'@'localhost' IDENTIFIED BY '${LOCAL_DB_PASS}';`,
-    `GRANT ALL PRIVILEGES ON ${LOCAL_DB_NAME}.* TO '${LOCAL_DB_USER}'@'127.0.0.1';`,
-    `GRANT ALL PRIVILEGES ON ${LOCAL_DB_NAME}.* TO '${LOCAL_DB_USER}'@'localhost';`,
-    `FLUSH PRIVILEGES;`,
-  ].join('\n')
-  execFileSync(getMysqlClientBinary(), clientArgs, {
-    input: userSQL,
-    stdio: ['pipe', 'pipe', 'pipe'],
-    env: getMysqlEnv(),
-  })
-
-  console.log('[MySQL] Base de datos configurada.')
-}
-
 // ── PHP ───────────────────────────────────────────────────────────────────────
 
-function spawnPHP() {
+// pid y puerto del PHP en ejecución, para encontrarlo si la app se cierra mal y queda vivo
+const rutaEstadoPHP = () => path.join(app.getPath('userData'), 'php.json')
+
+// Un PHP que quedó vivo de una ejecución que terminó mal se cierra al arrancar,
+// solo si en su puerto responde el API con el mismo pid (así no se cierra otro proceso)
+async function cerrarPHPHuerfano() {
+  let anterior
+  try {
+    anterior = JSON.parse(fs.readFileSync(rutaEstadoPHP(), 'utf8'))
+  } catch {
+    return
+  }
+  try {
+    const res = await fetch(`http://localhost:${anterior.puerto}/api/ping`, { signal: AbortSignal.timeout(1000) })
+    const datos = await res.json()
+    if (datos.pid === anterior.pid) {
+      process.kill(anterior.pid)
+      console.log(`[PHP] Se cerró el PHP que quedó abierto en el puerto ${anterior.puerto}`)
+    }
+  } catch {
+    /* ya no está */
+  }
+}
+
+function spawnPHP(puerto) {
   const phpBin = getPhpBinary()
   const backend = getBackendPath()
   const router = path.join(backend, 'index.php')
 
-  phpProcess = spawn(phpBin, ['-S', 'localhost:8000', '-t', backend, router], {
+  phpProcess = spawn(phpBin, ['-S', `localhost:${puerto}`, '-t', backend, router], {
     windowsHide: true,
   })
+  apiURL = `http://localhost:${puerto}/api`
+  if (phpProcess.pid) fs.writeFileSync(rutaEstadoPHP(), JSON.stringify({ pid: phpProcess.pid, puerto }))
 
   phpProcess.stderr.on('data', (d) => console.log('[PHP]', d.toString().trim()))
   phpProcess.on('close', (code) => console.log('[PHP] cerrado con código:', code))
 }
 
-async function waitPHP(tries = 10) {
+async function waitPHP(tries = 20) {
   for (let i = 0; i < tries; i++) {
     try {
-      const res = await fetch('http://localhost:8000/api/ping')
+      const res = await fetch(`${apiURL}/ping`)
       if (res.ok) {
-        console.log('[PHP] listo.')
+        console.log('[PHP] listo en', apiURL)
         return
       }
     } catch (_) { /* todavía arrancando */ }
     await new Promise((r) => setTimeout(r, 500))
   }
-  throw new Error('[PHP] no respondió después de varios intentos')
+  throw new Error('El servidor PHP no respondió')
 }
 
 function runSeeders() {
@@ -229,7 +102,7 @@ function runSeeders() {
 // Sirve el renderer compilado por http://localhost:<puerto libre>, igual que Vite en desarrollo.
 // Cargado con file://, Chromium rechaza las respuestas del API con credenciales (CORS) y no envía
 // la cookie de sesión, así que la app compilada no podía iniciar sesión.
-// Con http://localhost el API (localhost:8000) es del mismo sitio y la cookie funciona.
+// Con http://localhost el API (localhost:<puerto de PHP>) es del mismo sitio y la cookie funciona.
 const TIPOS_MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -353,6 +226,7 @@ function createWindow() {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      additionalArguments: [`--sgt-api=${apiURL}`],
     },
   })
 
@@ -372,53 +246,42 @@ function createWindow() {
   })
 }
 
-function isDatabaseReady() {
-  try {
-    execFileSync(getMysqlClientBinary(),
-      ['-u', LOCAL_DB_USER, `-p${LOCAL_DB_PASS}`,
-       `--port=${LOCAL_DB_PORT}`, '--host=127.0.0.1',
-       LOCAL_DB_NAME, '-e', 'SELECT 1'],
-      { stdio: 'pipe', env: getMysqlEnv() }
-    )
-    return true
-  } catch {
-    return false
-  }
-}
-
 // App lifecycle
 
 app.whenReady().then(async () => {
-  if (app.isPackaged) {
-    Object.assign(process.env, {
-      DB_HOST: '127.0.0.1',
-      DB_PORT: LOCAL_DB_PORT,
-      DB_NAME: LOCAL_DB_NAME,
-      DB_USER: LOCAL_DB_USER,
-      DB_PASS: LOCAL_DB_PASS,
-      APP_ENV: 'production',
-    })
-
-    initMySQLDataDir()
-
-    spawnMySQL()
-    await waitMySQL()
-
-    if (!isDatabaseReady()) {
-      setupDatabase()
+  try {
+    if (app.isPackaged) {
+      const bd = await mariadb.iniciar({ esquema: path.join(getBackendPath(), 'config', 'database.sql') })
+      Object.assign(process.env, {
+        DB_HOST: bd.host,
+        DB_PORT: String(bd.puerto),
+        DB_NAME: bd.baseDatos,
+        DB_USER: bd.usuario,
+        DB_PASS: bd.contrasena,
+        APP_ENV: 'production',
+      })
     }
+
+    if (!process.env['ELECTRON_RENDERER_URL']) {
+      rendererURL = await servirRenderer()
+      // El backend solo acepta peticiones con credenciales de este origen (ver CORS en index.php)
+      process.env.APP_ORIGIN = rendererURL
+    }
+
+    await cerrarPHPHuerfano()
+    spawnPHP(await puertoLibre())
+    await waitPHP()
+
+    runSeeders()
+  } catch (e) {
+    console.error('[Arranque]', e)
+    dialog.showErrorBox(
+      'No se pudo iniciar SGT',
+      `${e.message}\n\nCierra la aplicación y vuelve a abrirla. Si el problema continúa, reinicia el equipo.`
+    )
+    app.quit()
+    return
   }
-
-  if (!process.env['ELECTRON_RENDERER_URL']) {
-    rendererURL = await servirRenderer()
-    // El backend solo acepta peticiones con credenciales de este origen (ver CORS en index.php)
-    process.env.APP_ORIGIN = rendererURL
-  }
-
-  spawnPHP()
-  await waitPHP()
-
-  runSeeders()
 
   ipcMain.handle('ping', () => 'pong')
   ipcMain.on('caja:estado', (_event, abierta) => {
@@ -441,8 +304,11 @@ app.whenReady().then(async () => {
 })
 
 app.on('will-quit', () => {
-  if (phpProcess) phpProcess.kill()
-  if (mysqlProcess) mysqlProcess.kill()
+  if (phpProcess) {
+    phpProcess.kill()
+    fs.rmSync(rutaEstadoPHP(), { force: true })
+  }
+  if (app.isPackaged) mariadb.apagar()
 })
 
 app.on('window-all-closed', () => {

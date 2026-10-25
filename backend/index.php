@@ -81,7 +81,8 @@ try {
 switch (true) {
 
     case $path === '/api/ping': // Ruta de prueba para verificar que PHP responde
-        echo json_encode(['ok' => true, 'mensaje' => 'PHP respondiendo']);
+        // El pid permite a Electron reconocer y cerrar un PHP que quedó abierto de una ejecución anterior
+        echo json_encode(['ok' => true, 'mensaje' => 'PHP respondiendo', 'pid' => getmypid()]);
         break;
 
     case $path === '/api/logout':
@@ -225,15 +226,6 @@ switch (true) {
         require_once __DIR__ . '/routes/saleRoute.php';
         break;
 
-    /*
-        case $path === '/api/addProductSale':
-            require_once __DIR__ . '/routes/saleRoute.php';
-            break;
-
-        case $path === '/api/removeProductSale':
-            require_once __DIR__ . '/routes/saleRoute.php';
-            break;
-    */
     case $path === '/api/completeSale':
         requerirAutorizacion();
         require_once __DIR__ . '/routes/saleRoute.php';

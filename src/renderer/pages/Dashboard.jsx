@@ -45,7 +45,7 @@ export default function Dashboard() {
         if (res.ok) setUserInfo(res.usuarioinfo)
       })
       .finally(() => setLoading(false))
-  }, [usuario.id])
+  }, [usuario.id, userInfo, setUserInfo])
 
   useEffect(() => {
     getCashRegister()
