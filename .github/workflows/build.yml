@@ -5,6 +5,21 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+  # También en los PRs que cambian el empaquetado o el arranque de la app (proceso principal, dependencias)
+  pull_request:
+    paths:
+      - '.github/workflows/build.yml'
+      - 'src/main/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'electron.vite.config.mjs'
+      - 'backend/composer.json'
+      - 'backend/composer.lock'
+
+# Un push nuevo al mismo PR cancela la compilación anterior
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   MARIADB_VERSION: '12.2.2'
