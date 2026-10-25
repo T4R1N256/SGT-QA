@@ -3,28 +3,35 @@ import { ActionButton, FormAlert, FormModal } from '../components'
 import { useAuth } from '../context/AuthContext'
 import { useNotify } from '../context/NotificationContext.jsx'
 import { openCaja, closeCaja, getAllVentas, getMontoFinal } from '../api/api'
+import { calcularCambio } from '../utils/money'
 import { LockClosedIcon, LockOpenIcon } from '@heroicons/react/20/solid'
 
 const VENTA_COLUMNS = [
   { label: 'FECHA' },
   { label: 'HORA' },
+  { label: 'FORMA DE PAGO' },
   { label: 'MONTO' },
 ]
 
-const GRID_COLS = 'grid grid-cols-[1fr_1fr_1fr]'
+const GRID_COLS = 'grid grid-cols-[1fr_1fr_1fr_1fr]'
+
+const TOTALES_VACIOS = { efectivo: 0, tarjeta: 0, transferencia: 0, total: 0, ventas: 0 }
 
 function formatMoney(n) {
-  return `$${(Number.isFinite(n) ? n : 0).toFixed(2)}`
+  const valor = Number(n)
+  return `$${(Number.isFinite(valor) ? valor : 0).toFixed(2)}`
 }
 
 export default function Caja() {
-  const { usuario, caja, setCaja } = useAuth()
+  const { caja, setCaja } = useAuth()
   const notify = useNotify()
   const [estado, setEstado] = useState(caja ? 'abierta' : 'cerrada')
   const [saldoInicial, setSaldoInicial] = useState(caja ? Number(caja.Monto_Inicial) : 0)
 
   const [ventas, setVentas] = useState([])
-  const [totalVentas, setTotalVentas] = useState(0)
+  // Totales por forma de pago y efectivo esperado: los calcula el backend (el cuadre solo cuenta efectivo)
+  const [totales, setTotales] = useState(TOTALES_VACIOS)
+  const [efectivoEsperado, setEfectivoEsperado] = useState(saldoInicial)
   const [loadingVentas, setLoadingVentas] = useState(false)
 
   const [montoApertura, setMontoApertura] = useState('')
@@ -36,15 +43,27 @@ export default function Caja() {
 
   const [response, setResponse] = useState(null)
 
-  const saldoActual = saldoInicial + totalVentas
+  // Efectivo contado menos efectivo esperado (en centavos exactos)
+  const diferencia = calcularCambio(parseFloat(montoFinal) || 0, efectivoEsperado)
 
   async function fetchVentas() {
     setLoadingVentas(true)
     const [ventasRes, montoRes] = await Promise.all([getAllVentas(), getMontoFinal()])
     setLoadingVentas(false)
+
+    // La caja se cerró en otra sesión: se sincroniza la pantalla
+    if (montoRes.status === 409) {
+      setCaja(null)
+      setEstado('cerrada')
+      return
+    }
+
     setVentas(ventasRes.ok ? (ventasRes.ventas ?? []) : [])
-    const monto = montoRes.ok ? Number(Object.values(montoRes.monto ?? {})[0] ?? 0) : 0
-    setTotalVentas(Number.isFinite(monto) ? monto : 0)
+    if (montoRes.ok) {
+      setTotales(montoRes.totales ?? TOTALES_VACIOS)
+      setSaldoInicial(Number(montoRes.Monto_Inicial))
+      setEfectivoEsperado(Number(montoRes.Efectivo_Esperado))
+    }
   }
 
   useEffect(() => {
@@ -55,8 +74,18 @@ export default function Caja() {
     const monto = parseFloat(montoApertura)
     if (!Number.isFinite(monto) || monto < 0) return
     setResponse(null)
-    const res = await openCaja({ Monto_Inicial: monto, ID_Usuario: usuario.id })
+    const res = await openCaja({ Monto_Inicial: monto })
     if (!res.ok) {
+      // Ya hay una caja abierta (por ejemplo, desde otra sesión): se muestra esa caja
+      if (res.status === 409) {
+        const abierta = await getMontoFinal()
+        if (abierta.ok) {
+          setCaja({ Monto_Inicial: abierta.Monto_Inicial })
+          setSaldoInicial(Number(abierta.Monto_Inicial))
+          setEstado('abierta')
+          return
+        }
+      }
       setResponse({ type: 'error', message: res.mensaje ?? 'No se pudo abrir la caja' })
       return
     }
@@ -67,7 +96,7 @@ export default function Caja() {
   }
 
   function abrirModalCierre() {
-    setMontoFinal(saldoActual.toFixed(2))
+    setMontoFinal(efectivoEsperado.toFixed(2))
     setCierreError(null)
     cierreModalRef.current?.showModal()
   }
@@ -88,20 +117,23 @@ export default function Caja() {
     }
     cierreModalRef.current?.close()
     setCaja(null)
+    const corte = res.corte
     notify({
-      title: 'Resumen del corte',
-      type: 'success',
+      title: `Corte de caja: ${corte.Estado_Final}`,
+      type: corte.Estado_Final === 'cuadrada' ? 'success' : 'warning',
       message:
-        `Saldo inicial: ${formatMoney(saldoInicial)}\n` +
-        `Ventas: ${ventas.length} (${formatMoney(totalVentas)})\n` +
-        `Saldo esperado: ${formatMoney(saldoActual)}\n` +
-        `Monto final contado: ${formatMoney(monto)}\n` +
-        `Diferencia: ${formatMoney(monto - saldoActual)}`,
+        `Saldo inicial: ${formatMoney(corte.Monto_Inicial)}\n` +
+        `Ventas: ${corte.totales.ventas} (${formatMoney(corte.totales.total)})\n` +
+        `Efectivo: ${formatMoney(corte.totales.efectivo)} · Tarjeta: ${formatMoney(corte.totales.tarjeta)} · Transferencia: ${formatMoney(corte.totales.transferencia)}\n` +
+        `Efectivo esperado: ${formatMoney(corte.Efectivo_Esperado)}\n` +
+        `Efectivo contado: ${formatMoney(corte.Monto_Final)}\n` +
+        `Diferencia: ${formatMoney(corte.Diferencia)}`,
     })
     setEstado('cerrada')
     setSaldoInicial(0)
     setVentas([])
-    setTotalVentas(0)
+    setTotales(TOTALES_VACIOS)
+    setEfectivoEsperado(0)
     setMontoFinal('')
   }
 
@@ -150,11 +182,12 @@ export default function Caja() {
     <div className="flex flex-col gap-4 w-full h-full">
       {response && <FormAlert response={response} />}
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <StatCard label="Saldo inicial" value={saldoInicial} />
-        <StatCard label="Total ventas" value={totalVentas} tone="emerald" />
-        <StatCard label="# de ventas" value={ventas.length} isMoney={false} />
-        <StatCard label="Saldo esperado" value={saldoActual} bold />
+        <StatCard label="Ventas en efectivo" value={totales.efectivo} tone="emerald" />
+        <StatCard label="Tarjeta y transferencia" value={totales.tarjeta + totales.transferencia} />
+        <StatCard label="# de ventas" value={totales.ventas} isMoney={false} />
+        <StatCard label="Efectivo esperado" value={efectivoEsperado} bold />
       </div>
 
       <div className="flex justify-between items-center px-1">
@@ -226,28 +259,24 @@ export default function Caja() {
         <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
             <span className="block text-xs font-semibold text-gray-600 uppercase">
-              Saldo esperado
+              Efectivo esperado
             </span>
-            <span className="text-lg font-bold text-gray-900">{formatMoney(saldoActual)}</span>
+            <span className="text-lg font-bold text-gray-900">{formatMoney(efectivoEsperado)}</span>
           </div>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
             <span className="block text-xs font-semibold text-gray-600 uppercase">Diferencia</span>
             <span
               className={`text-lg font-bold ${
-                parseFloat(montoFinal) - saldoActual === 0
-                  ? 'text-gray-900'
-                  : parseFloat(montoFinal) - saldoActual > 0
-                    ? 'text-emerald-600'
-                    : 'text-red-600'
+                diferencia === 0 ? 'text-gray-900' : diferencia > 0 ? 'text-emerald-600' : 'text-red-600'
               }`}
             >
-              {formatMoney((parseFloat(montoFinal) || 0) - saldoActual)}
+              {formatMoney(diferencia)}
             </span>
           </div>
         </div>
 
         <label className="block text-xs font-semibold text-gray-700 mb-1">
-          Monto final contado *
+          Efectivo contado *
         </label>
         <input
           type="text"
@@ -286,6 +315,7 @@ function VentaRow({ venta }) {
     <li className={`${GRID_COLS} border-b border-gray-100 hover:bg-gray-50`}>
       <span className={`${rowCell} pl-4`}>{venta.Fecha ?? '-'}</span>
       <span className={rowCell}>{venta.Hora ?? '-'}</span>
+      <span className={`${rowCell} capitalize`}>{venta.Forma_Pago ?? '-'}</span>
       <span className={`${rowCell} font-semibold text-emerald-600 pr-4`}>
         {formatMoney(Number(venta.Monto))}
       </span>

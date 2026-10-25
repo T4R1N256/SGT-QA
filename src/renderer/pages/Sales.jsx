@@ -5,6 +5,7 @@ import { ActionButton } from '../components'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { useAuth } from '../context/AuthContext'
 import { useNotify } from '../context/NotificationContext.jsx'
+import { calcularCambio, totalCarrito } from '../utils/money'
 import {
   TrashIcon,
   PlusIcon,
@@ -88,13 +89,23 @@ export default function Sales() {
     )
   }, [cart, pago, formaPago])
 
-  const total = useMemo(
-    () => cart.reduce((sum, item) => sum + Number(item.Precio) * (Number(item.cantidad) || 0), 0),
-    [cart]
-  )
+  // Precios y existencias del carrito siempre con los datos más recientes del inventario
+  // (al cargar la página y después de un cobro rechazado)
+  useEffect(() => {
+    const productos = productsData?.productos
+    if (!productos) return
+    setCart((prev) =>
+      prev.map((it) => {
+        const actual = productos.find((p) => p.ID_Producto === it.ID_Producto)
+        return actual ? { ...it, Precio: actual.Precio, Cantidad: actual.Cantidad, Estado: actual.Estado } : it
+      })
+    )
+  }, [productsData])
+
+  const total = useMemo(() => totalCarrito(cart), [cart])
   const pagoNum = parseFloat(pago)
-  const cambio = Number.isFinite(pagoNum) ? pagoNum - total : 0
-  const pagoSuficiente = Number.isFinite(pagoNum) && pagoNum >= total && total > 0
+  const cambio = Number.isFinite(pagoNum) ? calcularCambio(pagoNum, total) : 0
+  const pagoSuficiente = Number.isFinite(pagoNum) && cambio >= 0 && total > 0
 
   const resultados = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -185,6 +196,8 @@ export default function Sales() {
     const res = await completeSale(payload)
     if (!res.ok) {
       notify({ message: res.mensaje ?? 'No se pudo completar la venta', type: 'error' })
+      // Stock insuficiente o precios distintos: se recarga el inventario y el carrito se actualiza
+      if (res.status === 409 || res.status === 404) refetchProducts()
       return
     }
     ventaActivaRef.current = false
@@ -328,7 +341,6 @@ export default function Sales() {
                   addToCart(p)
                   setSearchQuery('')
                   setShowResults(false)
-                  console.log(p)
                 }}
                 className={`flex justify-between items-center px-3 py-2 text-sm text-gray-700 cursor-pointer border-b border-gray-100 last:border-b-0 ${
                   idx === activeResultIndex ? 'bg-emerald-50' : 'hover:bg-gray-100'

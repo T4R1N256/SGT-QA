@@ -9,15 +9,9 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $Nombre_Proveedor = htmlspecialchars($data['Nombre_Proveedor']);
-    $Telefono = htmlspecialchars($data['Telefono']);
-
-    if (!$Nombre_Proveedor) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $Nombre_Proveedor = campoTexto($data, 'Nombre_Proveedor');
+    $Telefono = campoTexto($data, 'Telefono', false, 20) ?? '';
 
     require_once __DIR__ . ('/../models/proveedor.php');
 
@@ -64,13 +58,7 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
         return;
     }
 
-    $ID_Proveedor = (int) $_GET['id'];
-
-    if (!$ID_Proveedor) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $ID_Proveedor = campoEntero($_GET, 'id', true, 1);
 
     require_once __DIR__ . '/../models/proveedor.php';
 
@@ -98,17 +86,10 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Proveedor = (int) htmlspecialchars($data['ID_Proveedor']);
-    $Nombre_Proveedor = isset($data['Nombre_Proveedor']) ? htmlspecialchars($data['Nombre_Proveedor']) : null;
-    $Telefono = isset($data['Telefono']) ? htmlspecialchars($data['Telefono']) : null;
-
-
-    if (!$ID_Proveedor) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Proveedor = campoEntero($data, 'ID_Proveedor', true, 1);
+    $Nombre_Proveedor = campoTexto($data, 'Nombre_Proveedor', false) ?: null;
+    $Telefono = campoTexto($data, 'Telefono', false, 20);
 
     require_once __DIR__ . '/../models/proveedor.php';
 
@@ -145,16 +126,8 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Proveedor = (int) htmlspecialchars($data['ID_Proveedor']);
-
-
-
-    if (!$ID_Proveedor) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Proveedor = campoEntero($data, 'ID_Proveedor', true, 1);
 
     require_once __DIR__ . '/../models/proveedor.php';
 

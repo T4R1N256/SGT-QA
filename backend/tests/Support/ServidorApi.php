@@ -31,7 +31,6 @@ final class ServidorApi
         self::$proceso = proc_open(
             [
                 PHP_BINARY,
-                '-d', 'variables_order=EGPCS',
                 '-d', 'session.save_path=' . self::$carpetaSesiones,
                 '-S', "127.0.0.1:$puerto",
                 '-t', $backend,

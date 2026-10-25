@@ -14,7 +14,6 @@ import {
   modifyPasswordUser,
   modifyEstadoUser,
   deleteUser,
-  checkEmail,
 } from '../api/api'
 import { useFetch } from '../hooks/useFetch'
 import { useHeader } from '../context/HeaderContext'
@@ -128,15 +127,9 @@ const FORM_FIELDS = (mode) => [
   },
 ]
 
-async function validateCreate(form) {
-  const err = validateUserForm(form, 'create')
-  if (err) return err
-  const correo = sanitize(form.correo)
-  if (correo) {
-    const check = await checkEmail(correo)
-    if (!check.ok) return { message: check.mensaje, field: 'correo' }
-  }
-  return null
+// Solo se valida el formato del correo: consultar el dominio por DNS requería internet (RNF08)
+function validateCreate(form) {
+  return validateUserForm(form, 'create')
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -225,7 +218,7 @@ export default function Users() {
   // ─── Create ───────────────────────────────────────────────────────────────
 
   async function handleCreate() {
-    const err = await validateCreate(newUser)
+    const err = validateCreate(newUser)
     if (err) return setCreateResponse({ type: 'error', ...err })
 
     setCreating(true)

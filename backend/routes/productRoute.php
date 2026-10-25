@@ -10,30 +10,19 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
         return;
     }
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $Nombre_Producto = htmlspecialchars($data['Nombre_Producto']);
-    $Precio = htmlspecialchars($data['Precio']);
-    $Cantidad = htmlspecialchars($data['Cantidad']);
-    $Unidad_Medida = htmlspecialchars($data['Unidad_Medida']);
-    $Cantidad_Minima = htmlspecialchars($data['Cantidad_Minima']);
-    $ID_Categoria = htmlspecialchars($data['ID_Categoria']);
-    $ID_Proveedor = htmlspecialchars($data['ID_Proveedor']);
-
-    if (!$Nombre_Producto || !$Precio || !$Cantidad || !$Unidad_Medida || !$Cantidad_Minima || !$ID_Categoria || !$ID_Proveedor) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
-
-    if ($Cantidad > $Cantidad_Minima) {
-        $Estado = 'Disponible';
-    } elseif ($Cantidad > 0 && $Cantidad <= $Cantidad_Minima) {
-        $Estado = 'Stock bajo';
-    } elseif ($Cantidad == 0) {
-        $Estado = 'Sin stock';
-    }
+    // Se permite registrar un producto con 0 existencias (queda "Sin stock"); no se permiten negativos (regla 6)
+    $data = leerJson();
+    $Nombre_Producto = campoTexto($data, 'Nombre_Producto');
+    $Precio = campoDinero($data, 'Precio', true, 0.01);
+    $Cantidad = campoEntero($data, 'Cantidad');
+    $Unidad_Medida = campoTexto($data, 'Unidad_Medida', true, 20);
+    $Cantidad_Minima = campoEntero($data, 'Cantidad_Minima');
+    $ID_Categoria = campoEntero($data, 'ID_Categoria', true, 1);
+    $ID_Proveedor = campoEntero($data, 'ID_Proveedor', true, 1);
 
     require_once __DIR__ . '/../models/producto.php';
+
+    $Estado = Producto::calcularEstado($Cantidad, $Cantidad_Minima);
 
     $res = Producto::crearProducto(
         $Nombre_Producto,
@@ -88,13 +77,7 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
         return;
     }
 
-    $ID_Producto = (int) $_GET['id'];
-
-    if (!$ID_Producto) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $ID_Producto = campoEntero($_GET, 'id', true, 1);
 
     require_once __DIR__ . '/../models/producto.php';
 
@@ -121,25 +104,25 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Producto = (int) $data['ID_Producto'];
-    $Nombre_Producto = isset($data['Nombre_Producto']) ? htmlspecialchars($data['Nombre_Producto']) : null;
-    $Precio = isset($data['Precio']) ? htmlspecialchars($data['Precio']) : null;
-    $Cantidad = isset($data['Cantidad']) ? htmlspecialchars($data['Cantidad']) : null;
-    $Unidad_Medida = isset($data['Unidad_Medida']) ? htmlspecialchars($data['Unidad_Medida']) : null;
-    $Cantidad_Minima = isset($data['Cantidad_Minima']) ? htmlspecialchars($data['Cantidad_Minima']) : null;
-    $ID_Categoria = isset($data['ID_Categoria']) ? htmlspecialchars($data['ID_Categoria']) : null;
-    $ID_Proveedor = isset($data['ID_Proveedor']) ? htmlspecialchars($data['ID_Proveedor']) : null;
-
-    if (!$ID_Producto) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Producto = campoEntero($data, 'ID_Producto', true, 1);
+    $Nombre_Producto = campoTexto($data, 'Nombre_Producto', false) ?: null;
+    $Precio = campoDinero($data, 'Precio', false, 0.01);
+    $Cantidad = campoEntero($data, 'Cantidad', false);
+    $Unidad_Medida = campoTexto($data, 'Unidad_Medida', false, 20) ?: null;
+    $Cantidad_Minima = campoEntero($data, 'Cantidad_Minima', false);
+    $ID_Categoria = campoEntero($data, 'ID_Categoria', false, 1);
+    $ID_Proveedor = campoEntero($data, 'ID_Proveedor', false, 1);
 
     require_once __DIR__ . '/../models/producto.php';
 
     $infoActual = Producto::readProducto($ID_Producto);
+
+    if (!$infoActual) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'mensaje' => 'No se encontró el producto']);
+        return;
+    }
 
     $Nombre_Producto = $Nombre_Producto ?? $infoActual['Nombre_Producto'];
     $Precio = $Precio ?? $infoActual['Precio'];
@@ -149,13 +132,7 @@ if ($path === '/api/createProduct') { // Ruta que crea productos
     $ID_Categoria = $ID_Categoria ?? $infoActual['ID_Categoria'];
     $ID_Proveedor = $ID_Proveedor ?? $infoActual['ID_Proveedor'];
 
-    if ($Cantidad > $Cantidad_Minima) {
-        $Estado = 'Disponible';
-    } elseif ($Cantidad > 0 && $Cantidad <= $Cantidad_Minima) {
-        $Estado = 'Stock bajo';
-    } elseif ($Cantidad == 0) {
-        $Estado = 'Sin stock';
-    }
+    $Estado = Producto::calcularEstado((int) $Cantidad, (int) $Cantidad_Minima);
 
     $res = Producto::updateProducto(
         $ID_Producto,

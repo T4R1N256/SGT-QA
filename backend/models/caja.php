@@ -8,7 +8,7 @@ class Caja
 {
 
     const TABLE = "Caja";
-    // ID_Caja, Fecha, Hora, Monto_Inicial, Monto_Final, Estado, Estado_Final, ID_Usuario, Hora_Final
+    // ID_Caja, Fecha, Hora, Monto_Inicial, Monto_Final, Monto_Final_Sistema, Estado, Estado_Final, ID_Usuario, ID_Usuario_Cierre, Hora_Final
 
     // Funcion para abrir (crear) caja
     public static function openCaja($Fecha, $Hora, $Monto_Inicial, $Estado, $ID_Usuario)
@@ -40,15 +40,15 @@ class Caja
     }//-- Fin funcion abrir caja
 
 
-    //Funcion cerrar caja
-    public static function closeCaja($ID_Caja, $Monto_Final, $Monto_Final_Sistema, $Estado_Final, $Hora_Final)
+    //Funcion cerrar caja (dentro de la transacción de la ruta)
+    public static function closeCaja($connection, $ID_Caja, $Monto_Final, $Monto_Final_Sistema, $Estado_Final, $Hora_Final, $ID_Usuario_Cierre)
     {
         try {
             $Estado = 'cerrada';
-            $connection = new Conexion();
 
             $sql = $connection->prepare("UPDATE " . self::TABLE . " SET Monto_Final
-            = :Monto_Final, Monto_Final_Sistema = :Monto_Final_Sistema, Estado = :Estado, Estado_Final = :Estado_Final, Hora_Final = :Hora_Final 
+            = :Monto_Final, Monto_Final_Sistema = :Monto_Final_Sistema, Estado = :Estado, Estado_Final = :Estado_Final,
+            Hora_Final = :Hora_Final, ID_Usuario_Cierre = :ID_Usuario_Cierre
             WHERE ID_Caja = :ID_Caja");
             $sql->bindValue(":ID_Caja", $ID_Caja, PDO::PARAM_INT);
             $sql->bindValue(":Monto_Final", $Monto_Final);
@@ -56,66 +56,48 @@ class Caja
             $sql->bindValue(":Estado", $Estado);
             $sql->bindValue(":Estado_Final", $Estado_Final);
             $sql->bindValue(":Hora_Final", $Hora_Final);
+            $sql->bindValue(":ID_Usuario_Cierre", $ID_Usuario_Cierre, PDO::PARAM_INT);
             $sql->execute();
 
-            $row = $sql->rowCount();
-            $connection = NULL;
-
-
-            return $row > 0 ? 1 : 0;
+            return $sql->rowCount() > 0 ? 1 : 0;
 
         } catch (PDOException $e) {
             throw new Exception("Hubo un error " . $e->getMessage());
         }
     }//-- Fin funcion cerrar caja
 
-    // Funcion para obtener el monto inicial de una caja 
-    public static function getMontoInicial($ID_Caja)
+
+    // Funcion para obtener los totales de las ventas finalizadas de una caja, por forma de pago
+    // El cuadre de caja solo cuenta el efectivo
+    public static function totalesVentas($ID_Caja, $connection = NULL)
     {
         try {
-            $connection = new Conexion;
+            $conn = $connection ?? new Conexion;
 
-            $sql = $connection->prepare('SELECT Monto_Inicial FROM ' . self::TABLE . ' 
-            WHERE ID_Caja = :ID_Caja');
+            $sql = $conn->prepare("SELECT
+                COALESCE(SUM(CASE WHEN Forma_Pago = 'efectivo' THEN Monto END), 0) AS efectivo,
+                COALESCE(SUM(CASE WHEN Forma_Pago = 'tarjeta' THEN Monto END), 0) AS tarjeta,
+                COALESCE(SUM(CASE WHEN Forma_Pago = 'transferencia' THEN Monto END), 0) AS transferencia,
+                COALESCE(SUM(Monto), 0) AS total,
+                COUNT(*) AS ventas
+                FROM Venta WHERE ID_Caja = :ID_Caja AND Estado = 'finalizada'");
             $sql->bindValue(':ID_Caja', $ID_Caja, PDO::PARAM_INT);
             $sql->execute();
-            $monto = $sql->fetch();
-            $connection = NULL;
+            $totales = $sql->fetch();
+            $conn = NULL;
 
-            if ($monto) {
-                return $monto;
-            } else {
-                return false;
-            }
+            return [
+                'efectivo' => (float) $totales['efectivo'],
+                'tarjeta' => (float) $totales['tarjeta'],
+                'transferencia' => (float) $totales['transferencia'],
+                'total' => (float) $totales['total'],
+                'ventas' => (int) $totales['ventas'],
+            ];
 
         } catch (PDOException $e) {
             throw new Exception("Hubo un error: " . $e->getMessage());
         }
-    }//-- Fin funcion obtener monto
-
-    // Funcion para obtener el monto final de una caja 
-    public static function getMontoFinal($ID_Caja)
-    {
-        try {
-            $connection = new Conexion;
-
-            $sql = $connection->prepare('SELECT SUM(Monto) FROM Venta 
-            WHERE ID_Caja = :ID_Caja');
-            $sql->bindValue(':ID_Caja', $ID_Caja, PDO::PARAM_INT);
-            $sql->execute();
-            $monto = $sql->fetch();
-            $connection = NULL;
-
-            if ($monto) {
-                return $monto;
-            } else {
-                return false;
-            }
-
-        } catch (PDOException $e) {
-            throw new Exception("Hubo un error: " . $e->getMessage());
-        }
-    }//-- Fin funcion obtener monto final
+    }//-- Fin funcion totales de ventas
 
 
     // Funcion para saber si existe alguna caja abierta
@@ -123,7 +105,8 @@ class Caja
     {
         try {
             $connection = new Conexion();
-            $sql = $connection->prepare('SELECT ID_Caja, Monto_Inicial FROM ' . self::TABLE . ' WHERE Estado = :Estado');
+            $sql = $connection->prepare('SELECT ID_Caja, Fecha, Hora, Monto_Inicial, ID_Usuario FROM ' . self::TABLE . '
+            WHERE Estado = :Estado ORDER BY ID_Caja DESC LIMIT 1');
             $sql->bindValue(':Estado', 'abierta');
             $sql->execute();
             $caja = $sql->fetch();
@@ -137,22 +120,35 @@ class Caja
     }//-- Fin funcion caja abierta
 
 
-    // Funcion para leer caja
+    // Funcion para obtener la caja abierta o responder 409 (regla 2: sin caja abierta no hay ventas)
+    public static function requerirAbierta()
+    {
+        $caja = self::cajaAbierta();
+        if (!$caja) {
+            throw new ErrorApi('No hay caja abierta', 409);
+        }
+        return $caja;
+    }//-- Fin funcion requerir caja abierta
+
+
+    // Funcion para leer el último corte (la caja cerrada más reciente)
     public static function readCaja()
     {
         try {
             $connection = new Conexion;
 
             $sql = $connection->prepare('SELECT c.ID_Caja, c.Fecha, c.Hora, c.Monto_Inicial, c.Monto_Final,
-            c.Estado_Final, c.Hora_Final, e.Nombre  FROM ' . self::TABLE . ' c
-            INNER JOIN Empleado e ON e.ID_Usuario = c.ID_Usuario  
-            WHERE Fecha = (SELECT MAX(Fecha) FROM Caja) AND Hora = (SELECT MIN(Hora) FROM Caja)');
+            c.Monto_Final_Sistema, c.Estado_Final, c.Hora_Final, e.Nombre  FROM ' . self::TABLE . ' c
+            INNER JOIN Empleado e ON e.ID_Usuario = c.ID_Usuario
+            WHERE c.Estado = :Estado
+            ORDER BY c.Fecha DESC, c.Hora_Final DESC, c.ID_Caja DESC LIMIT 1');
+            $sql->bindValue(':Estado', 'cerrada');
             $sql->execute();
-            $producto = $sql->fetch();
+            $caja = $sql->fetch();
             $connection = NULL;
 
-            if ($producto) {
-                return $producto;
+            if ($caja) {
+                return $caja;
             } else {
                 return false;
             }

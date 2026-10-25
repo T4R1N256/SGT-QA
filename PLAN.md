@@ -102,41 +102,44 @@ Tamaños: **S** ≈ 1–2 días · **M** ≈ 3–5 días · **L** ≈ 1–2 sema
 
 Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 
-**Migración M001**
-- [ ] El dinero pasa a `DECIMAL(10,2)` en `Producto.Precio`, `Venta.Monto`, `Detalle_Venta.Precio_Unitario`, `Caja.Monto_*`, `Surtir.Monto` y `Detalle_Surtir.Precio_Unitario`.
-- [ ] `CHECK (Cantidad >= 0)` en `Producto` (regla 6).
-- [ ] `Caja.ID_Usuario_Cierre`.
+**Migraciones 001 y 002**
+- [x] El dinero pasa a `DECIMAL(10,2)` en `Producto.Precio`, `Venta.Monto`, `Detalle_Venta.Precio_Unitario`, `Caja.Monto_*`, `Surtir.Monto` y `Detalle_Surtir.Precio_Unitario`.
+- [x] `CHECK (Cantidad >= 0)` en `Producto` (regla 6).
+- [x] `Caja.ID_Usuario_Cierre`.
+- [x] 002: regresar a su texto original los datos que se guardaron con `htmlspecialchars` (`&amp;` → `&`).
 
 **Ventas** (`saleRoute.php`, `venta.php`, `producto.php`)
-- [ ] `completeSale` en **una sola transacción y una sola conexión**, con `SELECT … FOR UPDATE` sobre los productos (B2).
-- [ ] Validar el stock en el servidor y responder 409 si no alcanza (reglas 1 y 6, B3).
-- [ ] **Recalcular el total** con los precios de la base de datos en vez de confiar en el `Monto` que manda el cliente.
-- [ ] Asignar `Fecha` y `Hora` al **finalizar** la venta (regla 9).
-- [ ] Cancelar las ventas `enproceso` huérfanas al abrir una venta nueva y al cerrar la caja.
+- [x] `completeSale` en **una sola transacción y una sola conexión**, con `SELECT … FOR UPDATE` sobre los productos (B2).
+- [x] Validar el stock en el servidor y responder 409 si no alcanza (reglas 1 y 6, B3).
+- [x] **Recalcular el total** con los precios de la base de datos en vez de confiar en el `Monto` que manda el cliente.
+- [x] Asignar `Fecha` y `Hora` al **finalizar** la venta (regla 9).
+- [x] Cancelar las ventas `enproceso` huérfanas al abrir una venta nueva y al cerrar la caja.
 
 **Caja** (`cashRegisterRoute.php`, `caja.php`, `Caja.jsx`)
-- [ ] Obtener la caja activa de la base de datos (`cajaAbierta()`) en vez de `$_SESSION` (B8).
-- [ ] Tomar `ID_Usuario` de la sesión, no del cuerpo de la petición.
-- [ ] Permitir $0 al abrir y al cerrar (B4).
-- [ ] **El cuadre suma solo efectivo** (B11) y compara redondeando (B1).
-- [ ] La pantalla de Caja y el resumen del corte muestran el **desglose por forma de pago**.
-- [ ] Arreglar la consulta de "Último corte" (B6): la caja **cerrada** más reciente.
+- [x] Obtener la caja activa de la base de datos (`cajaAbierta()`) en vez de `$_SESSION` (B8).
+- [x] Tomar `ID_Usuario` de la sesión, no del cuerpo de la petición.
+- [x] Permitir $0 al abrir y al cerrar (B4).
+- [x] **El cuadre suma solo efectivo** (B11) y compara redondeando (B1).
+- [x] La pantalla de Caja y el resumen del corte muestran el **desglose por forma de pago**.
+- [x] Arreglar la consulta de "Último corte" (B6): la caja **cerrada** más reciente.
 
 **Productos**
-- [ ] Permitir crear productos con 0 existencias (B5).
-- [ ] Rechazar cantidades y precios negativos.
+- [x] Permitir crear productos con 0 existencias (B5).
+- [x] Rechazar cantidades y precios negativos.
 
 **Seguridad** (RNF03, RNF04, RL01)
-- [ ] Exigir sesión en los 8 endpoints de lectura que hoy están abiertos.
-- [ ] `getUserInfo?id=` solo para el admin; el empleado solo puede ver su propia información.
-- [ ] CORS: aceptar únicamente los orígenes conocidos y `file://`.
-- [ ] Quitar `htmlspecialchars` de las entradas (§1.4, B9).
-- [ ] En la app empaquetada, **generar la contraseña de la base de datos al azar** en el primer arranque y guardarla en `userData`, en lugar de dejarla escrita en `main.js`.
+- [x] Exigir sesión en los 8 endpoints de lectura que hoy están abiertos.
+- [x] `getUserInfo?id=` solo para el admin; el empleado solo puede ver su propia información.
+- [x] CORS: aceptar únicamente los orígenes conocidos. **Hallazgo:** con `file://`, la app compilada no podía iniciar sesión, porque Chromium rechaza `Access-Control-Allow-Origin: *` con credenciales. Ahora Electron sirve el renderer compilado por `http://localhost:<puerto libre>` y el backend solo acepta ese origen (`APP_ORIGIN`).
+- [x] Quitar `htmlspecialchars` de las entradas (§1.4, B9).
+- [ ] ~~Contraseña de la base de datos al azar en la app empaquetada~~ → **se movió a la fase 6**. El usuario `root` de la MariaDB local tampoco tiene contraseña, así que hay que resolver los dos juntos y probarlo con la app empaquetada.
 
 **Otros**
-- [ ] **Regla 4:** el renderer avisa al proceso principal (por IPC) si hay caja abierta, y el evento `close` de la ventana se cancela con un diálogo de aviso.
-- [ ] **RNF08:** quitar `checkEmail` por DNS (S5).
-- [ ] **Pruebas:** stock insuficiente con rollback, cuadre con centavos, caja con $0, permisos por rol y ventas huérfanas.
+- [x] **Regla 4:** el renderer avisa al proceso principal (por IPC) si hay caja abierta, y el evento `close` de la ventana se cancela con un diálogo de aviso.
+- [x] **RNF08:** quitar `checkEmail` por DNS (S5).
+- [x] **Pruebas:** stock insuficiente con rollback, cuadre con centavos, caja con $0, permisos por rol y ventas huérfanas.
+- [x] Extra: `Conexion` lee las credenciales con `getenv()` cuando `$_ENV` viene vacío (`variables_order = "GPCS"`), y si no se puede conectar responde JSON con código 500.
+- [x] Extra: `rowCount()` cuenta las filas encontradas, así que guardar un registro sin cambios ya no responde "no se encontró".
 
 **Listo cuando:**
 - Una venta de $10.10 en efectivo, contada exacta, deja la caja **cuadrada**.
@@ -146,7 +149,7 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 
 ### Fase 2: Venta completa y ticket PDF · M
 
-**Migración M002**
+**Migración 003**
 - [ ] `Venta.Pago_Recibido`, `Venta.Cambio` y `Venta.ID_Usuario`.
 - [ ] Tabla `Configuracion` con los datos de la tienda: nombre, dirección, teléfono, RFC y mensaje del ticket.
 - [ ] `Producto.Activo` para la baja lógica.
@@ -175,7 +178,7 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 
 ### Fase 3: Surtir (reabastecimiento) · M
 
-**Migración M003**
+**Migración 004**
 - [ ] `Surtir.ID_Usuario` y `Surtir.Notas`.
 - [ ] `Detalle_Surtir.Precio_Unitario` se usa como **costo**.
 - [ ] `Producto.Costo`, que guarda el último costo de compra para calcular márgenes.
@@ -233,6 +236,7 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 - [ ] `docs/QA_CHECKLIST.md`: casos manuales ligados a cada RF y regla, con el resultado de cada uno.
 - [ ] Probar la **actualización** de una base de datos con datos de la versión actual: las migraciones se aplican sin pérdida.
 - [ ] Probar la app **empaquetada** en Windows y Linux (CI con tag `v*`), incluyendo el primer arranque sin internet.
+- [ ] Contraseñas al azar para el usuario de la app y para `root` en la MariaDB empaquetada (viene de la fase 1).
 - [ ] Quitar código muerto: `firebase/php-jwt`, las rutas comentadas y los `console.log`.
 - [ ] Actualizar el README, `ANALISIS_SRS.md` (matriz final) y la sección de sprints del SRS.
 

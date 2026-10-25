@@ -1,11 +1,18 @@
 
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const { spawn, execFileSync } = require('child_process')
 const path = require('node:path')
 const fs = require('node:fs')
+const http = require('node:http')
 
 let phpProcess = null
 let mysqlProcess = null
+
+// Regla 4: el sistema no se puede cerrar con la caja abierta. El renderer avisa por IPC ('caja:estado')
+let cajaAbierta = false
+
+// URL con la que se carga el renderer compilado (ver servirRenderer)
+let rendererURL = null
 
 // Local MySQL credentials — only used in the packaged app (127.0.0.1 only, never exposed)
 const LOCAL_DB_PORT = '3307'
@@ -217,6 +224,60 @@ function runSeeders() {
   }
 }
 
+// ── Renderer compilado ───────────────────────────────────────────────────────
+
+// Sirve el renderer compilado por http://localhost:<puerto libre>, igual que Vite en desarrollo.
+// Cargado con file://, Chromium rechaza las respuestas del API con credenciales (CORS) y no envía
+// la cookie de sesión, así que la app compilada no podía iniciar sesión.
+// Con http://localhost el API (localhost:8000) es del mismo sitio y la cookie funciona.
+const TIPOS_MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+}
+
+function servirRenderer() {
+  const raiz = path.join(__dirname, '../renderer')
+
+  const server = http.createServer((req, res) => {
+    let ruta
+    try {
+      ruta = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
+    } catch {
+      res.writeHead(400).end()
+      return
+    }
+    const archivo = path.join(raiz, ruta === '/' ? 'index.html' : ruta)
+
+    // Solo archivos dentro de la carpeta del renderer
+    if (path.relative(raiz, archivo).startsWith('..')) {
+      res.writeHead(403).end()
+      return
+    }
+
+    fs.readFile(archivo, (err, contenido) => {
+      if (err) {
+        res.writeHead(404).end()
+        return
+      }
+      res.writeHead(200, { 'Content-Type': TIPOS_MIME[path.extname(archivo)] ?? 'application/octet-stream' })
+      res.end(contenido)
+    })
+  })
+
+  return new Promise((resolve, reject) => {
+    server.on('error', reject)
+    server.listen(0, 'localhost', () => resolve(`http://localhost:${server.address().port}`))
+  })
+}
+
 // ── Create window ─────────────────────────────────────────────────────────────
 
 function createWindow() {
@@ -230,11 +291,20 @@ function createWindow() {
     },
   })
 
-  if (process.env['ELECTRON_RENDERER_URL']) {
-    win.loadURL(process.env['ELECTRON_RENDERER_URL']) // Vite dev server
-  } else {
-    win.loadFile(path.join(__dirname, '../renderer/index.html')) // production build
-  }
+  // Vite en desarrollo, o el servidor local del renderer compilado
+  win.loadURL(process.env['ELECTRON_RENDERER_URL'] || rendererURL)
+
+  win.on('close', (event) => {
+    if (!cajaAbierta) return
+    event.preventDefault()
+    dialog.showMessageBox(win, {
+      type: 'warning',
+      title: 'Caja abierta',
+      message: 'No puedes cerrar el sistema con la caja abierta.',
+      detail: 'Haz el corte desde el módulo Caja y vuelve a intentarlo.',
+      buttons: ['Entendido'],
+    })
+  })
 }
 
 function isDatabaseReady() {
@@ -274,12 +344,21 @@ app.whenReady().then(async () => {
     }
   }
 
+  if (!process.env['ELECTRON_RENDERER_URL']) {
+    rendererURL = await servirRenderer()
+    // El backend solo acepta peticiones con credenciales de este origen (ver CORS en index.php)
+    process.env.APP_ORIGIN = rendererURL
+  }
+
   spawnPHP()
   await waitPHP()
 
   runSeeders()
 
   ipcMain.handle('ping', () => 'pong')
+  ipcMain.on('caja:estado', (_event, abierta) => {
+    cajaAbierta = Boolean(abierta)
+  })
 
   createWindow()
 
