@@ -102,6 +102,10 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/tienda/producto?id=99999)" = 404
           curl -fsS -X POST -H 'Content-Type: application/json' -d '{"productos":[{"id":5,"cantidad":2}]}' \
             http://localhost:8080/api/tienda/carrito/revisar | grep -q '"subtotal":58.62,"iva":9.38,"tasa_iva":16,"envio":0,"total":68'
+          curl -fsS -c cookies.txt -X POST -H 'Content-Type: application/json' \
+            -d '{"nombre":"Ana","apellidos":"Pérez","correo":"ana@ejemplo.mx","telefono":"6561234567","password":"secreta123"}' \
+            http://localhost:8080/api/tienda/registro | grep -q '"correo":"ana@ejemplo.mx"'
+          curl -fsS -b cookies.txt http://localhost:8080/api/tienda/cuenta | grep -q '"nombre":"Ana"'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/getAllProducts)" = 404
           docker compose logs backend | grep -q 'Catálogo de la tienda cargado: 12 categorías y 180 productos'
 

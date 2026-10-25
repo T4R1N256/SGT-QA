@@ -9,6 +9,7 @@ import { formatoMoneda } from '../../compartido/format'
 import { cantidadConUnidad } from '../catalogo/disponibilidad'
 import Cargando from '../componentes/Cargando'
 import ErrorCarga from '../componentes/ErrorCarga'
+import { useSesion } from '../cuenta/SesionContext'
 import { useCarrito } from './CarritoContext'
 import SelectorCantidad from './SelectorCantidad'
 import { validarCantidad } from './carrito'
@@ -17,6 +18,7 @@ import { validarCantidad } from './carrito'
 // los precios y existencias vigentes, y avisa si algo se ajustó (P4, P5)
 export default function Carrito() {
   const { lineas, cambiar, quitar, vaciar, sincronizar } = useCarrito()
+  const { cliente } = useSesion()
   const revision = useConsulta(revisarCarrito, lineas)
   const [avisos, setAvisos] = useState([])
   const [continuando, setContinuando] = useState(false)
@@ -53,7 +55,11 @@ export default function Carrito() {
       sincronizar(res.lineas)
       return
     }
-    if (res.lineas.length) navigate('/compra/entrega')
+    if (!res.lineas.length) return
+    // Se compra con cuenta (D5): sin sesión se pide ingresar y luego se regresa aquí; el carrito se conserva (T-S2)
+    navigate(
+      cliente ? '/compra/entrega' : `/ingresar?siguiente=${encodeURIComponent('/compra/entrega')}`
+    )
   }
 
   if (lineas.length === 0) {

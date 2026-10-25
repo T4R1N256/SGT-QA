@@ -3,11 +3,13 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { MagnifyingGlassIcon, ShoppingCartIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 import { useTienda } from '../TiendaContext'
 import { useCarrito } from '../carrito/CarritoContext'
+import { useSesion } from '../cuenta/SesionContext'
 
 // Encabezado de todas las páginas: nombre de la tienda, búsqueda, carrito y cuenta
 export default function Encabezado() {
   const { nombre } = useTienda()
   const { piezas } = useCarrito()
+  const { cliente } = useSesion()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [params] = useSearchParams()
@@ -73,9 +75,12 @@ export default function Encabezado() {
               </span>
             )}
           </Link>
-          <Link to="/ingresar" className="flex items-center gap-1.5 hover:text-emerald-800">
-            <UserCircleIcon className="w-6 h-6" />
-            Ingresar
+          <Link
+            to={cliente ? '/cuenta' : '/ingresar'}
+            className="flex items-center gap-1.5 hover:text-emerald-800"
+          >
+            <UserCircleIcon className="w-6 h-6" aria-hidden="true" />
+            {cliente ? `Hola, ${cliente.nombre}` : 'Ingresar'}
           </Link>
         </nav>
       </div>

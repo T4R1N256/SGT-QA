@@ -40,17 +40,22 @@ final class ClienteApi
         return [$codigo, json_decode((string) $cuerpo, true)];
     }
 
-    // Nombres de las cookies que guardó este cliente (por ejemplo, la de sesión)
-    public function nombresCookies(): array
+    // Cookies que guardó este cliente: nombre => valor (por ejemplo, la de sesión)
+    public function cookies(): array
     {
-        $nombres = [];
+        $cookies = [];
         foreach (file($this->cookies, FILE_IGNORE_NEW_LINES) as $linea) {
             $campos = explode("\t", $linea);
             if (count($campos) === 7) {
-                $nombres[] = $campos[5];
+                $cookies[$campos[5]] = $campos[6];
             }
         }
-        return $nombres;
+        return $cookies;
+    }
+
+    public function nombresCookies(): array
+    {
+        return array_keys($this->cookies());
     }
 
     public function get(string $ruta): array

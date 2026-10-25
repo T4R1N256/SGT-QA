@@ -121,7 +121,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-La tienda queda en **http://localhost:8080**. El cliente explora el catálogo sin cuenta: inicio con categorías y destacados, páginas de categoría, búsqueda sin distinguir acentos (con filtros, orden y paginación) y detalle de cada producto. El carrito se guarda en el navegador y el servidor lo revisa en cada cambio: precios vigentes, existencias, productos dados de baja y el desglose del IVA (los precios ya lo incluyen). La primera vez el backend aplica las migraciones y, con `SEED_TIENDA=1` (valor por defecto de `.env.example`), carga un catálogo de prueba de 12 categorías y 180 productos. El catálogo solo se carga si la tabla de productos está vacía.
+La tienda queda en **http://localhost:8080**. El cliente explora el catálogo sin cuenta: inicio con categorías y destacados, páginas de categoría, búsqueda sin distinguir acentos (con filtros, orden y paginación) y detalle de cada producto. El carrito se guarda en el navegador y el servidor lo revisa en cada cambio: precios vigentes, existencias, productos dados de baja y el desglose del IVA (los precios ya lo incluyen). Para comprar se necesita una cuenta de cliente (nombre, apellidos, correo, teléfono y contraseña): si el cliente continúa sin sesión, la tienda le pide ingresar o registrarse y lo regresa a su compra con el carrito intacto. Los clientes son independientes de los usuarios de SGT y tienen su propia sesión. La primera vez el backend aplica las migraciones y, con `SEED_TIENDA=1` (valor por defecto de `.env.example`), carga un catálogo de prueba de 12 categorías y 180 productos. El catálogo solo se carga si la tabla de productos está vacía.
 
 | Contenedor | Qué hace |
 |---|---|
