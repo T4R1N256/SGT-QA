@@ -249,6 +249,13 @@ switch (true) {
         require_once __DIR__ . '/routes/saleRoute.php';
         break;
 
+    case $path === '/api/getSalesHistory':
+    case $path === '/api/getCashRegisters':
+    case $path === '/api/getCashRegisterDetail':
+        requerirAdmin();
+        require_once __DIR__ . '/routes/historyRoute.php';
+        break;
+
     case $path === '/api/createRestock':
     case $path === '/api/getAllRestocks':
     case $path === '/api/getRestock':
