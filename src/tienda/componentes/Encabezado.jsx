@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { MagnifyingGlassIcon, ShoppingCartIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 import { useTienda } from '../TiendaContext'
+import { useCarrito } from '../carrito/CarritoContext'
 
 // Encabezado de todas las páginas: nombre de la tienda, búsqueda, carrito y cuenta
 export default function Encabezado() {
   const { nombre } = useTienda()
+  const { piezas } = useCarrito()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [params] = useSearchParams()
@@ -53,9 +55,23 @@ export default function Encabezado() {
         </form>
 
         <nav className="flex items-center gap-5 text-sm text-gray-700">
-          <Link to="/carrito" className="flex items-center gap-1.5 hover:text-emerald-800">
-            <ShoppingCartIcon className="w-6 h-6" />
+          <Link
+            to="/carrito"
+            aria-label={
+              piezas ? `Carrito: ${piezas} ${piezas === 1 ? 'pieza' : 'piezas'}` : 'Carrito'
+            }
+            className="relative flex items-center gap-1.5 hover:text-emerald-800"
+          >
+            <ShoppingCartIcon className="w-6 h-6" aria-hidden="true" />
             Carrito
+            {piezas > 0 && (
+              <span
+                aria-hidden="true"
+                className="min-w-5 h-5 px-1 rounded-full bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center"
+              >
+                {piezas > 99 ? '99+' : piezas}
+              </span>
+            )}
           </Link>
           <Link to="/ingresar" className="flex items-center gap-1.5 hover:text-emerald-800">
             <UserCircleIcon className="w-6 h-6" />

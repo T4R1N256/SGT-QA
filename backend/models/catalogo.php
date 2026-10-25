@@ -147,4 +147,37 @@ class Catalogo
 
         return $fila ? self::publico($fila) : null;
     }//-- Fin funcion producto
+
+
+    // Productos visibles con esos IDs, indexados por ID (los que no se muestran en la tienda no vienen)
+    public static function productosPorId(array $IDs): array
+    {
+        if (!$IDs) {
+            return [];
+        }
+        $connection = new Conexion;
+        $marcadores = implode(', ', array_fill(0, count($IDs), '?'));
+        $sql = $connection->prepare('SELECT ' . self::COLUMNAS . ' ' . self::VISIBLES . " AND p.ID_Producto IN ($marcadores)");
+        $sql->execute(array_values($IDs));
+
+        $productos = [];
+        foreach ($sql->fetchAll() as $fila) {
+            $productos[(int) $fila['ID_Producto']] = self::publico($fila);
+        }
+        return $productos;
+    }//-- Fin funcion productos por ID
+
+
+    // Nombres de productos con esos IDs, aunque ya no se muestren (para avisar cuál se quitó del carrito)
+    public static function nombres(array $IDs): array
+    {
+        if (!$IDs) {
+            return [];
+        }
+        $connection = new Conexion;
+        $marcadores = implode(', ', array_fill(0, count($IDs), '?'));
+        $sql = $connection->prepare("SELECT ID_Producto, Nombre_Producto FROM Producto WHERE ID_Producto IN ($marcadores)");
+        $sql->execute(array_values($IDs));
+        return array_map('strval', $sql->fetchAll(PDO::FETCH_KEY_PAIR));
+    }//-- Fin funcion nombres
 }

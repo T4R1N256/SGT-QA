@@ -4,6 +4,7 @@ import { useConsulta } from '../hooks/useConsulta'
 import { useTienda, useTitulo } from '../TiendaContext'
 import { formatoMoneda } from '../../compartido/format'
 import { desglosarIVA } from '../../compartido/money'
+import AgregarAlCarrito from '../carrito/AgregarAlCarrito'
 import Cargando from '../componentes/Cargando'
 import Disponibilidad from '../componentes/Disponibilidad'
 import ErrorCarga from '../componentes/ErrorCarga'
@@ -92,6 +93,10 @@ function DetalleProducto({ id }) {
           <div className="mt-5 flex flex-col items-start gap-2">
             <Disponibilidad valor={producto.disponibilidad} />
             <p className="text-sm text-gray-600">{textoExistencia(producto)}</p>
+          </div>
+
+          <div className="mt-6">
+            <AgregarAlCarrito producto={producto} />
           </div>
         </aside>
       </div>

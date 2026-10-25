@@ -69,7 +69,7 @@ Todas las rutas van bajo `/api/tienda/`, con un router propio y con **sesión se
 | `GET destacados` | Pública | Un producto disponible de cada categoría, para el inicio |
 | `GET productos?q&categoria&disponibles&orden&pagina` | Pública | Catálogo con búsqueda, filtros, orden (`nombre`, `precio_asc`, `precio_desc`) y paginación de 12 en 12 |
 | `GET producto?id` | Pública | Detalle de un producto |
-| `POST carrito/revisar` | Pública | Recibe el carrito del navegador. Regresa las líneas con el precio vigente, los avisos (agotado, ajustado, dado de baja) y el desglose de subtotal, IVA y total |
+| `POST carrito/revisar` | Pública | Recibe el carrito del navegador (`id`, `cantidad` y el `precio` que vio el cliente). Regresa las líneas con el precio vigente, los avisos (retirado, agotado, ajustado, precio) y el desglose de subtotal, IVA y total. No aparta existencias |
 | `POST registro`, `POST ingresar`, `POST salir`, `GET cuenta` | Pública o con sesión de cliente | Cuentas de cliente |
 | `POST pedidos` | Cliente | Crea el pedido "pendiente de pago" a partir del carrito y los datos de entrega. Todo se valida en el servidor |
 | `GET pedidos`, `GET pedido?folio` | Cliente | Mis pedidos y el detalle de uno |
@@ -129,10 +129,10 @@ El equipo del profesor no necesita Node, PHP ni MariaDB: solo Docker.
 **Listo cuando:** se cumplen N1–N4, P14 y P15.
 
 ### Fase T2: Carrito · M (R05–R07, R09, R10)
-- [ ] Reducer del carrito con `localStorage`: agregar con cantidad, cambiar, quitar y vaciar.
-- [ ] `carrito/revisar` en el servidor: precios vigentes, existencias, bajas y desglose de IVA (T-S1).
-- [ ] Página del carrito con importes, subtotal, IVA, total y "Envío: gratis" (D3).
-- [ ] Mensajes de existencia y cantidades inválidas (P1–P5).
+- [x] Reducer del carrito con `localStorage`: agregar con cantidad, cambiar, quitar y vaciar.
+- [x] `carrito/revisar` en el servidor: precios vigentes, existencias, bajas y desglose de IVA (T-S1).
+- [x] Página del carrito con importes, subtotal, IVA, total y "Envío: gratis" (D3).
+- [x] Mensajes de existencia y cantidades inválidas (P1–P5).
 
 **Listo cuando:** se cumplen N5–N8 y P1–P6.
 

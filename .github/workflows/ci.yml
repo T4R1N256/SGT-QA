@@ -100,6 +100,8 @@ jobs:
           curl -fsS http://localhost:8080/api/tienda/categorias | grep -q '"nombre":"Abarrotes","productos":15'
           curl -fsS 'http://localhost:8080/api/tienda/productos?q=azucar' | grep -q 'Azúcar estándar 1 kg'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/tienda/producto?id=99999)" = 404
+          curl -fsS -X POST -H 'Content-Type: application/json' -d '{"productos":[{"id":5,"cantidad":2}]}' \
+            http://localhost:8080/api/tienda/carrito/revisar | grep -q '"subtotal":58.62,"iva":9.38,"tasa_iva":16,"envio":0,"total":68'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/getAllProducts)" = 404
           docker compose logs backend | grep -q 'Catálogo de la tienda cargado: 12 categorías y 180 productos'
 

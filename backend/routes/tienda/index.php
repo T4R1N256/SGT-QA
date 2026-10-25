@@ -11,6 +11,7 @@ const RUTAS_TIENDA = [
     'destacados' => ['GET', 'destacados.php'],
     'productos' => ['GET', 'productos.php'],
     'producto' => ['GET', 'producto.php'],
+    'carrito/revisar' => ['POST', 'carrito.php'],
 ];
 
 // Responde {ok: true, ...datos} con el código HTTP indicado
