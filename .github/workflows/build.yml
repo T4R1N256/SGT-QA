@@ -123,6 +123,8 @@ jobs:
 
       # Primer arranque de la app empaquetada (Linux): MariaDB inicializa sus datos, PHP responde y se cierra.
       # El runner trae un MySQL instalado con su /etc/mysql/my.cnf: comprueba que la app no lo lee (--no-defaults)
+      # La app corre el seeder después de que PHP responde: se espera a que el seeder llegue al usuario admin
+      # antes de cerrarla (si no, el cierre puede llegar a mitad del seeder)
       - name: Smoke test (Linux)
         if: matrix.platform == 'linux'
         run: |
@@ -131,7 +133,7 @@ jobs:
           for i in $(seq 1 90); do
             if [ -f ~/.config/sgt/php.json ]; then
               puerto=$(node -p "require(process.env.HOME + '/.config/sgt/php.json').puerto")
-              if curl -sf "http://localhost:$puerto/api/ping"; then listo=si; break; fi
+              if curl -sf "http://localhost:$puerto/api/ping" && grep -qi "usuario admin" arranque.log; then listo=si; break; fi
             fi
             sleep 2
           done
