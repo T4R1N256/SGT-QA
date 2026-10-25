@@ -2,7 +2,11 @@ import clsx from 'clsx'
 import { forwardRef, useId } from 'react'
 
 // Campo de formulario con su etiqueta y su mensaje de error, ligados para los lectores de pantalla
-const Campo = forwardRef(function Campo({ etiqueta, error, ayuda, className, ...props }, ref) {
+// como: 'input' (por defecto), 'select' (con sus <option> como children) o 'textarea'
+const Campo = forwardRef(function Campo(
+  { etiqueta, error, ayuda, className, como: Control = 'input', ...props },
+  ref
+) {
   const id = useId()
   const idMensaje = `${id}-mensaje`
 
@@ -11,13 +15,13 @@ const Campo = forwardRef(function Campo({ etiqueta, error, ayuda, className, ...
       <label htmlFor={id} className="block text-sm font-medium text-gray-800 mb-1">
         {etiqueta}
       </label>
-      <input
+      <Control
         ref={ref}
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={error || ayuda ? idMensaje : undefined}
         className={clsx(
-          'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2',
+          'w-full px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2',
           error
             ? 'border-red-500 focus:ring-red-200'
             : 'border-gray-300 focus:border-emerald-600 focus:ring-emerald-100'

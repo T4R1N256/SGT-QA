@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useTitulo } from '../TiendaContext'
 import Cargando from '../componentes/Cargando'
+import MisPedidos from './MisPedidos'
 import { useSesion } from './SesionContext'
 
 // Mi cuenta: datos del cliente y cierre de sesión. Sin sesión lleva a Ingresar
@@ -27,7 +28,7 @@ export default function Cuenta() {
   }
 
   return (
-    <section className="max-w-2xl">
+    <section className="max-w-4xl">
       <h1 className="text-2xl font-bold text-gray-900">Mi cuenta</h1>
 
       {cliente && (
@@ -50,7 +51,7 @@ export default function Cuenta() {
       )}
 
       <h2 className="mt-8 text-lg font-semibold text-gray-900">Mis pedidos</h2>
-      <p className="mt-2 text-sm text-gray-600">Aún no tienes pedidos.</p>
+      {cliente && <MisPedidos />}
 
       <button
         type="button"

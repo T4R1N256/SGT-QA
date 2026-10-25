@@ -106,6 +106,15 @@ jobs:
             -d '{"nombre":"Ana","apellidos":"Pérez","correo":"ana@ejemplo.mx","telefono":"6561234567","password":"secreta123"}' \
             http://localhost:8080/api/tienda/registro | grep -q '"correo":"ana@ejemplo.mx"'
           curl -fsS -b cookies.txt http://localhost:8080/api/tienda/cuenta | grep -q '"nombre":"Ana"'
+          curl -fsS -b cookies.txt -X POST -H 'Content-Type: application/json' \
+            -d '{"recibe":"Ana Pérez","telefono":"6561234567","calle":"Av. Juárez","numero_exterior":"123","colonia":"Centro","codigo_postal":"32000","ciudad":"Ciudad Juárez","entidad":"Chihuahua"}' \
+            http://localhost:8080/api/tienda/entrega | grep -q '"codigo_postal":"32000"'
+          curl -fsS -b cookies.txt -X POST -H 'Content-Type: application/json' \
+            -d '{"productos":[{"id":5,"cantidad":2}],"clave":"clave-de-ci-0001"}' \
+            http://localhost:8080/api/tienda/pedidos | tee pedido.json | grep -q '"creado":true'
+          FOLIO=$(sed -E 's/.*"folio":"([^"]+)".*/\1/' pedido.json)
+          curl -fsS -b cookies.txt -X POST -H 'Content-Type: application/json' -d "{\"folio\":\"$FOLIO\",\"metodo\":\"tarjeta\"}" \
+            http://localhost:8080/api/tienda/pedido/pagar | grep -q '"pagado":false'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/getAllProducts)" = 404
           docker compose logs backend | grep -q 'Catálogo de la tienda cargado: 12 categorías y 180 productos'
 

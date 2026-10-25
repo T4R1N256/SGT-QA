@@ -4,7 +4,7 @@
 
 date_default_timezone_set('America/Mazatlan');
 
-// Ruta => [método HTTP, archivo que la atiende]
+// Ruta => [método HTTP (o lista de métodos), archivo que la atiende]
 const RUTAS_TIENDA = [
     'config' => ['GET', 'configuracion.php'],
     'categorias' => ['GET', 'categorias.php'],
@@ -16,6 +16,10 @@ const RUTAS_TIENDA = [
     'ingresar' => ['POST', 'ingresar.php'],
     'salir' => ['POST', 'salir.php'],
     'cuenta' => ['GET', 'cuenta.php'],
+    'entrega' => [['GET', 'POST'], 'entrega.php'],
+    'pedidos' => [['GET', 'POST'], 'pedidos.php'],
+    'pedido' => ['GET', 'pedido.php'],
+    'pedido/pagar' => ['POST', 'pagar.php'],
 ];
 
 // Responde {ok: true, ...datos} con el código HTTP indicado
@@ -36,11 +40,18 @@ function clienteActual(): ?array
     return Cliente::leer((int) $_SESSION['ID_Cliente']);
 }
 
+// Cliente con la sesión iniciada; sin sesión responde 401 (las rutas de compra y pedidos)
+function requerirCliente(): array
+{
+    return clienteActual() ?? throw new ErrorApi('Inicia sesión para continuar', 401);
+}
+
 // Inicia la sesión del cliente con un ID nuevo (evita que alguien fije la sesión antes de ingresar)
+// y sin datos de otra sesión (por ejemplo, la dirección de entrega de otro cliente)
 function iniciarSesionCliente(int $ID_Cliente): void
 {
     session_regenerate_id(true);
-    $_SESSION['ID_Cliente'] = $ID_Cliente;
+    $_SESSION = ['ID_Cliente' => $ID_Cliente];
 }
 
 // Parámetro entero de la URL (?nombre=valor). $etiqueta es como se llama en los mensajes de error
@@ -55,8 +66,8 @@ if (!isset(RUTAS_TIENDA[$ruta])) {
     throw new ErrorApi('Ruta no encontrada', 404);
 }
 
-[$metodo, $archivo] = RUTAS_TIENDA[$ruta];
-if ($_SERVER['REQUEST_METHOD'] !== $metodo) {
+[$metodos, $archivo] = RUTAS_TIENDA[$ruta];
+if (!in_array($_SERVER['REQUEST_METHOD'], (array) $metodos, true)) {
     throw new ErrorApi('Método no permitido', 405);
 }
 

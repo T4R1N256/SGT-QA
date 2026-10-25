@@ -71,9 +71,10 @@ Todas las rutas van bajo `/api/tienda/`, con un router propio y con **sesión se
 | `GET producto?id` | Pública | Detalle de un producto |
 | `POST carrito/revisar` | Pública | Recibe el carrito del navegador (`id`, `cantidad` y el `precio` que vio el cliente). Regresa las líneas con el precio vigente, los avisos (retirado, agotado, ajustado, precio) y el desglose de subtotal, IVA y total. No aparta existencias |
 | `POST registro`, `POST ingresar`, `POST salir`, `GET cuenta` | Pública o con sesión de cliente | Cuentas de cliente. Los datos inválidos responden 400 con `errores: {campo: mensaje}`; un correo repetido, 409. `cuenta` regresa `cliente: null` si no hay sesión |
-| `POST pedidos` | Cliente | Crea el pedido "pendiente de pago" a partir del carrito y los datos de entrega. Todo se valida en el servidor |
-| `GET pedidos`, `GET pedido?folio` | Cliente | Mis pedidos y el detalle de uno |
-| `POST pedido/pagar` | Cliente | Siempre responde que el pago **no está disponible**. No contacta a ningún proveedor |
+| `GET entrega`, `POST entrega` | Cliente | Datos de entrega de la compra en curso. GET los prellena (lo capturado en la sesión, el último pedido o el nombre y teléfono del cliente) y dice si el paso ya se hizo; POST los valida por campo y los guarda en la sesión |
+| `POST pedidos` | Cliente | Crea el pedido "pendiente de pago" a partir del carrito y los datos de entrega guardados. Todo se valida en el servidor: si el carrito cambió responde 409 con los avisos y no lo crea; sin entrega, 409 con `paso: "entrega"`. La `clave` de cada confirmación evita el doble envío |
+| `GET pedidos`, `GET pedido?folio` | Cliente | Mis pedidos y el detalle de uno (el de otro cliente responde 404) |
+| `POST pedido/pagar` | Cliente | Siempre responde que el pago **no está disponible** (`pagado: false`). No contacta a ningún proveedor |
 
 ### 1.3 Base de datos (migraciones 005 y 006)
 
@@ -144,14 +145,14 @@ El equipo del profesor no necesita Node, PHP ni MariaDB: solo Docker.
 **Listo cuando:** registrarse, entrar y salir funciona, con todos los datos inválidos rechazados (P8–P10).
 
 ### Fase T4: Compra y pago · L (R08, R11–R15)
-- [ ] Paso de **datos de entrega**: formulario validado, prellenado con la última dirección usada; la entidad se elige de una lista de 32.
-- [ ] **Resumen final** con productos, cantidades, importes, subtotal, IVA, total y datos de entrega. Permite corregir los datos o el carrito.
-- [ ] **Confirmar**: crea el pedido "pendiente de pago" con folio, vuelve a validar existencias (T-S5) y evita el doble envío (P12).
-- [ ] **Pantalla de pago**:
+- [x] Paso de **datos de entrega**: formulario validado, prellenado con la última dirección usada; la entidad se elige de una lista de 32.
+- [x] **Resumen final** con productos, cantidades, importes, subtotal, IVA, total y datos de entrega. Permite corregir los datos o el carrito.
+- [x] **Confirmar**: crea el pedido "pendiente de pago" con folio, vuelve a validar existencias (T-S5) y evita el doble envío (P12).
+- [x] **Pantalla de pago**:
   - métodos de pago (tarjeta, transferencia, pago en tienda, etc.) sin campos de tarjeta
   - botón "Pagar" que muestra que el pago en línea todavía no está disponible
   - ninguna conexión externa
-- [ ] **Guardas de los pasos** (P6, P7, P13) y **"Mis pedidos"** (T-S6).
+- [x] **Guardas de los pasos** (P6, P7, P13) y **"Mis pedidos"** (T-S6).
 
 **Listo cuando:** se cumplen N9–N11 y P6–P13.
 

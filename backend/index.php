@@ -305,8 +305,8 @@ switch (true) {
 
 } catch (ErrorApi $e) {
     http_response_code($e->getCode() ?: 400);
-    $errores = $e instanceof ErrorCampos ? ['errores' => $e->errores] : [];
-    echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()] + $errores);
+    $datos = $e instanceof ErrorDatos ? $e->datos : [];
+    echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()] + $datos);
 } catch (Throwable $e) {
     error_log('[API] ' . $path . ': ' . $e->getMessage());
     http_response_code(500);
