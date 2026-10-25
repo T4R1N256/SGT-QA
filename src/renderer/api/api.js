@@ -68,6 +68,11 @@ export const openSale     = ()     => post('openSale')
 export const cancelSale   = ()     => patch('cancelSale')
 export const completeSale = (data) => patch('completeSale', data)
 export const getAllVentas = ()     => get('getAllVentas')
+export const getVenta     = (id)   => get(`getVenta?id=${id}`)
+
+// Configuración de la tienda (datos del ticket)
+export const getConfig    = ()     => get('getConfig')
+export const updateConfig = (data) => patch('updateConfig', data)
 
 // Catálogos — Proveedores
 export const getProveedores   = ()       => get('getAllSuppliers')

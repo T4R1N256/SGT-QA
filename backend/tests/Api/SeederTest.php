@@ -38,7 +38,7 @@ final class SeederTest extends ApiTestCase
         $this->assertSame(32, array_sum($estados));
         $this->assertArrayHasKey('Disponible', $estados);
         $this->assertArrayHasKey('Stock bajo', $estados);
-        $this->assertArrayHasKey('Sin stock', $estados);
+        $this->assertArrayHasKey('Agotado', $estados);
     }
 
     public function testVolverAEjecutarElSeederNoDuplicaDatos(): void

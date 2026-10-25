@@ -99,6 +99,43 @@ class Venta
         }//-- Fin funcion quitar producto de detalle
     */
 
+    // Funcion para obtener los datos de una venta finalizada para su ticket (regla 8)
+    // Regresa false si la venta no existe o no está finalizada
+    public static function readTicket($ID_Venta)
+    {
+        try {
+            $connection = new Conexion();
+
+            $sql = $connection->prepare('SELECT v.ID_Venta, v.Fecha, v.Hora, v.Monto, v.Pago_Recibido, v.Cambio,
+            v.Forma_Pago, v.ID_Caja, e.Nombre AS Cajero FROM ' . self::TABLE . ' v
+            LEFT JOIN Empleado e ON e.ID_Usuario = v.ID_Usuario
+            WHERE v.ID_Venta = :ID_Venta AND v.Estado = :Estado');
+            $sql->bindValue(':ID_Venta', $ID_Venta, PDO::PARAM_INT);
+            $sql->bindValue(':Estado', 'finalizada', PDO::PARAM_STR);
+            $sql->execute();
+            $venta = $sql->fetch();
+
+            if (!$venta) {
+                return false;
+            }
+
+            $sql = $connection->prepare('SELECT d.ID_Producto, p.Nombre_Producto, p.Unidad_Medida, d.Cantidad,
+            d.Precio_Unitario, d.Cantidad * d.Precio_Unitario AS Importe
+            FROM Detalle_Venta d INNER JOIN Producto p ON p.ID_Producto = d.ID_Producto
+            WHERE d.ID_Venta = :ID_Venta ORDER BY d.ID_Detalle_Venta');
+            $sql->bindValue(':ID_Venta', $ID_Venta, PDO::PARAM_INT);
+            $sql->execute();
+            $venta['productos'] = $sql->fetchAll();
+            $connection = NULL;
+
+            return $venta;
+
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion leer ticket
+
+
     // Funcion para obtener detalles de una venta
     public static function getDetalleVenta($ID_Venta)
     {
@@ -115,17 +152,21 @@ class Venta
     }//-- Fin funcion obtener detalle venta
 
     // Funcion para completar venta (dentro de la transacción de la ruta)
-    public static function completeVenta($connection, $ID_Venta, $Fecha, $Hora, $Monto, $Forma_Pago)
+    public static function completeVenta($connection, $ID_Venta, $Fecha, $Hora, $Monto, $Pago_Recibido, $Cambio, $Forma_Pago, $ID_Usuario)
     {
         try {
             $Estado = 'finalizada';
 
             $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Fecha = :Fecha, Hora = :Hora,
-            Monto = :Monto, Estado = :Estado, Forma_Pago = :Forma_Pago
+            Monto = :Monto, Pago_Recibido = :Pago_Recibido, Cambio = :Cambio, Estado = :Estado,
+            Forma_Pago = :Forma_Pago, ID_Usuario = :ID_Usuario
             WHERE ID_Venta = :ID_Venta');
             $sql->bindValue(':Fecha', $Fecha, PDO::PARAM_STR);
             $sql->bindValue(':Hora', $Hora, PDO::PARAM_STR);
             $sql->bindValue(':Monto', $Monto, PDO::PARAM_STR);
+            $sql->bindValue(':Pago_Recibido', $Pago_Recibido, PDO::PARAM_STR);
+            $sql->bindValue(':Cambio', $Cambio, PDO::PARAM_STR);
+            $sql->bindValue(':ID_Usuario', $ID_Usuario, PDO::PARAM_INT);
             $sql->bindValue(':Estado', $Estado, PDO::PARAM_STR);
             $sql->bindValue(':Forma_Pago', $Forma_Pago, PDO::PARAM_STR);
             $sql->bindValue(':ID_Venta', $ID_Venta, PDO::PARAM_INT);

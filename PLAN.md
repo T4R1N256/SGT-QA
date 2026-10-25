@@ -150,29 +150,31 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 ### Fase 2: Venta completa y ticket PDF · M
 
 **Migración 003**
-- [ ] `Venta.Pago_Recibido`, `Venta.Cambio` y `Venta.ID_Usuario`.
-- [ ] Tabla `Configuracion` con los datos de la tienda: nombre, dirección, teléfono, RFC y mensaje del ticket.
-- [ ] `Producto.Activo` para la baja lógica.
-- [ ] `'Sin stock'` → `'Agotado'` (S9).
+- [x] `Venta.Pago_Recibido`, `Venta.Cambio` y `Venta.ID_Usuario`.
+- [x] Tabla `Configuracion` con los datos de la tienda: nombre, dirección, teléfono, RFC y mensaje del ticket.
+- [x] `Producto.Activo` para la baja lógica.
+- [x] `'Sin stock'` → `'Agotado'` (S9).
 
 **Backend**
-- [ ] `completeSale` guarda el pago recibido y el cambio (RF04), y devuelve el **folio** (`ID_Venta`) junto con el detalle.
-- [ ] Nuevo `getVenta?id=` que devuelve el detalle completo para reimprimir.
-- [ ] Nuevos `getConfig` y `updateConfig` (admin).
-- [ ] Nuevo `deleteProduct`: baja lógica, solo admin (RF06, B7).
-- [ ] Los productos inactivos no aparecen en Ventas pero se conservan en el historial.
+- [x] `completeSale` guarda el pago recibido y el cambio (RF04), y devuelve el **folio** (`ID_Venta`) junto con el detalle.
+- [x] Nuevo `getVenta?id=` que devuelve el detalle completo para reimprimir.
+- [x] Nuevos `getConfig` y `updateConfig` (admin).
+- [x] Nuevo `deleteProduct`: baja lógica, solo admin (RF06, B7).
+- [x] Los productos inactivos no aparecen en Ventas pero se conservan en el historial.
 
 **Frontend**
-- [ ] Plantilla **TicketPDF** con:
+- [x] Plantilla **TicketPDF** con:
   - datos de la tienda;
   - folio, fecha, hora y cajero;
   - productos con cantidad, precio e importe;
   - total, forma de pago, pago recibido y cambio;
   - la leyenda del supuesto S1.
-- [ ] El PDF del ticket se **genera automáticamente** después de cada venta (regla 8).
-- [ ] Botón "Reimprimir último ticket" en Ventas.
-- [ ] Búsqueda por **nombre o categoría** (S6).
-- [ ] Página **Configuración** (admin) para los datos de la tienda.
+- [x] El PDF del ticket se **genera automáticamente** después de cada venta (regla 8).
+- [x] Botón "Reimprimir último ticket" en Ventas.
+- [x] Búsqueda por **nombre o categoría** (S6).
+- [x] Página **Configuración** (admin) para los datos de la tienda, con vista previa del ticket.
+- [x] Extra: con tarjeta o transferencia no se captura el pago (se cobra el total exacto); la búsqueda ignora acentos; el nombre de la tienda del login sale de la configuración; F9 reimprime.
+- [x] Nota: si el sistema no tiene carpeta Documentos, Electron guarda en `<carpeta personal>/SGT/Tickets`.
 
 **Listo cuando:** cada venta produce un PDF con folio y aparece en `Documentos/SGT/Tickets/`, y eliminar un producto lo oculta de Ventas sin romper el historial.
 
@@ -237,6 +239,7 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 - [ ] Probar la **actualización** de una base de datos con datos de la versión actual: las migraciones se aplican sin pérdida.
 - [ ] Probar la app **empaquetada** en Windows y Linux (CI con tag `v*`), incluyendo el primer arranque sin internet.
 - [ ] Contraseñas al azar para el usuario de la app y para `root` en la MariaDB empaquetada (viene de la fase 1).
+- [ ] Si la app se cierra de forma anormal, el proceso de PHP puede quedar vivo ocupando el puerto 8000 y el siguiente arranque no inicia sesión (visto en pruebas). Detectar y cerrar el PHP huérfano al arrancar, o usar un puerto libre y pasárselo al renderer (viene de la fase 2).
 - [ ] Quitar código muerto: `firebase/php-jwt`, las rutas comentadas y los `console.log`.
 - [ ] Actualizar el README, `ANALISIS_SRS.md` (matriz final) y la sección de sprints del SRS.
 

@@ -14,6 +14,7 @@ const PAGE_TITLES = {
   '/proveedores': 'Proveedores',
   '/users': 'Usuarios',
   '/user-info': 'Información de Usuario',
+  '/configuracion': 'Configuración',
 }
 
 export default function PageHeader() {

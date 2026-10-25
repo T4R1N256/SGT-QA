@@ -1,5 +1,5 @@
 
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const { spawn, execFileSync } = require('child_process')
 const path = require('node:path')
 const fs = require('node:fs')
@@ -278,6 +278,65 @@ function servirRenderer() {
   })
 }
 
+// ── PDF (tickets y reportes) ─────────────────────────────────────────────────
+
+// El renderer arma el HTML del documento y el proceso principal lo convierte a PDF con Chromium
+// (printToPDF), sin dependencias externas y sin internet. Se guarda en Documentos/SGT/<carpeta>.
+const CARPETAS_PDF = ['Tickets', 'Reportes']
+const ANCHO_TICKET_MM = 80
+const PX_POR_PULGADA = 96
+
+async function generarPDF({ html, carpeta, nombre, formato = 'ticket', abrir = true } = {}) {
+  if (typeof html !== 'string' || html.length === 0 || html.length > 5_000_000) {
+    throw new Error('El documento está vacío o es demasiado grande')
+  }
+  if (!CARPETAS_PDF.includes(carpeta)) throw new Error(`Carpeta no permitida: ${carpeta}`)
+  if (!/^[\w.-]{1,100}$/.test(nombre ?? '')) throw new Error('Nombre de archivo no válido')
+
+  const esTicket = formato === 'ticket'
+  const anchoPx = Math.round((ANCHO_TICKET_MM / 25.4) * PX_POR_PULGADA)
+
+  const ventana = new BrowserWindow({
+    show: false,
+    width: esTicket ? anchoPx : 816,
+    // Ventana baja: scrollHeight nunca es menor que la ventana, así el alto medido es el del contenido
+    height: esTicket ? 50 : 600,
+    webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
+  })
+
+  try {
+    await ventana.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+
+    let pageSize = 'Letter'
+    if (esTicket) {
+      // El ticket mide 80 mm de ancho y su alto se ajusta al contenido
+      const altoPx = await ventana.webContents.executeJavaScript('document.documentElement.scrollHeight')
+      pageSize = { width: ANCHO_TICKET_MM / 25.4, height: Math.max(altoPx / PX_POR_PULGADA + 0.1, 2) }
+    }
+
+    const pdf = await ventana.webContents.printToPDF({
+      pageSize,
+      printBackground: true,
+      margins: esTicket ? { top: 0, bottom: 0, left: 0, right: 0 } : undefined,
+    })
+
+    const directorio = path.join(app.getPath('documents'), 'SGT', carpeta)
+    fs.mkdirSync(directorio, { recursive: true })
+    const ruta = path.join(directorio, `${nombre}.pdf`)
+    fs.writeFileSync(ruta, pdf)
+
+    // Se abre con el visor de PDF del sistema para imprimirlo. No se espera: si no hay visor
+    // (o tarda en abrir) el archivo ya quedó guardado y la venta no debe quedarse esperando
+    if (abrir) {
+      shell.openPath(ruta).then((error) => error && console.error('[PDF] No se pudo abrir:', error))
+    }
+
+    return ruta
+  } finally {
+    ventana.destroy()
+  }
+}
+
 // ── Create window ─────────────────────────────────────────────────────────────
 
 function createWindow() {
@@ -358,6 +417,14 @@ app.whenReady().then(async () => {
   ipcMain.handle('ping', () => 'pong')
   ipcMain.on('caja:estado', (_event, abierta) => {
     cajaAbierta = Boolean(abierta)
+  })
+  ipcMain.handle('pdf:generar', async (_event, opciones) => {
+    try {
+      return { ok: true, ruta: await generarPDF(opciones) }
+    } catch (e) {
+      console.error('[PDF]', e)
+      return { ok: false, mensaje: e.message }
+    }
   })
 
   createWindow()

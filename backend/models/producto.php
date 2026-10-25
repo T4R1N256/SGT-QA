@@ -18,7 +18,7 @@ class Producto
         if ($Cantidad > $Cantidad_Minima) {
             return 'Disponible';
         }
-        return $Cantidad > 0 ? 'Stock bajo' : 'Sin stock';
+        return $Cantidad > 0 ? 'Stock bajo' : 'Agotado';
     }//-- Fin funcion calcular estado
 
 
@@ -63,7 +63,7 @@ class Producto
     }//-- Fin funcion crear producto
 
 
-    //Funcion para leer todos los productos 
+    //Funcion para leer todos los productos activos (los dados de baja no se muestran ni se venden)
     public static function readAllProductos()
     {
 
@@ -73,7 +73,8 @@ class Producto
             $sql = $connection->prepare('SELECT p.ID_Producto, p.Nombre_Producto, p.Precio, p.Cantidad, p.Unidad_Medida, p.Estado,
             c.Nombre_Categoria, d.Nombre_Proveedor  FROM ' . self::TABLE . ' p 
             INNER JOIN Categoria c ON c.ID_Categoria = p.ID_Categoria
-            INNER JOIN Proveedor d ON d.ID_Proveedor = p.ID_Proveedor');
+            INNER JOIN Proveedor d ON d.ID_Proveedor = p.ID_Proveedor
+            WHERE p.Activo = 1');
             $sql->execute();
             $productos = $sql->fetchAll();
             $connection = NULL;
@@ -100,7 +101,7 @@ class Producto
             p.Cantidad_Minima, c.ID_Categoria, c.Nombre_Categoria, d.ID_Proveedor, d.Nombre_Proveedor  FROM ' . self::TABLE . ' p 
             INNER JOIN Categoria c ON c.ID_Categoria = p.ID_Categoria
             INNER JOIN Proveedor d ON d.ID_Proveedor = p.ID_Proveedor
-            WHERE p.ID_Producto = :ID_Producto');
+            WHERE p.ID_Producto = :ID_Producto AND p.Activo = 1');
             $sql->bindValue(':ID_Producto', $ID_Producto, PDO::PARAM_INT);
             $sql->execute();
             $producto = $sql->fetch();
@@ -167,7 +168,7 @@ class Producto
     {
         try {
             $marcadores = implode(', ', array_fill(0, count($IDs), '?'));
-            $sql = $connection->prepare('SELECT ID_Producto, Nombre_Producto, Precio, Cantidad, Cantidad_Minima FROM '
+            $sql = $connection->prepare('SELECT ID_Producto, Nombre_Producto, Precio, Cantidad, Cantidad_Minima, Activo FROM '
                 . self::TABLE . " WHERE ID_Producto IN ($marcadores) FOR UPDATE");
             $sql->execute(array_values($IDs));
 
@@ -198,7 +199,7 @@ class Producto
         CASE 
             WHEN Cantidad > Cantidad_Minima THEN "Disponible"
             WHEN Cantidad > 0 AND Cantidad <= Cantidad_Minima THEN "Stock bajo"
-            ELSE "Sin stock"
+            ELSE "Agotado"
         END
         WHERE ID_Producto = :ID_Producto');
             $sqlEstado->bindValue(':ID_Producto', $ID_Producto, PDO::PARAM_INT);
@@ -209,32 +210,24 @@ class Producto
         }
     }//-- Fin funcion descontar inventario
 
-    /*
-    public static function deleteProducto($ID_Producto) {
-
+    // Funcion para dar de baja un producto (baja lógica, RF06)
+    // No se borra: sus ventas pasadas lo siguen referenciando
+    public static function desactivarProducto($ID_Producto)
+    {
         try {
             $connection = new Conexion;
 
-            $sql = $connection->prepare('DELETE FROM ' . self::TABLE . ' WHERE ID_Producto = :ID_Producto');
+            $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Activo = 0 WHERE ID_Producto = :ID_Producto AND Activo = 1');
             $sql->bindValue(':ID_Producto', $ID_Producto, PDO::PARAM_INT);
-            $valid = $sql->execute();
+            $sql->execute();
             $row = $sql->rowCount();
             $connection = NULL;
 
-            if ($valid) {
-                if ($row > 0) {
-                    return 1; // contacto_empleado borrado
-                } else {
-                    return 0; // no borro o contacto_empleado no encontrado
-                }
-            } else {
-                return -1; // error
-            }
+            return $row > 0 ? 1 : 0;
 
         } catch (PDOException $e) {
             throw new Exception("Hubo un error: " . $e->getMessage());
         }
-    }
-    */
+    }//-- Fin funcion desactivar producto
 }
 

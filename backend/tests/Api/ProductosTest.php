@@ -26,7 +26,7 @@ final class ProductosTest extends ApiTestCase
         [$codigo] = $this->comoAdmin()->post('/api/createProduct', $this->datosProducto(['Cantidad' => 0, 'Cantidad_Minima' => 0]));
 
         $this->assertSame(201, $codigo);
-        $this->assertSame('Sin stock', $this->ultimoProducto()['Estado']);
+        $this->assertSame('Agotado', $this->ultimoProducto()['Estado']);
     }
 
     public function testElTextoSeGuardaTalCual(): void
@@ -93,6 +93,42 @@ final class ProductosTest extends ApiTestCase
         [$codigo] = $this->comoAdmin()->patch('/api/modifyProduct', ['ID_Producto' => 999, 'Cantidad' => 5]);
 
         $this->assertSame(404, $codigo);
+    }
+
+    public function testEliminarEsUnaBajaLogica(): void
+    {
+        $admin = $this->comoAdmin();
+
+        [$codigo] = $admin->peticion('DELETE', '/api/deleteProduct', ['ID_Producto' => 1]);
+        [, $lista] = $admin->get('/api/getAllProducts');
+        [$leer] = $admin->get('/api/getProduct?id=1');
+        [$otraVez] = $admin->peticion('DELETE', '/api/deleteProduct', ['ID_Producto' => 1]);
+
+        $this->assertSame(200, $codigo);
+        $this->assertNotContains(1, array_map('intval', array_column($lista['productos'], 'ID_Producto')));
+        $this->assertSame(404, $leer);
+        $this->assertSame(404, $otraVez);
+        // El registro se conserva para el historial
+        $this->assertSame(0, (int) $this->valor('SELECT Activo FROM Producto WHERE ID_Producto = 1'));
+    }
+
+    public function testUnProductoDadoDeBajaNoSeVende(): void
+    {
+        $this->comoAdmin()->peticion('DELETE', '/api/deleteProduct', ['ID_Producto' => 1]);
+        $cajero = $this->comoEmpleado();
+        $this->abrirCaja($cajero);
+
+        [$codigo, $cuerpo] = $this->vender($cajero, [1 => 1]);
+
+        $this->assertSame(409, $codigo);
+        $this->assertStringContainsString('ya no está a la venta', $cuerpo['mensaje']);
+    }
+
+    public function testElEmpleadoNoEliminaProductos(): void
+    {
+        [$codigo] = $this->comoEmpleado()->peticion('DELETE', '/api/deleteProduct', ['ID_Producto' => 1]);
+
+        $this->assertSame(403, $codigo);
     }
 
     public function testElEmpleadoNoModificaProductos(): void
