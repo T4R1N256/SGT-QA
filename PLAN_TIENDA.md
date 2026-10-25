@@ -70,7 +70,7 @@ Todas las rutas van bajo `/api/tienda/`, con un router propio y con **sesión se
 | `GET productos?q&categoria&disponibles&orden&pagina` | Pública | Catálogo con búsqueda, filtros, orden (`nombre`, `precio_asc`, `precio_desc`) y paginación de 12 en 12 |
 | `GET producto?id` | Pública | Detalle de un producto |
 | `POST carrito/revisar` | Pública | Recibe el carrito del navegador (`id`, `cantidad` y el `precio` que vio el cliente). Regresa las líneas con el precio vigente, los avisos (retirado, agotado, ajustado, precio) y el desglose de subtotal, IVA y total. No aparta existencias |
-| `POST registro`, `POST ingresar`, `POST salir`, `GET cuenta` | Pública o con sesión de cliente | Cuentas de cliente |
+| `POST registro`, `POST ingresar`, `POST salir`, `GET cuenta` | Pública o con sesión de cliente | Cuentas de cliente. Los datos inválidos responden 400 con `errores: {campo: mensaje}`; un correo repetido, 409. `cuenta` regresa `cliente: null` si no hay sesión |
 | `POST pedidos` | Cliente | Crea el pedido "pendiente de pago" a partir del carrito y los datos de entrega. Todo se valida en el servidor |
 | `GET pedidos`, `GET pedido?folio` | Cliente | Mis pedidos y el detalle de uno |
 | `POST pedido/pagar` | Cliente | Siempre responde que el pago **no está disponible**. No contacta a ningún proveedor |
@@ -137,9 +137,9 @@ El equipo del profesor no necesita Node, PHP ni MariaDB: solo Docker.
 **Listo cuando:** se cumplen N5–N8 y P1–P6.
 
 ### Fase T3: Cuentas de cliente · M (R11, R12, D5)
-- [ ] Registro, inicio y cierre de sesión, con validación por campo en el navegador y en el servidor. El correo no se puede repetir.
-- [ ] Al continuar la compra sin sesión, se pide ingresar o registrarse y se regresa al flujo con el carrito intacto (T-S2).
-- [ ] Página "Mi cuenta".
+- [x] Registro, inicio y cierre de sesión, con validación por campo en el navegador y en el servidor. El correo no se puede repetir.
+- [x] Al continuar la compra sin sesión, se pide ingresar o registrarse y se regresa al flujo con el carrito intacto (T-S2).
+- [x] Página "Mi cuenta".
 
 **Listo cuando:** registrarse, entrar y salir funciona, con todos los datos inválidos rechazados (P8–P10).
 

@@ -12,6 +12,10 @@ const RUTAS_TIENDA = [
     'productos' => ['GET', 'productos.php'],
     'producto' => ['GET', 'producto.php'],
     'carrito/revisar' => ['POST', 'carrito.php'],
+    'registro' => ['POST', 'registro.php'],
+    'ingresar' => ['POST', 'ingresar.php'],
+    'salir' => ['POST', 'salir.php'],
+    'cuenta' => ['GET', 'cuenta.php'],
 ];
 
 // Responde {ok: true, ...datos} con el código HTTP indicado
@@ -20,6 +24,23 @@ function responder(array $datos = [], int $codigo = 200): void
 {
     http_response_code($codigo);
     echo json_encode(['ok' => true] + $datos, JSON_UNESCAPED_UNICODE);
+}
+
+// Cliente con la sesión iniciada en la tienda, o null
+function clienteActual(): ?array
+{
+    if (!isset($_SESSION['ID_Cliente'])) {
+        return null;
+    }
+    require_once __DIR__ . '/../../models/cliente.php';
+    return Cliente::leer((int) $_SESSION['ID_Cliente']);
+}
+
+// Inicia la sesión del cliente con un ID nuevo (evita que alguien fije la sesión antes de ingresar)
+function iniciarSesionCliente(int $ID_Cliente): void
+{
+    session_regenerate_id(true);
+    $_SESSION['ID_Cliente'] = $ID_Cliente;
 }
 
 // Parámetro entero de la URL (?nombre=valor). $etiqueta es como se llama en los mensajes de error

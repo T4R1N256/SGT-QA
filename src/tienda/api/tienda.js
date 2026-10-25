@@ -69,3 +69,9 @@ export const revisarCarrito = (lineas) =>
     metodo: 'POST',
     datos: { productos: lineas.map(({ id, cantidad, precio }) => ({ id, cantidad, precio })) },
   })
+
+// Cuentas de cliente (fase T3)
+export const obtenerCuenta = () => peticion('cuenta')
+export const registrarCliente = (datos) => peticion('registro', { metodo: 'POST', datos })
+export const ingresarCliente = (datos) => peticion('ingresar', { metodo: 'POST', datos })
+export const salirCliente = () => peticion('salir', { metodo: 'POST' })

@@ -21,6 +21,17 @@ class ErrorValidacion extends ErrorApi
 }
 
 
+// Varios campos inválidos a la vez (formularios de la tienda en línea)
+// index.php responde {ok: false, mensaje, errores: {campo: mensaje}} para marcar cada campo
+class ErrorCampos extends ErrorApi
+{
+    public function __construct(public readonly array $errores, string $mensaje = 'Revisa los datos marcados', int $codigo = 400)
+    {
+        parent::__construct($mensaje, $codigo);
+    }
+}
+
+
 // Cuerpo JSON de la petición como arreglo ([] si viene vacío o no es JSON)
 function leerJson(): array
 {
