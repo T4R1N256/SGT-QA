@@ -19,3 +19,12 @@ export function totalCarrito(cart) {
 export function calcularCambio(pago, total) {
   return (aCentavos(pago) - aCentavos(total)) / 100
 }
+
+// Desglose de un precio que ya incluye IVA (D2): subtotal = total ÷ (1 + tasa), redondeado a centavos,
+// y el IVA es la diferencia, para que subtotal + IVA siempre dé el total exacto
+export function desglosarIVA(total, tasa) {
+  const centavos = aCentavos(total)
+  const factor = 1 + (Number(tasa) || 0) / 100
+  const subtotal = Math.round(centavos / factor)
+  return { subtotal: subtotal / 100, iva: (centavos - subtotal) / 100 }
+}

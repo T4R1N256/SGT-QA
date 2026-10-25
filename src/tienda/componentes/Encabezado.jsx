@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { MagnifyingGlassIcon, ShoppingCartIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 import { useTienda } from '../TiendaContext'
 
@@ -7,12 +7,20 @@ import { useTienda } from '../TiendaContext'
 export default function Encabezado() {
   const { nombre } = useTienda()
   const navigate = useNavigate()
-  const [busqueda, setBusqueda] = useState('')
+  const { pathname } = useLocation()
+  const [params] = useSearchParams()
+  const q = pathname === '/buscar' ? (params.get('q') ?? '') : ''
+  const [busqueda, setBusqueda] = useState(q)
+
+  // El cuadro muestra lo que se buscó, también al usar Atrás o Adelante
+  useEffect(() => {
+    setBusqueda(q)
+  }, [q])
 
   function buscar(e) {
     e.preventDefault()
-    const q = busqueda.trim()
-    if (q) navigate(`/buscar?q=${encodeURIComponent(q)}`)
+    const texto = busqueda.trim()
+    navigate(texto ? `/buscar?q=${encodeURIComponent(texto)}` : '/buscar')
   }
 
   return (

@@ -13,11 +13,15 @@ export function TiendaProvider({ children }) {
     })
   }, [])
 
-  useEffect(() => {
-    document.title = tienda.nombre
-  }, [tienda.nombre])
-
   return <TiendaContext.Provider value={tienda}>{children}</TiendaContext.Provider>
 }
 
 export const useTienda = () => useContext(TiendaContext)
+
+// Título de la pestaña: "<página> · <tienda>", o solo el nombre de la tienda en el inicio
+export function useTitulo(titulo) {
+  const { nombre } = useTienda()
+  useEffect(() => {
+    document.title = titulo ? `${titulo} · ${nombre}` : nombre
+  }, [titulo, nombre])
+}

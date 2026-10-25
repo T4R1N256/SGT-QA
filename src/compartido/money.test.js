@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aCentavos, calcularCambio, totalCarrito } from './money'
+import { aCentavos, calcularCambio, desglosarIVA, totalCarrito } from './money'
 
 describe('aCentavos', () => {
   it('convierte sin errores de punto flotante', () => {
@@ -37,5 +37,23 @@ describe('calcularCambio', () => {
 
   it('es negativo si el pago no alcanza', () => {
     expect(calcularCambio('100', 143.7)).toBe(-43.7)
+  })
+})
+
+describe('desglosarIVA', () => {
+  it('separa el IVA del 16 % de un precio que ya lo incluye', () => {
+    expect(desglosarIVA(116, 16)).toEqual({ subtotal: 100, iva: 16 })
+    expect(desglosarIVA(34, 16)).toEqual({ subtotal: 29.31, iva: 4.69 })
+  })
+
+  it('el subtotal más el IVA da siempre el total exacto', () => {
+    for (const total of [0.01, 0.99, 9.9, 45.9, 1234.56, 99999.99]) {
+      const { subtotal, iva } = desglosarIVA(total, 16)
+      expect(aCentavos(subtotal) + aCentavos(iva)).toBe(aCentavos(total))
+    }
+  })
+
+  it('con tasa 0 todo es subtotal', () => {
+    expect(desglosarIVA(50, 0)).toEqual({ subtotal: 50, iva: 0 })
   })
 })

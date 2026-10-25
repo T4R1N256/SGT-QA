@@ -31,18 +31,20 @@ class Producto
         $Estado,
         $Cantidad_Minima,
         $ID_Categoria,
-        $ID_Proveedor
+        $ID_Proveedor,
+        $Descripcion = ''
     ) {
 
         try {
             $connection = new Conexion;
 
             $sql = $connection->prepare(
-                'INSERT INTO ' . self::TABLE . ' (Nombre_Producto, Precio, Cantidad, Unidad_Medida, 
+                'INSERT INTO ' . self::TABLE . ' (Nombre_Producto, Descripcion, Precio, Cantidad, Unidad_Medida, 
                 Estado, Cantidad_Minima, ID_Categoria, ID_Proveedor) 
-                VALUES (:Nombre_Producto, :Precio, :Cantidad, :Unidad_Medida, 
+                VALUES (:Nombre_Producto, :Descripcion, :Precio, :Cantidad, :Unidad_Medida, 
                 :Estado, :Cantidad_Minima, :ID_Categoria, :ID_Proveedor)'
             );
+            $sql->bindValue(':Descripcion', $Descripcion, PDO::PARAM_STR);
             $sql->bindValue(':Nombre_Producto', $Nombre_Producto, PDO::PARAM_STR);
             $sql->bindValue(':Precio', $Precio, PDO::PARAM_STR);
             $sql->bindValue(':Cantidad', $Cantidad, PDO::PARAM_INT);
@@ -70,7 +72,7 @@ class Producto
         try {
             $connection = new Conexion;
 
-            $sql = $connection->prepare('SELECT p.ID_Producto, p.Nombre_Producto, p.Precio, p.Costo, p.Cantidad, p.Unidad_Medida, p.Estado,
+            $sql = $connection->prepare('SELECT p.ID_Producto, p.Nombre_Producto, p.Descripcion, p.Precio, p.Costo, p.Cantidad, p.Unidad_Medida, p.Estado,
             p.Cantidad_Minima, c.Nombre_Categoria, d.ID_Proveedor, d.Nombre_Proveedor  FROM ' . self::TABLE . ' p 
             INNER JOIN Categoria c ON c.ID_Categoria = p.ID_Categoria
             INNER JOIN Proveedor d ON d.ID_Proveedor = p.ID_Proveedor
@@ -97,7 +99,7 @@ class Producto
         try {
             $connection = new Conexion;
 
-            $sql = $connection->prepare('SELECT p.ID_Producto, p.Nombre_Producto, p.Precio, p.Cantidad, p.Unidad_Medida, p.Estado,
+            $sql = $connection->prepare('SELECT p.ID_Producto, p.Nombre_Producto, p.Descripcion, p.Precio, p.Cantidad, p.Unidad_Medida, p.Estado,
             p.Cantidad_Minima, c.ID_Categoria, c.Nombre_Categoria, d.ID_Proveedor, d.Nombre_Proveedor  FROM ' . self::TABLE . ' p 
             INNER JOIN Categoria c ON c.ID_Categoria = p.ID_Categoria
             INNER JOIN Proveedor d ON d.ID_Proveedor = p.ID_Proveedor
@@ -128,20 +130,22 @@ class Producto
         $Estado,
         $Cantidad_Minima,
         $ID_Categoria,
-        $ID_Proveedor
+        $ID_Proveedor,
+        $Descripcion = ''
     ) {
 
         try {
             $connection = new Conexion;
 
             $sql = $connection->prepare(
-                'UPDATE ' . self::TABLE . ' SET Nombre_Producto = :Nombre_Producto, Precio = :Precio, 
+                'UPDATE ' . self::TABLE . ' SET Nombre_Producto = :Nombre_Producto, Descripcion = :Descripcion, Precio = :Precio, 
                 Cantidad = :Cantidad, Unidad_Medida = :Unidad_Medida, Estado = :Estado, 
                 Cantidad_Minima = :Cantidad_Minima, ID_Categoria = :ID_Categoria, ID_Proveedor = :ID_Proveedor
                 WHERE ID_Producto = :ID_Producto'
             );
             $sql->bindValue(':ID_Producto', $ID_Producto, PDO::PARAM_INT);
             $sql->bindValue(':Nombre_Producto', $Nombre_Producto, PDO::PARAM_STR);
+            $sql->bindValue(':Descripcion', $Descripcion, PDO::PARAM_STR);
             $sql->bindValue(':Precio', $Precio, PDO::PARAM_STR);
             $sql->bindValue(':Cantidad', $Cantidad, PDO::PARAM_INT);
             $sql->bindValue(':Unidad_Medida', $Unidad_Medida, PDO::PARAM_STR);

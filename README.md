@@ -121,13 +121,15 @@ cp .env.example .env
 docker compose up --build
 ```
 
-La tienda queda en **http://localhost:8080**. La primera vez el backend aplica las migraciones y, con `SEED_TIENDA=1` (valor por defecto de `.env.example`), carga un catálogo de prueba de 12 categorías y 180 productos. El catálogo solo se carga si la tabla de productos está vacía.
+La tienda queda en **http://localhost:8080**. El cliente explora el catálogo sin cuenta: inicio con categorías y destacados, páginas de categoría, búsqueda sin distinguir acentos (con filtros, orden y paginación) y detalle de cada producto. La primera vez el backend aplica las migraciones y, con `SEED_TIENDA=1` (valor por defecto de `.env.example`), carga un catálogo de prueba de 12 categorías y 180 productos. El catálogo solo se carga si la tabla de productos está vacía.
 
 | Contenedor | Qué hace |
 |---|---|
 | `db` | MariaDB |
 | `backend` | PHP: el API de SGT y el de la tienda (`/api/tienda/...`), en el `8001` |
 | `web` | Compila la tienda y la sirve con nginx en el `8080`. Reenvía `/api/tienda/` al backend; el resto del API de SGT no se expone |
+
+La tienda muestra los productos activos de SGT. La descripción que ve el cliente se captura en SGT, en **Inventario** (campo *Descripción*).
 
 Para trabajar en la tienda con recarga en caliente, con el backend de Docker levantado:
 
