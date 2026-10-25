@@ -11,8 +11,10 @@ Aplicación de escritorio para gestión de inventario y ventas, construida con *
 | Node.js | 18 + |
 | npm | 9 + |
 | Docker + Docker Compose | cualquier versión reciente |
+| PHP (solo sin Docker o para pruebas) | 8.3 + con `pdo_mysql`, `pdo_sqlite` y `curl` |
+| Composer (solo sin Docker o para pruebas) | 2 + |
 
-Docker es la forma más sencilla de levantar el backend. También se puede usar PHP 8 instalado localmente.
+Docker es la forma más sencilla de levantar el backend. También se puede usar PHP instalado localmente.
 
 ---
 
@@ -51,10 +53,11 @@ GRANT ALL PRIVILEGES ON sgtdb.* TO 'sgt_root'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-2. Importar el esquema:
+2. Importar el esquema base e instalar las dependencias de PHP:
 
 ```bash
 mysql -u sgt_root -p sgtdb < backend/config/database.sql
+composer install --working-dir=backend
 ```
 
 3. Ajustar el `.env`:
@@ -73,16 +76,32 @@ VITE_API_URL=http://localhost:8000/api
 npm run dev
 ```
 
-Electron arranca el servidor PHP automáticamente (usando el PHP del sistema) y abre la ventana. Los cambios en el renderer se recargan en caliente.
+Electron arranca el servidor PHP automáticamente (usando el PHP del sistema), ejecuta el seeder y abre la ventana. Los cambios en el renderer se recargan en caliente.
 
 ### Credenciales por defecto
 
 | Campo | Valor |
 |-------|-------|
-| Usuario | `admin` |
-| Contraseña | `passadministrador` |
+| ID de usuario | `1` |
+| Contraseña | `passadmin` |
 
 El seeder crea esta cuenta automáticamente en el primer arranque si no existe.
+
+### Datos de demostración
+
+Con `SEED_DEMO=1` en el `.env`, el seeder carga 7 categorías, 6 proveedores y 32 productos (en los estados disponible, stock bajo y sin stock) y un usuario empleado. Solo se cargan si la tabla de productos está vacía.
+
+| Usuario | ID | Contraseña |
+|---|---|---|
+| Empleado Demo | `2` | `empleado123` |
+
+El ID del empleado es `2` en una base de datos nueva. Si ya había usuarios, el seeder imprime el ID que le tocó.
+
+---
+
+## Base de datos y migraciones
+
+`backend/config/database.sql` es el **esquema base**. Cada cambio posterior al esquema es un archivo en `backend/config/migrations/` y se aplica solo en el siguiente arranque, tanto en Docker como en Electron. Las reglas están en [`backend/config/migrations/README.md`](backend/config/migrations/README.md).
 
 ---
 
@@ -115,10 +134,65 @@ src/
     components/ Componentes UI reutilizables
     pages/      Páginas por ruta
 backend/        PHP 8 sin framework — router único en index.php
-  config/       Esquema database.sql + seeder
+  config/       Esquema base database.sql, migraciones, seeder y datos demo
   models/       Clases de consultas PDO
+  routes/       Controladores por módulo
+  tests/        Pruebas PHPUnit (Unit y Api)
 resources/      Binarios empaquetados (en .gitignore — descargar por separado)
 ```
+
+---
+
+## Pruebas
+
+### Frontend (Vitest)
+
+```bash
+npm test                 # una vez
+npm run test:watch       # en modo observación
+```
+
+Las pruebas van junto al código que prueban, con el nombre `*.test.js` o `*.test.jsx`.
+
+### Backend (PHPUnit)
+
+Las pruebas `Unit` no necesitan base de datos. Las pruebas `Api` levantan el backend con `php -S` y usan una base de datos de pruebas que **se borra y se vuelve a crear en cada ejecución**. Nunca apunten las pruebas a la base de datos real.
+
+Usuario de pruebas en MariaDB (una sola vez):
+
+```sql
+CREATE USER 'sgt_test'@'127.0.0.1' IDENTIFIED BY 'sgt_test';
+GRANT ALL PRIVILEGES ON `sgtdb_test`.* TO 'sgt_test'@'127.0.0.1';
+```
+
+Ejecutar:
+
+```bash
+cd backend
+composer install
+composer test
+```
+
+Con la base de datos de Docker Compose, en lugar de crear el usuario:
+
+```bash
+DB_PORT=3307 DB_USER=root DB_PASS=root composer test
+```
+
+Los valores por defecto (`127.0.0.1:3306`, base `sgtdb_test`, usuario `sgt_test`) están en `backend/phpunit.xml` y se pueden cambiar con variables de entorno.
+
+### CI
+
+`.github/workflows/ci.yml` corre el lint y las dos suites de pruebas en cada PR y en cada push a `main`. `build.yml` sigue generando los instalables al crear una etiqueta `v*`.
+
+---
+
+## Flujo de trabajo
+
+El desarrollo se hace en el fork `T4R1N256/SGT-QA`, siguiendo [`PLAN.md`](PLAN.md):
+
+- Una rama por fase, creada desde `main`: `fase-0-base`, `fase-1-integridad`, etc.
+- Cada fase entra a `main` con un PR revisado y el CI en verde.
 
 ---
 
@@ -126,6 +200,7 @@ resources/      Binarios empaquetados (en .gitignore — descargar por separado)
 
 ```bash
 npm run lint             # ESLint con auto-fix
+npm run lint:check       # ESLint sin modificar archivos (lo que corre el CI)
 npm run format           # Prettier
 docker-compose down      # detener contenedores (los datos persisten)
 docker-compose down -v   # detener y borrar el volumen de base de datos
