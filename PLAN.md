@@ -44,7 +44,7 @@
 **Solución.**
 - Una carpeta `backend/config/migrations/NNN_descripcion.sql`.
 - Una tabla `Migracion (Version, Aplicada_En)` que registra qué migraciones ya se aplicaron.
-- `backend/config/migrate.php` aplica, en orden y dentro de una transacción, las migraciones pendientes.
+- `backend/config/migrate.php` aplica, en orden, las migraciones pendientes. MariaDB no permite deshacer cambios de esquema, así que una migración que falla no se registra y se reintenta en el siguiente arranque; por eso deben ser idempotentes.
 - Se invoca desde `seeder.php`, que **ya corre en cada arranque** tanto en Docker (`entrypoint.sh`) como en Electron (`runSeeders()`).
 - `database.sql` se queda como el esquema base (versión 0).
 
@@ -91,10 +91,10 @@ Tamaños: **S** ≈ 1–2 días · **M** ≈ 3–5 días · **L** ≈ 1–2 sema
 
 ### Fase 0: Base de trabajo · S
 
-- [ ] Mecanismo de migraciones (§1.1).
-- [ ] Infraestructura de pruebas: PHPUnit, Vitest y `ci.yml` (§1.5).
-- [ ] Seeder de **datos de demostración** opcional (`SEED_DEMO=1`), con categorías, proveedores y unos 30 productos, para QA.
-- [ ] README: corregir la contraseña del admin (B10) y documentar el flujo de trabajo en el fork.
+- [x] Mecanismo de migraciones (§1.1).
+- [x] Infraestructura de pruebas: PHPUnit, Vitest y `ci.yml` (§1.5).
+- [x] Seeder de **datos de demostración** opcional (`SEED_DEMO=1`), con categorías, proveedores y unos 30 productos, para QA.
+- [x] README: corregir la contraseña del admin (B10) y documentar el flujo de trabajo en el fork.
 
 **Listo cuando:** el CI corre en verde con una prueba de ejemplo, y una base de datos existente recibe migraciones al arrancar sin perder datos.
 

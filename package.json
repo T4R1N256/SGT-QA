@@ -12,7 +12,10 @@
     "dist": "npm run build && electron-builder --publish never",
     "dist:linux": "npm run build && electron-builder --linux --publish never",
     "dist:win": "npm run build && electron-builder --win --publish never",
-    "dist:mac": "npm run build && electron-builder --mac --publish never"
+    "dist:mac": "npm run build && electron-builder --mac --publish never",
+    "lint:check": "eslint src/renderer",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "build": {
     "appId": "com.tuempresa.sgt",
@@ -69,7 +72,13 @@
       },
       {
         "from": "backend",
-        "to": "backend"
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!tests/**",
+          "!phpunit.xml",
+          "!.phpunit.cache/**"
+        ]
       }
     ],
     "linux": {
@@ -135,9 +144,11 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "jsdom": "^27.4.0",
     "postcss": "^8.5.10",
     "prettier": "^3.8.2",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "vitest": "^3.2.7"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

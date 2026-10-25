@@ -158,3 +158,6 @@ CLAUDE.md
 
 # Ignore compressed binaries
 binaries/
+
+# Pruebas del backend
+backend/.phpunit.cache/

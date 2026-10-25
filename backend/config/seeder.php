@@ -1,10 +1,19 @@
 <?php
-//Creación de usuario administrador por defecto
-// ID = 1 
+//Se ejecuta en cada arranque: aplica migraciones pendientes y crea el usuario administrador por defecto
+// ID = 1
 // Password = passadmin
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/migrate.php';
 
+try {
+    $nuevas = aplicarMigraciones(new Conexion, __DIR__ . '/migrations');
+    echo $nuevas ? 'Migraciones aplicadas: ' . implode(', ', $nuevas) . "\n\n" : "No hay migraciones pendientes\n\n";
+} catch (Exception $e) {
+    echo "Error en migraciones: " . $e->getMessage() . "\n\n";
+}
+
+$connection = NULL;
 try {
     $connection = new Conexion;
 
@@ -57,4 +66,17 @@ try {
     if ($connection)
         $connection->rollBack();
     echo "Error: " . $e->getMessage() . "\n\n";
+}
+
+// Datos de demostración (solo desarrollo y QA)
+if (in_array(strtolower($_ENV['SEED_DEMO'] ?? getenv('SEED_DEMO') ?: ''), ['1', 'true'], true)) {
+    require_once __DIR__ . '/seed_demo.php';
+
+    try {
+        if (!cargarDatosDemo(new Conexion)) {
+            echo "Ya existen productos, no se cargaron datos de demostración\n\n";
+        }
+    } catch (Exception $e) {
+        echo "Error en datos de demostración: " . $e->getMessage() . "\n\n";
+    }
 }

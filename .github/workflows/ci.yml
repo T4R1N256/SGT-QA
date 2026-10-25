@@ -1,0 +1,70 @@
+name: CI
+
+# Lint y pruebas en cada PR y en cada push a main
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  frontend:
+    name: Frontend (lint + Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint:check
+
+      - name: Pruebas
+        run: npm test
+
+  backend:
+    name: Backend (PHPUnit + MariaDB)
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:12.2.2
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: sgtdb_test
+          MARIADB_USER: sgt_test
+          MARIADB_PASSWORD: sgt_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_mysql, pdo_sqlite, curl
+          coverage: none
+
+      - name: Instalar dependencias de Composer
+        run: composer install --no-interaction --no-progress --working-dir=backend
+
+      - name: Pruebas
+        working-directory: backend
+        run: vendor/bin/phpunit
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: sgtdb_test
+          DB_USER: sgt_test
+          DB_PASS: sgt_test
