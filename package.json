@@ -7,17 +7,18 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "lint": "eslint src/renderer src/tienda src/compartido --fix",
+    "lint": "eslint src/renderer src/tienda src/compartido e2e playwright.config.mjs --fix",
     "format": "prettier --write src/renderer/**/*.{js,jsx,css}",
     "dist": "npm run build && electron-builder --publish never",
     "dist:linux": "npm run build && electron-builder --linux --publish never",
     "dist:win": "npm run build && electron-builder --win --publish never",
     "dist:mac": "npm run build && electron-builder --mac --publish never",
-    "lint:check": "eslint src/renderer src/tienda src/compartido",
+    "lint:check": "eslint src/renderer src/tienda src/compartido e2e playwright.config.mjs",
     "test": "vitest run",
     "dev:tienda": "vite --config vite.tienda.config.mjs",
     "build:tienda": "vite build --config vite.tienda.config.mjs",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e:tienda": "playwright test"
   },
   "build": {
     "appId": "com.tuempresa.sgt",
@@ -202,6 +203,7 @@
   "homepage": "https://github.com/EduardGarrido/SGT#readme",
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "1.63.0",
     "@typescript-eslint/parser": "^8.59.0",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.5.0",

@@ -157,10 +157,10 @@ El equipo del profesor no necesita Node, PHP ni MariaDB: solo Docker.
 **Listo cuando:** se cumplen N9–N11 y P6–P13.
 
 ### Fase T5: QA y entrega · M (R16, R17)
-- [ ] E2E en el navegador de N1–N11 y P1–P15, en el repo y en el CI.
-- [ ] `docs/QA_TIENDA.md`: cada requisito R01–R20 y cada criterio, con su evidencia y resultado.
-- [ ] README de la tienda: cómo levantarla con Docker, cuentas de prueba y cómo correr las pruebas.
-- [ ] Prueba desde cero en un equipo limpio: `git clone` y `docker compose up --build`.
+- [x] E2E en el navegador de N1–N11 y P1–P15, en el repo y en el CI.
+- [x] `docs/QA_TIENDA.md`: cada requisito R01–R20 y cada criterio, con su evidencia y resultado.
+- [x] README de la tienda: cómo levantarla con Docker, cuentas de prueba y cómo correr las pruebas.
+- [x] Prueba desde cero en un equipo limpio: `git clone` y `docker compose up --build`.
 
 **Listo cuando:** el checklist de la tienda está en verde para R01–R20.
 

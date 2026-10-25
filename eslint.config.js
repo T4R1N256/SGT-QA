@@ -8,7 +8,7 @@ export default [
   js.configs.recommended,
   prettier,
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['**/*.{js,jsx,mjs}'],
     plugins: {
       react,
       'react-hooks': hooks,
@@ -33,5 +33,10 @@ export default [
       'no-unused-vars': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
+  },
+  {
+    // Las fixtures de Playwright reciben una función "use" que no es un hook de React
+    files: ['e2e/**'],
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
   },
 ]

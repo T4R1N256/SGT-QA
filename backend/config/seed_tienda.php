@@ -4,6 +4,9 @@
 
 require_once __DIR__ . '/../models/producto.php';
 
+// Correo y contraseña del cliente de prueba (README, sección "Tienda en línea")
+const CLIENTE_PRUEBA = ['cliente@ejemplo.mx', 'prueba123'];
+
 
 // Funcion para cargar el catálogo de la tienda
 // Regresa false si ya había productos y no se cargó nada
@@ -51,8 +54,20 @@ function cargarCatalogoTienda(PDO $connection): bool
             }
         }
 
+        // Cliente de prueba para recorrer la compra sin registrarse (también se puede crear otra cuenta)
+        $cliente = $connection->prepare('INSERT IGNORE INTO Cliente (Nombre, Apellidos, Correo, Telefono, Password)
+            VALUES (:Nombre, :Apellidos, :Correo, :Telefono, :Password)');
+        $cliente->execute([
+            ':Nombre' => 'Cliente',
+            ':Apellidos' => 'De Prueba',
+            ':Correo' => CLIENTE_PRUEBA[0],
+            ':Telefono' => '6560000000',
+            ':Password' => password_hash(CLIENTE_PRUEBA[1], PASSWORD_DEFAULT),
+        ]);
+
         $connection->commit();
-        echo "Catálogo de la tienda cargado: " . count($catalogo['categorias']) . " categorías y $total productos\n\n";
+        echo "Catálogo de la tienda cargado: " . count($catalogo['categorias']) . " categorías y $total productos\n";
+        echo "Cliente de prueba de la tienda: " . CLIENTE_PRUEBA[0] . ' / ' . CLIENTE_PRUEBA[1] . "\n\n";
         return true;
 
     } catch (Exception $e) {
