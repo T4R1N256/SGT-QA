@@ -191,16 +191,18 @@ Esta es la propuesta de criterios de aceptación de la tienda. Cada fila se pued
 
 ---
 
-## 6. Decisiones que necesitamos antes de programar
+## 6. Decisiones del equipo (25-oct-2026)
 
-| # | Pregunta | Recomendación |
+| # | Pregunta | Decisión |
 |---|---|---|
-| **D1** | ¿La tienda es un **módulo nuevo dentro de SGT** (mismo backend y base de datos, con SGT como back office para el catálogo) o un proyecto aparte? | Módulo nuevo. Se reutiliza el catálogo, la validación, la base de datos y las pruebas, y SGT sirve para administrar productos. |
-| **D2** | **IVA**: ¿los precios ya incluyen IVA y se desglosa, o el precio es sin IVA y se le suma el 16 %? ¿Hay productos con tasa 0 % (alimentos básicos)? | Precio sin IVA más tasa por producto (16 % o 0 %), con desglose. Es lo realista en México y prueba bien el cálculo. |
-| **D3** | **Envío**: ¿se cobra? ¿Tarifa fija, gratis desde cierto monto o no aplica? | Tarifa fija (por ejemplo $99) y gratis desde $999, como dato configurable. |
-| **D4** | **Pedido**: ¿se guarda en la base de datos como "pendiente de pago"? ¿Se apartan existencias? | Guardarlo con folio, sin descontar existencias, porque el pago nunca se completa. |
-| **D5** | **Cuenta de cliente**: ¿registro e inicio de sesión, o compra como invitado? | Como invitado. El enunciado solo pide los datos para identificar y entregar. |
-| **D6** | **Pantalla de pago**: ¿mostrar un formulario de tarjeta simulado o solo los métodos y el botón "Pagar"? | Métodos de pago y botón "Pagar", sin campos de tarjeta, para no manejar datos sensibles. |
-| **D7** | **Imágenes**: ¿fotos reales o ilustraciones generadas? | Ilustraciones generadas por categoría (SVG locales), sin depender de internet ni de derechos de imagen. |
-| **D8** | ¿**Cómo la va a probar el profesor**: URL pública, `docker compose up` en su equipo o el instalador? | `docker compose up` con un contenedor web y la tienda en `http://localhost:8080`. |
-| **D9** | ¿Se pide que funcione en **celular**? | Que sea adaptable (responsive) aunque no se pida explícitamente. |
+| D1 | ¿Módulo nuevo o proyecto aparte? | **Módulo nuevo** dentro de SGT: mismo backend y base de datos. SGT queda como back office del catálogo. |
+| D2 | IVA | **Los precios ya incluyen IVA.** La tienda lo desglosa: subtotal sin IVA, IVA y total. |
+| D3 | Envío | **No se cobra.** |
+| D4 | ¿Se guarda el pedido? | **Sí**, como "pendiente de pago" y con folio, sin apartar existencias. |
+| D5 | Cuenta de cliente | **Compra con registro**: el cliente crea su cuenta e inicia sesión para comprar. |
+| D6 | Pantalla de pago | **Solo los métodos de pago y el botón "Pagar"**, sin campos de tarjeta. |
+| D7 | Imágenes | **Sin imágenes.** |
+| D8 | Cómo se evalúa | **Con Docker en un equipo** (`docker compose up`). |
+| D9 | Celular | **No se pide.** La tienda es para navegador de escritorio. |
+
+El plan de trabajo está en [`PLAN_TIENDA.md`](PLAN_TIENDA.md).
