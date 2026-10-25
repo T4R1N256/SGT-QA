@@ -9,7 +9,7 @@ const PRINCIPAL = [
   { label: 'Ventas', to: '/sales' },
   { label: 'Caja', to: '/caja' },
   { label: 'Historial', to: '/historial', adminOnly: true },
-  { label: 'Reporte', to: '/report' },
+  { label: 'Reportes', to: '/report', adminOnly: true }, // Regla 5: solo el administrador
 ]
 
 const CATALOGO = [

@@ -14,6 +14,7 @@ import {
   Configuracion,
   Surtir,
   Historial,
+  Reportes,
 } from './pages'
 import AppLayout from './components/AppLayout'
 
@@ -49,17 +50,6 @@ function RutaPublica({ children }) {
   return usuario ? <Navigate to="/dashboard" replace /> : children
 }
 
-function PaginaEnConstruccion({ titulo }) {
-  return (
-    <div className="flex items-center justify-center flex-1">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-gray-700">{titulo}</h1>
-        <p className="text-gray-400 mt-2">Próximamente</p>
-      </div>
-    </div>
-  )
-}
-
 export default function App() {
   return (
     <HashRouter>
@@ -73,7 +63,7 @@ export default function App() {
           <Route path="/user-info"  element={<UserInfo />} />
           <Route path="/caja"       element={<Caja />} />
           <Route path="/historial"  element={<RutaAdmin><Historial /></RutaAdmin>} />
-          <Route path="/report"     element={<PaginaEnConstruccion titulo="Report" />} />
+          <Route path="/report"     element={<RutaAdmin><Reportes /></RutaAdmin>} />
           <Route path="/categorias" element={<RutaAdmin><Categorias /></RutaAdmin>} />
           <Route path="/proveedores" element={<RutaAdmin><Proveedores /></RutaAdmin>} />
           <Route path="/inventory"  element={<RutaAdmin><Inventory /></RutaAdmin>} />

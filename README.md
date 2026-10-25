@@ -91,6 +91,10 @@ El seeder crea esta cuenta automáticamente en el primer arranque si no existe.
 
 Cada venta genera su ticket en PDF (80 mm) en `Documentos/SGT/Tickets/ticket-<folio>.pdf` y lo abre con el visor del sistema para imprimirlo. Si el sistema no tiene carpeta Documentos, se guarda en `<carpeta personal>/SGT/Tickets`. Los datos de la tienda que aparecen en el ticket se editan en **Catálogo → Configuración** (solo admin). En el navegador, sin Electron, el ticket se abre en una ventana nueva.
 
+### Reportes
+
+En **Reportes** (solo admin) se consultan las ventas, los surtidos y compras, el stock y un resumen del periodo (día, semana, mes o rango). **Exportar PDF** guarda el reporte en tamaño carta en `Documentos/SGT/Reportes/reporte-<tipo>-<periodo>.pdf` y lo abre. La utilidad del resumen se estima con el último costo de compra de cada producto, que se registra en **Surtir**.
+
 ### Datos de demostración
 
 Con `SEED_DEMO=1` en el `.env`, el seeder carga 7 categorías, 6 proveedores y 32 productos (en los estados disponible, stock bajo y sin stock) y un usuario empleado. Solo se cargan si la tabla de productos está vacía.

@@ -217,20 +217,21 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 
 ### Fase 5: Reportes con exportación a PDF · L
 
-**Selector de periodo:** día (con fecha), semana, mes o rango personalizado (RF11, diagramas SADT X3 e Y1).
+**Selector de periodo:** día (con fecha), semana (de lunes a domingo), mes o rango personalizado (RF11, diagramas SADT X3 e Y1). El reporte de stock es del momento y no usa periodo.
 
-**Backend:** `/api/reports/sales`, `/api/reports/restocks` y `/api/reports/stock`, solo para el admin.
+**Backend** (solo admin, regla 5): `getSalesReport`, `getRestockReport`, `getStockReport` y `getSummaryReport`, todos con `?desde&hasta` (por defecto, los últimos 30 días) salvo el de stock. Modelo `Reporte` y pruebas en `ReportesTest`.
 
 | Reporte | Contenido |
 |---|---|
-| **Ventas** | Total vendido, número de ventas y ticket promedio. Desglose por forma de pago, ventas por día, top de productos (por unidades e importe), ventas canceladas y ventas por cajero. |
-| **Surtidos y compras** | Total gastado y número de surtidos. Desglose por proveedor y productos surtidos (unidades y costo). |
-| **Stock** | Existencias por categoría y valor del inventario (a costo y a precio de venta). **Productos en stock bajo y agotados** (regla 5) con una cantidad de pedido sugerida. |
-| **Resumen** | Ventas menos compras del periodo, y utilidad bruta estimada para los productos que tienen costo. |
+| **Ventas** | [x] Total vendido, número de ventas, ticket promedio, artículos y ventas canceladas. Desglose por forma de pago (con % del total), por cajero y por día, y los 10 productos más vendidos (por unidades e importe). |
+| **Surtidos y compras** | [x] Total gastado, número de surtidos, unidades y productos distintos. Desglose por proveedor, productos surtidos (unidades, costo promedio y total) y la lista de surtidos del periodo. |
+| **Stock** | [x] Valor del inventario a costo y a precio de venta (el valor a costo avisa cuántos productos no tienen costo), existencias por categoría y la lista completa. **Productos en stock bajo y agotados** (regla 5) con la cantidad sugerida (la misma regla de Surtir) y su costo estimado. |
+| **Resumen** | [x] Ventas menos compras del periodo y por día, utilidad bruta estimada con el último costo (margen y qué parte de lo vendido cubre) y los cortes de caja (descuadrados y diferencia neta). |
 
 **Frontend**
-- [ ] Página **Reportes** con pestañas y un botón **Exportar PDF** (plantilla `ReportePDF`, tamaño carta).
-- [ ] Ocultar "Reporte" del menú del empleado y proteger la ruta con `RutaAdmin` (regla 5).
+- [x] Página **Reportes** con pestañas, indicadores y tablas, y un botón **Exportar PDF** (plantilla `ReportePDF`, tamaño carta, encabezados de tabla repetidos y número de página al pie). Se guarda en `Documentos/SGT/Reportes/reporte-<tipo>-<periodo>.pdf`.
+- [x] La pantalla y el PDF salen del mismo armado (`utils/reportes.js`), así muestran las mismas cifras.
+- [x] Ocultar "Reportes" del menú del empleado y proteger la ruta con `RutaAdmin` (regla 5).
 
 **Listo cuando:** el admin genera los cuatro reportes para cualquier periodo, los exporta a PDF y las cifras coinciden con el Historial.
 
@@ -253,6 +254,7 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 - Build para macOS (RNF05).
 - Convertir el router de `index.php` en una tabla de rutas con middleware (RNF10).
 - Panel de inicio con un "Resumen del día" (ventas de hoy y alertas de stock bajo).
+- Guardar el costo de cada producto al venderlo (en `Detalle_Venta`) para que la utilidad del reporte sea exacta y no una estimación con el último costo de compra.
 
 ---
 

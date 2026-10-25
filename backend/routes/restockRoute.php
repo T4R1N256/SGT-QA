@@ -109,12 +109,7 @@ if ($path === '/api/createRestock') { // Ruta para registrar un surtido
         return;
     }
 
-    $Hasta = campoFecha($_GET, 'hasta', false) ?? date('Y-m-d');
-    $Desde = campoFecha($_GET, 'desde', false) ?? date('Y-m-d', strtotime("$Hasta -30 days"));
-
-    if ($Desde > $Hasta) {
-        throw new ErrorValidacion('La fecha inicial no puede ser posterior a la final');
-    }
+    [$Desde, $Hasta] = rangoFechas($_GET);
 
     http_response_code(200);
     echo json_encode([

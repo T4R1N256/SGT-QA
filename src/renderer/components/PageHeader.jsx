@@ -10,7 +10,7 @@ const PAGE_TITLES = {
   '/surtir': 'Surtir',
   '/caja': 'Caja',
   '/historial': 'Historial',
-  '/report': 'Reporte',
+  '/report': 'Reportes',
   '/categorias': 'Categorías',
   '/proveedores': 'Proveedores',
   '/users': 'Usuarios',

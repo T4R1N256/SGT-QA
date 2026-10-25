@@ -84,6 +84,12 @@ export const getSalesHistory       = (params) => get(`getSalesHistory?${consulta
 export const getCashRegisters      = (params) => get(`getCashRegisters?${consulta(params)}`)
 export const getCashRegisterDetail = (id)     => get(`getCashRegisterDetail?id=${id}`)
 
+// Reportes (solo admin, regla 5). params: { desde, hasta }; el de stock es del momento y no lleva periodo
+export const getSalesReport   = (params) => get(`getSalesReport?${consulta(params)}`)
+export const getRestockReport = (params) => get(`getRestockReport?${consulta(params)}`)
+export const getStockReport   = ()       => get('getStockReport')
+export const getSummaryReport = (params) => get(`getSummaryReport?${consulta(params)}`)
+
 // Configuración de la tienda (datos del ticket)
 export const getConfig    = ()     => get('getConfig')
 export const updateConfig = (data) => patch('updateConfig', data)

@@ -137,6 +137,20 @@ function campoFecha(array $data, string $campo, bool $requerido = true): ?string
 }
 
 
+// Rango de fechas de los filtros (desde, hasta); por defecto, los últimos 30 días
+// Regresa [Desde, Hasta] en formato AAAA-MM-DD
+function rangoFechas(array $parametros): array
+{
+    $Hasta = campoFecha($parametros, 'hasta', false) ?? date('Y-m-d');
+    $Desde = campoFecha($parametros, 'desde', false) ?? date('Y-m-d', strtotime("$Hasta -30 days"));
+
+    if ($Desde > $Hasta) {
+        throw new ErrorValidacion('La fecha inicial no puede ser posterior a la final');
+    }
+    return [$Desde, $Hasta];
+}
+
+
 // Valor que debe ser una de las opciones permitidas
 function campoOpcion(array $data, string $campo, array $opciones, bool $requerido = true): ?string
 {

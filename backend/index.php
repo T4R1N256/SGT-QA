@@ -256,6 +256,14 @@ switch (true) {
         require_once __DIR__ . '/routes/historyRoute.php';
         break;
 
+    case $path === '/api/getSalesReport':
+    case $path === '/api/getRestockReport':
+    case $path === '/api/getStockReport':
+    case $path === '/api/getSummaryReport':
+        requerirAdmin(); // Regla 5: los reportes son solo para el administrador
+        require_once __DIR__ . '/routes/reportRoute.php';
+        break;
+
     case $path === '/api/createRestock':
     case $path === '/api/getAllRestocks':
     case $path === '/api/getRestock':
