@@ -205,13 +205,13 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 ### Fase 4: Historial · M
 
 **Backend**
-- [ ] `getSalesHistory?desde&hasta&forma_pago&estado&pagina`.
-- [ ] `getCashRegisters?desde&hasta`.
-- [ ] `getCashRegisterDetail?id`: ventas del corte, totales por forma de pago y diferencia.
+- [x] `getSalesHistory?desde&hasta&forma_pago&estado&pagina`.
+- [x] `getCashRegisters?desde&hasta`.
+- [x] `getCashRegisterDetail?id`: ventas del corte, totales por forma de pago y diferencia.
 
 **Frontend:** página **Historial** con dos pestañas.
-- [ ] **Ventas:** filtros por fecha, forma de pago y estado; tabla paginada; detalle en un modal; **reimprimir el ticket en PDF**.
-- [ ] **Cajas:** una fila por corte con fecha, cajero, horas de apertura y cierre, monto inicial, efectivo esperado, efectivo contado, diferencia y estado (cuadrada o descuadrada). Al abrir uno se ven sus ventas.
+- [x] **Ventas:** filtros por fecha, forma de pago y estado; tabla paginada; detalle en un modal; **reimprimir el ticket en PDF**.
+- [x] **Cajas:** una fila por corte con fecha, cajero, horas de apertura y cierre, monto inicial, efectivo esperado, efectivo contado, diferencia y estado (cuadrada o descuadrada). Al abrir uno se ven sus ventas.
 
 **Listo cuando:** se puede encontrar cualquier venta o corte pasado y reimprimir su ticket.
 

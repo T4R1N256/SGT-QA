@@ -99,6 +99,101 @@ class Venta
         }//-- Fin funcion quitar producto de detalle
     */
 
+    // Condiciones del historial de ventas: rango de fechas, estados y, opcionalmente, forma de pago
+    // Regresa [WHERE, parámetros] para readHistorial y resumenHistorial
+    private static function filtroHistorial(array $filtros): array
+    {
+        $condiciones = ['v.Fecha BETWEEN :Desde AND :Hasta'];
+        $parametros = [':Desde' => $filtros['desde'], ':Hasta' => $filtros['hasta']];
+
+        $estados = [];
+        foreach ($filtros['estados'] as $i => $estado) {
+            $estados[] = ":Estado$i";
+            $parametros[":Estado$i"] = $estado;
+        }
+        $condiciones[] = 'v.Estado IN (' . implode(', ', $estados) . ')';
+
+        if (!empty($filtros['forma_pago'])) {
+            $condiciones[] = 'v.Forma_Pago = :Forma_Pago';
+            $parametros[':Forma_Pago'] = $filtros['forma_pago'];
+        }
+
+        return ['WHERE ' . implode(' AND ', $condiciones), $parametros];
+    }
+
+
+    // Funcion para leer una página del historial de ventas (la más reciente primero)
+    // El cajero de una venta cancelada es quien abrió la caja (la venta no llegó a cobrarse)
+    public static function readHistorial(array $filtros, int $limite, int $desplazamiento)
+    {
+        try {
+            [$where, $parametros] = self::filtroHistorial($filtros);
+            $connection = new Conexion();
+
+            $sql = $connection->prepare("SELECT v.ID_Venta, v.Fecha, v.Hora, v.Monto, v.Forma_Pago, v.Estado, v.ID_Caja,
+            e.Nombre AS Cajero,
+            (SELECT COALESCE(SUM(d.Cantidad), 0) FROM Detalle_Venta d WHERE d.ID_Venta = v.ID_Venta) AS Articulos
+            FROM " . self::TABLE . " v
+            LEFT JOIN Caja c ON c.ID_Caja = v.ID_Caja
+            LEFT JOIN Empleado e ON e.ID_Usuario = COALESCE(v.ID_Usuario, c.ID_Usuario)
+            $where
+            ORDER BY v.Fecha DESC, v.Hora DESC, v.ID_Venta DESC
+            LIMIT :Limite OFFSET :Desplazamiento");
+            foreach ($parametros as $nombre => $valor) {
+                $sql->bindValue($nombre, $valor);
+            }
+            $sql->bindValue(':Limite', $limite, PDO::PARAM_INT);
+            $sql->bindValue(':Desplazamiento', $desplazamiento, PDO::PARAM_INT);
+            $sql->execute();
+            $ventas = $sql->fetchAll();
+            $connection = NULL;
+
+            return $ventas;
+
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion leer historial
+
+
+    // Funcion para el resumen del historial con los mismos filtros: número de ventas y total cobrado
+    public static function resumenHistorial(array $filtros)
+    {
+        try {
+            [$where, $parametros] = self::filtroHistorial($filtros);
+            $connection = new Conexion();
+
+            $sql = $connection->prepare("SELECT COUNT(*) AS Ventas,
+            COALESCE(SUM(CASE WHEN v.Estado = 'finalizada' THEN v.Monto END), 0) AS Total
+            FROM " . self::TABLE . " v $where");
+            $sql->execute($parametros);
+            $resumen = $sql->fetch();
+            $connection = NULL;
+
+            return ['ventas' => (int) $resumen['Ventas'], 'total' => (float) $resumen['Total']];
+
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion resumen historial
+
+
+    // Funcion para contar las ventas canceladas de una caja
+    public static function contarCanceladas($ID_Caja)
+    {
+        try {
+            $connection = new Conexion();
+            $sql = $connection->prepare("SELECT COUNT(*) FROM " . self::TABLE . "
+            WHERE ID_Caja = :ID_Caja AND Estado = 'cancelada'");
+            $sql->bindValue(':ID_Caja', $ID_Caja, PDO::PARAM_INT);
+            $sql->execute();
+            return (int) $sql->fetchColumn();
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion contar canceladas
+
+
     // Funcion para obtener los datos de una venta finalizada para su ticket (regla 8)
     // Regresa false si la venta no existe o no está finalizada
     public static function readTicket($ID_Venta)

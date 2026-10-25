@@ -131,6 +131,63 @@ class Caja
     }//-- Fin funcion requerir caja abierta
 
 
+    // Columnas comunes del historial y del detalle de cajas
+    const COLUMNAS_HISTORIAL = 'c.ID_Caja, c.Fecha, c.Hora, c.Hora_Final, c.Monto_Inicial, c.Monto_Final_Sistema,
+            c.Monto_Final, c.Monto_Final - c.Monto_Final_Sistema AS Diferencia, c.Estado, c.Estado_Final,
+            ea.Nombre AS Abrio, ec.Nombre AS Cerro,
+            (SELECT COUNT(*) FROM Venta v WHERE v.ID_Caja = c.ID_Caja AND v.Estado = \'finalizada\') AS Ventas,
+            (SELECT COALESCE(SUM(v.Monto), 0) FROM Venta v WHERE v.ID_Caja = c.ID_Caja AND v.Estado = \'finalizada\') AS Total_Ventas';
+
+    const JOINS_HISTORIAL = 'LEFT JOIN Empleado ea ON ea.ID_Usuario = c.ID_Usuario
+            LEFT JOIN Empleado ec ON ec.ID_Usuario = c.ID_Usuario_Cierre';
+
+
+    // Funcion para leer las cajas abiertas en un rango de fechas (la más reciente primero)
+    public static function readHistorial($Desde, $Hasta)
+    {
+        try {
+            $connection = new Conexion;
+
+            $sql = $connection->prepare('SELECT ' . self::COLUMNAS_HISTORIAL . ' FROM ' . self::TABLE . ' c
+            ' . self::JOINS_HISTORIAL . '
+            WHERE c.Fecha BETWEEN :Desde AND :Hasta
+            ORDER BY c.Fecha DESC, c.Hora DESC, c.ID_Caja DESC');
+            $sql->bindValue(':Desde', $Desde);
+            $sql->bindValue(':Hasta', $Hasta);
+            $sql->execute();
+            $cajas = $sql->fetchAll();
+            $connection = NULL;
+
+            return $cajas;
+
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion leer historial de cajas
+
+
+    // Funcion para leer una caja del historial
+    public static function readCajaHistorial($ID_Caja)
+    {
+        try {
+            $connection = new Conexion;
+
+            $sql = $connection->prepare('SELECT ' . self::COLUMNAS_HISTORIAL . ' FROM ' . self::TABLE . ' c
+            ' . self::JOINS_HISTORIAL . '
+            WHERE c.ID_Caja = :ID_Caja');
+            $sql->bindValue(':ID_Caja', $ID_Caja, PDO::PARAM_INT);
+            $sql->execute();
+            $caja = $sql->fetch();
+            $connection = NULL;
+
+            return $caja ?: false;
+
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion leer caja del historial
+
+
     // Funcion para leer el último corte (la caja cerrada más reciente)
     public static function readCaja()
     {

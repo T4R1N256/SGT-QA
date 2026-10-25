@@ -13,6 +13,7 @@ import {
   Proveedores,
   Configuracion,
   Surtir,
+  Historial,
 } from './pages'
 import AppLayout from './components/AppLayout'
 
@@ -71,7 +72,7 @@ export default function App() {
           <Route path="/sales"      element={<Sales />} />
           <Route path="/user-info"  element={<UserInfo />} />
           <Route path="/caja"       element={<Caja />} />
-          <Route path="/historial"  element={<PaginaEnConstruccion titulo="Historial" />} />
+          <Route path="/historial"  element={<RutaAdmin><Historial /></RutaAdmin>} />
           <Route path="/report"     element={<PaginaEnConstruccion titulo="Report" />} />
           <Route path="/categorias" element={<RutaAdmin><Categorias /></RutaAdmin>} />
           <Route path="/proveedores" element={<RutaAdmin><Proveedores /></RutaAdmin>} />

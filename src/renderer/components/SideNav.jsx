@@ -8,7 +8,7 @@ const PRINCIPAL = [
   { label: 'Surtir', to: '/surtir', adminOnly: true },
   { label: 'Ventas', to: '/sales' },
   { label: 'Caja', to: '/caja' },
-  { label: 'Historial', to: '/historial' },
+  { label: 'Historial', to: '/historial', adminOnly: true },
   { label: 'Reporte', to: '/report' },
 ]
 

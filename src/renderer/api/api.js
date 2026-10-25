@@ -76,6 +76,14 @@ export const getRestocks   = (desde, hasta) =>
   get(`getAllRestocks?${new URLSearchParams({ ...(desde && { desde }), ...(hasta && { hasta }) })}`)
 export const getRestock    = (id)   => get(`getRestock?id=${id}`)
 
+// Historial (solo admin): ventas pasadas y cortes de caja
+// params: { desde, hasta, forma_pago, estado, pagina }; los vacíos no se envían
+const consulta = (params = {}) =>
+  new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v != null)).toString()
+export const getSalesHistory       = (params) => get(`getSalesHistory?${consulta(params)}`)
+export const getCashRegisters      = (params) => get(`getCashRegisters?${consulta(params)}`)
+export const getCashRegisterDetail = (id)     => get(`getCashRegisterDetail?id=${id}`)
+
 // Configuración de la tienda (datos del ticket)
 export const getConfig    = ()     => get('getConfig')
 export const updateConfig = (data) => patch('updateConfig', data)
