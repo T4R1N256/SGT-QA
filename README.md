@@ -112,7 +112,7 @@ El ID del empleado es `2` en una base de datos nueva. Si ya había usuarios, el 
 
 ## Probar la app instalada (sin compilar)
 
-Cada ejecución del workflow **Build** deja los instaladores como artefactos durante 14 días. Para descargarlos: *Actions → Build →* la ejecución más reciente en verde *→ Artifacts*.
+Las versiones publicadas, como `v1.0.0`, tienen sus instaladores en la página **Releases** del repositorio. Además, cada ejecución del workflow **Build** deja los instaladores como artefactos durante 14 días: *Actions → Build →* la ejecución más reciente en verde *→ Artifacts*.
 
 | Sistema | Artefacto | Cómo abrirla |
 |---|---|---|
@@ -168,7 +168,7 @@ El resultado se genera en `release/`. La app empaquetada es completamente autón
 ### Instaladores en el CI
 
 `build.yml` compila los instaladores de Linux (`.tar.gz`) y Windows (`.exe` y `.zip`) y los deja como artefactos del workflow. Al terminar arranca la app de Linux como prueba (smoke test). Corre en tres casos:
-- al crear una etiqueta `v*`
+- al crear una etiqueta `v*`. En este caso, además, publica un **release de GitHub** con los instaladores, que no caducan; los artefactos del workflow se borran a los 14 días
 - a mano, desde *Actions → Build → Run workflow*
 - en los PRs que cambian el empaquetado o el proceso principal
 
