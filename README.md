@@ -115,10 +115,12 @@ El ID del empleado es `2` en una base de datos nueva. Si ya había usuarios, el 
 
 ## Compilar una versión distribuible
 
-Los binarios de PHP y MariaDB deben colocarse en `resources/` antes de compilar (están en el `.gitignore`). Descárgarlos por separado:
+Los binarios de PHP y MariaDB deben colocarse en `resources/` antes de compilar (están en el `.gitignore`). El CI los descarga del release `binaries` del repositorio original (`EduardGarrido/SGT`); para compilar en local, descargar los mismos archivos de ese release:
 
-- **PHP** (NTS x64): [php.net](https://www.php.net/downloads) → extraer en `resources/php/{win,linux,mac}/`
-- **MariaDB 10.11 LTS**: [mariadb.org](https://mariadb.org/download/) → extraer en `resources/mysql/{win,linux,mac}/`
+- **PHP 8.5** (`php-linux.tar.gz`, `php-win.zip`) → extraer en `resources/php/{linux,win}/`
+- **MariaDB 12.2** (`mysql-linux.tar.gz`, `mysql-win.zip`) → extraer en `resources/mysql/{linux,win}/`
+
+Las dependencias de PHP se instalan sin las de desarrollo: `composer install --no-dev --working-dir=backend`. El instalador no incluye las partes de MariaDB que la app no usa (pruebas, motores RocksDB/Mroonga/Spider, Galera, mariabackup); los filtros están en `extraResources` de `package.json`.
 
 Luego compilar para la plataforma deseada:
 
@@ -128,7 +130,28 @@ npm run dist:linux  # Linux   — .tar.gz (ejecutar en Linux)
 npm run dist:mac    # macOS   — .dmg (ejecutar en macOS)
 ```
 
-El resultado se genera en `release/`. La app empaquetada es completamente autónoma: no requiere PHP ni MariaDB en la máquina del usuario final.
+El resultado se genera en `release/`. La app empaquetada es completamente autónoma: no requiere PHP ni MariaDB en la máquina del usuario final, y funciona sin internet.
+
+### Cómo arranca la app empaquetada
+
+- **Base de datos:** MariaDB se inicializa en la carpeta de datos del usuario (`~/.config/sgt/mysql_data` en Linux, `%APPDATA%\sgt\mysql_data` en Windows). Escucha solo en `127.0.0.1`, en un puerto libre.
+- **Contraseñas:** se generan al azar en el primer arranque para `root` y para el usuario de la app (`sgt_root`). Se guardan en `credenciales-bd.json`, en la misma carpeta, solo legible por el usuario. No hay contraseñas escritas en el código.
+- **Actualización desde una versión anterior:** se le pone contraseña a root, se quitan los usuarios anónimos y la base `test`, y `seeder.php` aplica las migraciones pendientes. Los datos se conservan.
+- **Otro MySQL o MariaDB en el equipo:** no afecta, porque la app no lee el `my.cnf` / `my.ini` del sistema.
+- **PHP:** corre en un puerto libre, que el preload le pasa al renderer (`window.electronAPI.apiURL`).
+- **Cierre:** al cerrar la app, MariaDB se apaga de forma ordenada.
+
+**Si algo falla:**
+- **Procesos que quedaron vivos.** Si la app se cerró de forma forzada, el siguiente arranque cierra el PHP y la MariaDB que hayan quedado vivos.
+- **Credenciales borradas.** Si se borra `credenciales-bd.json`, la app restablece la contraseña de root al arrancar.
+- **La app no puede arrancar.** Muestra un aviso con el motivo y se cierra.
+
+### Instaladores en el CI
+
+`build.yml` compila los instaladores de Linux (`.tar.gz`) y Windows (`.exe` y `.zip`) y los deja como artefactos del workflow. Al terminar arranca la app de Linux como prueba (smoke test). Corre en tres casos:
+- al crear una etiqueta `v*`
+- a mano, desde *Actions → Build → Run workflow*
+- en los PRs que cambian el empaquetado o el proceso principal
 
 ---
 
@@ -136,7 +159,7 @@ El resultado se genera en `release/`. La app empaquetada es completamente autón
 
 ```
 src/
-  main/         Proceso principal de Electron (arranca PHP siempre; también MySQL en la app empaquetada)
+  main/         Proceso principal de Electron: arranca PHP siempre y MariaDB en la app empaquetada (mariadb.js)
   renderer/     App React (Vite)
     api/        Wrappers de fetch
     components/ Componentes UI reutilizables
@@ -191,7 +214,11 @@ Los valores por defecto (`127.0.0.1:3306`, base `sgtdb_test`, usuario `sgt_test`
 
 ### CI
 
-`.github/workflows/ci.yml` corre el lint y las dos suites de pruebas en cada PR y en cada push a `main`. `build.yml` sigue generando los instalables al crear una etiqueta `v*`.
+`.github/workflows/ci.yml` corre el lint y las dos suites de pruebas en cada PR y en cada push a `main`. `build.yml` genera los instaladores (ver *Instaladores en el CI*).
+
+### QA
+
+El resultado de la verificación final contra el SRS (requisitos funcionales, reglas de negocio y no funcionales) está en [`docs/QA_CHECKLIST.md`](docs/QA_CHECKLIST.md).
 
 ---
 

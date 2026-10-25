@@ -2,6 +2,8 @@
 
 > Comparación de **SRS - Sistema de Gestión de Tienda v1.1** (20 de mayo de 2026) contra el código de `main` (commit `c052740`).
 > Leyenda: ✅ cumple · ⚠️ parcial o con defectos · ❌ no implementado
+>
+> **Actualización 25-oct-2026 (fase 6):** las secciones 1 a 7 describen el punto de partida. El estado después de las fases 0 a 6 está en la [sección 8](#8-estado-final-fase-6) y el detalle de cada verificación en [`docs/QA_CHECKLIST.md`](docs/QA_CHECKLIST.md).
 
 ---
 
@@ -150,3 +152,55 @@ El SRS no define lo suficiente para implementar estos puntos sin suponer cosas.
 4. Surtir y reabastecimiento (P5).
 5. Registro de inicios de sesión si los reportes lo requieren (P2).
 6. Respaldos y aviso de privacidad (P9).
+
+---
+
+## 8. Estado final (fase 6)
+
+Todos los requisitos funcionales y las reglas de negocio se cumplen y tienen pruebas automatizadas o de punta a punta. Los bugs B1 a B11 están corregidos.
+
+| Bloque | Cumple | Parcial | Falta |
+|---|---|---|---|
+| Requisitos funcionales (13) | 13 | 0 | 0 |
+| Reglas de negocio (9) | 9 | 0 | 0 |
+| RNF, legales y técnicos (11 filas de la tabla §4) | 9 | 2 | 0 |
+
+Los dos parciales son decisiones de alcance, no defectos:
+- **RNF04 / RL01:** falta el aviso de privacidad al registrar empleados. Queda en la fase 7, opcional.
+- **RNF05:** se entregan Linux y Windows; macOS queda en la fase 7. El instalador de Windows se compila en el CI, pero falta abrirlo en un equipo Windows real.
+
+| Antes (§2–§5) | Ahora |
+|---|---|
+| RF02, B2, B3: venta no atómica, monto del cliente, inventario negativo | Venta en una transacción con bloqueo de filas; total recalculado en el servidor; `CHECK` en la base de datos |
+| RF03: solo por nombre | Por nombre o categoría, sin acentos |
+| RF04: sin pago ni cambio | Se guardan pago recibido, cambio y cajero |
+| RF05 / Surtir: sin backend ni interfaz | Página Surtir con sugerencias de stock bajo y costo de compra |
+| RF06, B7: eliminar devolvía 404 | Baja lógica; el historial se conserva |
+| RF09, RF10, B1, B4, B11: cuadre con FLOAT y montos de $0 rechazados | `DECIMAL(10,2)`, cuadre en centavos solo con efectivo, cajas con $0 |
+| RF11: "Próximamente" | Reportes de ventas, surtidos y compras, stock y resumen con PDF |
+| Regla 4: solo bloqueaba cerrar sesión | También se bloquea cerrar la ventana |
+| Regla 5: Reporte visible para el empleado | Reportes solo para el admin, en el menú y en el API |
+| Regla 8: sin ticket | Ticket PDF de 80 mm y reimpresión |
+| Regla 9 | Fecha y hora se guardan al cobrar |
+| RNF03: 8 rutas sin sesión | Todas exigen sesión |
+| RNF04: contraseña de la BD en `main.js` | Contraseñas al azar por instalación, MariaDB sin usuarios anónimos y solo en 127.0.0.1 |
+| RNF08: correo validado por DNS | Solo se valida el formato; la app empaquetada se probó sin red |
+| Pruebas: ninguna | 159 PHPUnit, 60 Vitest, lint y CI; E2E y QA de la app empaquetada |
+
+Las preguntas P1–P12 de la §6 se respondieron o se resolvieron con los supuestos de [`PLAN.md` §0](PLAN.md).
+
+---
+
+## 9. Sprints (para la sección de sprints del SRS)
+
+El trabajo se hizo en el fork `T4R1N256/SGT-QA` en siete fases. Cada fase entró a `main` con un PR revisado y el CI en verde.
+
+| Fase | Contenido | PR | Fecha |
+|---|---|---|---|
+| 0. Base de trabajo | Migraciones versionadas, PHPUnit y Vitest, CI, datos de demostración | [#1](https://github.com/T4R1N256/SGT-QA/pull/1) | 25-oct-2026 |
+| 1. Integridad y correcciones | Dinero en `DECIMAL`, ventas atómicas, validación de stock, caja desde la BD, seguridad del API, regla 4 | [#2](https://github.com/T4R1N256/SGT-QA/pull/2) | 25-oct-2026 |
+| 2. Venta completa y ticket | Pago y cambio, ticket PDF, configuración de la tienda, baja lógica de productos, búsqueda por categoría | [#3](https://github.com/T4R1N256/SGT-QA/pull/3) | 25-oct-2026 |
+| 3. Surtir | Reabastecimiento con costo de compra y sugerencias de stock bajo | [#4](https://github.com/T4R1N256/SGT-QA/pull/4) | 25-oct-2026 |
+| 4. Historial | Ventas pasadas con reimpresión del ticket y cortes de caja | [#5](https://github.com/T4R1N256/SGT-QA/pull/5) | 25-oct-2026 |
+| 5. Reportes | Ventas, surtidos y compras, stock y resumen; exportación a PDF | [#6](https://github.com/T4R1N256/SGT-QA/pull/6) | 25-oct-2026 |
+| 6. QA y entrega | MariaDB empaquetada segura, actualización probada, instaladores en el CI, checklist QA | [#7](https://github.com/T4R1N256/SGT-QA/pull/7) | 25-oct-2026 |
