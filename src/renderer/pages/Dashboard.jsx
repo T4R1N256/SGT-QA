@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getUserInfo, getCashRegister } from '../api/api'
-import { capitalize } from '../utils/format'
+import { capitalize } from '../../compartido/format'
 
 import cat from '../assets/fuhahhcat.jpg'
 

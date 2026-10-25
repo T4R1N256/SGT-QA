@@ -64,7 +64,8 @@ final class BaseDatosPrueba
     }
 
     // Ejecuta seeder.php como lo hacen Docker y Electron en cada arranque
-    public static function ejecutarSeeder(): string
+    // $entorno cambia variables del seeder (por ejemplo, SEED_TIENDA)
+    public static function ejecutarSeeder(array $entorno = []): string
     {
         $proceso = proc_open(
             [PHP_BINARY, __DIR__ . '/../../config/seeder.php'],
@@ -72,7 +73,7 @@ final class BaseDatosPrueba
             $pipes,
             null,
             // APP_ENV=development para que los errores fatales aparezcan en la salida
-            array_merge(getenv(), self::entorno(), ['APP_ENV' => 'development'])
+            array_merge(getenv(), self::entorno(), ['APP_ENV' => 'development'], $entorno)
         );
         $salida = stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]);
         $codigo = proc_close($proceso);

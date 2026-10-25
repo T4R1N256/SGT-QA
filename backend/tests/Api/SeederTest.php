@@ -17,7 +17,8 @@ final class SeederTest extends ApiTestCase
             AND COLUMN_NAME IN ('Precio', 'Monto', 'Precio_Unitario', 'Monto_Inicial', 'Monto_Final', 'Monto_Final_Sistema')")
             ->fetchAll(PDO::FETCH_KEY_PAIR);
 
-        $this->assertCount(8, $tipos);
+        // Las 8 columnas de SGT y Detalle_Pedido.Precio_Unitario de la tienda
+        $this->assertCount(9, $tipos);
         foreach ($tipos as $columna => $tipo) {
             $this->assertSame('decimal(10,2)', $tipo, $columna);
         }

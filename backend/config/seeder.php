@@ -68,6 +68,20 @@ try {
     echo "Error: " . $e->getMessage() . "\n\n";
 }
 
+// Catálogo de prueba de la tienda en línea (Docker): 180 productos en 12 categorías
+// Va antes que los datos de demostración: los dos se cargan solo si no hay productos
+if (in_array(strtolower(variableEntorno('SEED_TIENDA', '')), ['1', 'true'], true)) {
+    require_once __DIR__ . '/seed_tienda.php';
+
+    try {
+        if (!cargarCatalogoTienda(new Conexion)) {
+            echo "Ya existen productos, no se cargó el catálogo de la tienda\n\n";
+        }
+    } catch (Exception $e) {
+        echo "Error en el catálogo de la tienda: " . $e->getMessage() . "\n\n";
+    }
+}
+
 // Datos de demostración (solo desarrollo y QA)
 if (in_array(strtolower(variableEntorno('SEED_DEMO', '')), ['1', 'true'], true)) {
     require_once __DIR__ . '/seed_demo.php';

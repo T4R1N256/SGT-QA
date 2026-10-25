@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { capitalize, cuenta, formatoNumero } from './format'
+import { capitalize, cuenta, formatoMoneda, formatoNumero } from './format'
 
 describe('capitalize', () => {
   it('pone en mayúscula solo la primera letra', () => {
@@ -24,5 +24,12 @@ describe('formatoNumero y cuenta', () => {
     expect(cuenta(1, 'producto')).toBe('1 producto')
     expect(cuenta(0, 'producto')).toBe('0 productos')
     expect(cuenta(1200, 'venta cobrada', 'ventas cobradas')).toBe('1,200 ventas cobradas')
+  })
+})
+
+describe('formatoMoneda', () => {
+  it('moneda en pesos', () => {
+    expect(formatoMoneda('1234.5')).toBe('$1,234.50')
+    expect(formatoMoneda(null)).toBe('$0.00')
   })
 })

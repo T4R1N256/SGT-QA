@@ -3,7 +3,7 @@ import { ActionButton, FormAlert, FormModal } from '../components'
 import { useAuth } from '../context/AuthContext'
 import { useNotify } from '../context/NotificationContext.jsx'
 import { openCaja, closeCaja, getAllVentas, getMontoFinal } from '../api/api'
-import { calcularCambio } from '../utils/money'
+import { calcularCambio } from '../../compartido/money'
 import { LockClosedIcon, LockOpenIcon } from '@heroicons/react/20/solid'
 
 const VENTA_COLUMNS = [

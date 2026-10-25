@@ -1,9 +1,8 @@
 // Contenido de los reportes (RF11): a partir de lo que regresa el backend arma el título, el periodo,
 // los indicadores y las tablas ya con formato. Lo usan la página Reportes y el PDF, así se ven igual.
 
-import { formatoMoneda } from '../pdf/TicketPDF'
 import { formatoFecha, textoPeriodo } from './fechas'
-import { capitalize, cuenta, formatoNumero } from './format'
+import { capitalize, cuenta, formatoMoneda, formatoNumero } from '../../compartido/format'
 
 export const TIPOS_REPORTE = [
   { id: 'ventas', label: 'Ventas', titulo: 'Reporte de ventas' },

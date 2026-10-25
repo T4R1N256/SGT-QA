@@ -5,9 +5,9 @@ import { useHeader } from '../context/HeaderContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
 import { ActionButton, Pestanas } from '../components'
 import { imprimirTicket } from '../pdf/imprimir'
-import { formatoFolio, formatoMoneda } from '../pdf/TicketPDF'
+import { formatoFolio } from '../pdf/TicketPDF'
 import { rangoDias } from '../utils/fechas'
-import { capitalize, cuenta } from '../utils/format'
+import { capitalize, cuenta, formatoMoneda } from '../../compartido/format'
 import { PrinterIcon } from '@heroicons/react/20/solid'
 
 // Historial (solo admin): ventas pasadas con su ticket y cortes de caja con su detalle

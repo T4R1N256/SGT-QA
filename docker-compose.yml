@@ -26,11 +26,25 @@ services:
     restart: unless-stopped
     env_file:
       - ./.env
+    environment:
+      # Varios procesos de PHP para atender en paralelo a la tienda
+      PHP_CLI_SERVER_WORKERS: 4
     ports:
       - "8001:8000"
     depends_on:
       db:
         condition: service_healthy
+
+  # Tienda en línea: http://localhost:8080 (nginx sirve la app y reenvía /api/tienda/ al backend)
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
 
 volumes:
   db_data:

@@ -1,6 +1,8 @@
 // Ticket de venta (regla 8) para imprimir en papel de 80 mm
 // Recibe los datos que regresa el backend en completeSale y getVenta: venta, productos, cajero y tienda
 
+import { formatoMoneda } from '../../compartido/format'
+
 export const ESTILOS_TICKET = `
   body { width: 80mm; padding: 4mm 4mm 6mm; font-family: 'DejaVu Sans Mono', Consolas, 'Courier New', monospace; font-size: 11px; line-height: 1.35; }
   .centro { text-align: center; }
@@ -12,12 +14,6 @@ export const ESTILOS_TICKET = `
   .total { font-size: 13px; font-weight: bold; }
 `
 
-const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
-
-export function formatoMoneda(monto) {
-  const n = Number(monto)
-  return moneda.format(Number.isFinite(n) ? n : 0)
-}
 
 // Folio de 6 dígitos: 000123
 export function formatoFolio(ID_Venta) {

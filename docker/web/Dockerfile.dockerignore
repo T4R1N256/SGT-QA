@@ -1,0 +1,10 @@
+# Contexto de la imagen de la tienda: solo lo necesario para compilarla
+*
+!package.json
+!package-lock.json
+!vite.tienda.config.mjs
+!src/tienda
+!src/compartido
+!docker/web/nginx.conf
+**/*.test.js
+**/*.test.jsx

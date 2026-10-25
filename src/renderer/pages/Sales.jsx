@@ -5,7 +5,7 @@ import { ActionButton } from '../components'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { useAuth } from '../context/AuthContext'
 import { useNotify } from '../context/NotificationContext.jsx'
-import { calcularCambio, totalCarrito } from '../utils/money'
+import { calcularCambio, totalCarrito } from '../../compartido/money'
 import { filtrarProductos } from '../utils/productos'
 import { imprimirTicket } from '../pdf/imprimir'
 import {

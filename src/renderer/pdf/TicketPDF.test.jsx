@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ticketHTML } from './imprimir'
-import { formatoFechaHora, formatoFolio, formatoMoneda } from './TicketPDF'
+import { formatoFechaHora, formatoFolio } from './TicketPDF'
 
 const venta = {
   ID_Venta: 42,
@@ -33,10 +33,6 @@ describe('formatos del ticket', () => {
     expect(formatoFechaHora('2026-10-25', '14:03:59')).toBe('25/10/2026 14:03')
   })
 
-  it('moneda en pesos', () => {
-    expect(formatoMoneda('1234.5')).toBe('$1,234.50')
-    expect(formatoMoneda(null)).toBe('$0.00')
-  })
 })
 
 describe('ticketHTML', () => {

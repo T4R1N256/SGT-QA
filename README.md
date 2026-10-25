@@ -2,6 +2,8 @@
 
 Aplicación de escritorio para gestión de inventario y ventas, construida con **Electron + React** (frontend) y **PHP + MySQL** (backend).
 
+Incluye una **tienda en línea** para clientes que se abre en el navegador (ver *Tienda en línea*). El plan está en [`PLAN_TIENDA.md`](PLAN_TIENDA.md).
+
 ---
 
 ## Requisitos previos
@@ -110,6 +112,33 @@ El ID del empleado es `2` en una base de datos nueva. Si ya había usuarios, el 
 
 ---
 
+## Tienda en línea
+
+Módulo web para clientes, con el mismo backend y la misma base de datos que SGT. Con Docker no hace falta Node, PHP ni MariaDB en el equipo:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+La tienda queda en **http://localhost:8080**. La primera vez el backend aplica las migraciones y, con `SEED_TIENDA=1` (valor por defecto de `.env.example`), carga un catálogo de prueba de 12 categorías y 180 productos. El catálogo solo se carga si la tabla de productos está vacía.
+
+| Contenedor | Qué hace |
+|---|---|
+| `db` | MariaDB |
+| `backend` | PHP: el API de SGT y el de la tienda (`/api/tienda/...`), en el `8001` |
+| `web` | Compila la tienda y la sirve con nginx en el `8080`. Reenvía `/api/tienda/` al backend; el resto del API de SGT no se expone |
+
+Para trabajar en la tienda con recarga en caliente, con el backend de Docker levantado:
+
+```bash
+npm run dev:tienda       # http://localhost:5174, reenvía /api al backend del 8001
+```
+
+Para usar otro backend: `TIENDA_API=http://localhost:8000 npm run dev:tienda`.
+
+---
+
 ## Probar la app instalada (sin compilar)
 
 Las versiones publicadas, como `v1.0.0`, tienen sus instaladores en la página **Releases** del repositorio. Además, cada ejecución del workflow **Build** deja los instaladores como artefactos durante 14 días: *Actions → Build →* la ejecución más reciente en verde *→ Artifacts*.
@@ -183,11 +212,14 @@ src/
     api/        Wrappers de fetch
     components/ Componentes UI reutilizables
     pages/      Páginas por ruta
+  tienda/       Tienda en línea: app React independiente de Electron (vite.tienda.config.mjs)
+  compartido/   Dinero y formatos, usados por SGT y por la tienda
 backend/        PHP 8 sin framework — router único en index.php
-  config/       Esquema base database.sql, migraciones, seeder y datos demo
+  config/       Esquema base database.sql, migraciones, seeder, datos demo y catálogo de la tienda
   models/       Clases de consultas PDO
-  routes/       Controladores por módulo
+  routes/       Controladores por módulo (routes/tienda/: API de la tienda)
   tests/        Pruebas PHPUnit (Unit y Api)
+docker/web/     Imagen de la tienda (Node para compilar, nginx para servir)
 resources/      Binarios empaquetados (en .gitignore — descargar por separado)
 ```
 
@@ -233,7 +265,7 @@ Los valores por defecto (`127.0.0.1:3306`, base `sgtdb_test`, usuario `sgt_test`
 
 ### CI
 
-`.github/workflows/ci.yml` corre el lint y las dos suites de pruebas en cada PR y en cada push a `main`. `build.yml` genera los instaladores (ver *Instaladores en el CI*).
+`.github/workflows/ci.yml` corre el lint, las dos suites de pruebas y la compilación de la tienda en cada PR y en cada push a `main`. El job **Tienda (Docker)** levanta todo con `docker compose up --build` y revisa que la tienda y su API respondan en el `8080`. `build.yml` genera los instaladores (ver *Instaladores en el CI*).
 
 ### QA
 
@@ -256,6 +288,8 @@ El desarrollo se hace en el fork `T4R1N256/SGT-QA`, siguiendo [`PLAN.md`](PLAN.m
 npm run lint             # ESLint con auto-fix
 npm run lint:check       # ESLint sin modificar archivos (lo que corre el CI)
 npm run format           # Prettier
+npm run dev:tienda       # tienda en línea en modo desarrollo (5174)
+npm run build:tienda     # compila la tienda en dist-tienda/
 docker-compose down      # detener contenedores (los datos persisten)
 docker-compose down -v   # detener y borrar el volumen de base de datos
 ```

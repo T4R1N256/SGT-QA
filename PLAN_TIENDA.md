@@ -91,7 +91,7 @@ Todas las rutas van bajo `/api/tienda/`, con un router propio y con **sesión se
 `docker compose up --build` levanta tres contenedores:
 - **db:** MariaDB.
 - **backend:** PHP. Aplica las migraciones y carga el catálogo de la tienda.
-- **web:** compila la tienda con Node y la sirve con nginx en `:8080`. Reenvía `/api/` al backend.
+- **web:** compila la tienda con Node y la sirve con nginx en `:8080`. Reenvía `/api/tienda/` al backend; el resto del API de SGT no se expone.
 
 El equipo del profesor no necesita Node, PHP ni MariaDB: solo Docker.
 
@@ -109,13 +109,13 @@ El equipo del profesor no necesita Node, PHP ni MariaDB: solo Docker.
 ## 2. Fases
 
 ### Fase T0: Base del módulo · M
-- [ ] Mover las utilidades compartidas a `src/compartido/` (SGT sigue igual).
-- [ ] App `src/tienda/` con su configuración de Vite, su layout (encabezado con búsqueda, categorías, carrito y cuenta) y rutas vacías.
-- [ ] Router `/api/tienda/` con sesión separada.
-- [ ] Migraciones 005 y 006.
-- [ ] Contenedor `web` en `docker-compose`.
-- [ ] Catálogo de prueba amplio (T-S9).
-- [ ] CI: compilar la tienda y la imagen.
+- [x] Mover las utilidades compartidas a `src/compartido/` (SGT sigue igual).
+- [x] App `src/tienda/` con su configuración de Vite, su layout (encabezado con búsqueda, categorías, carrito y cuenta) y rutas vacías.
+- [x] Router `/api/tienda/` con sesión separada.
+- [x] Migraciones 005 y 006.
+- [x] Contenedor `web` en `docker-compose`.
+- [x] Catálogo de prueba amplio (T-S9).
+- [x] CI: compilar la tienda y la imagen.
 
 **Listo cuando:** `docker compose up --build` muestra la tienda vacía en `:8080` y el API responde.
 

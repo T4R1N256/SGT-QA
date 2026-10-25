@@ -4,7 +4,7 @@ import { useFetch } from '../hooks/useFetch'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
 import { ActionButton, FormAlert } from '../components'
-import { aCentavos } from '../utils/money'
+import { aCentavos } from '../../compartido/money'
 import { cantidadSugerida, filtrarProductos, necesitanSurtido } from '../utils/productos'
 import { PlusIcon, TrashIcon, SparklesIcon, TruckIcon } from '@heroicons/react/20/solid'
 
