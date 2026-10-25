@@ -32,6 +32,14 @@ final class BaseDatosPrueba
     // Borra y vuelve a crear la base de datos, aplica database.sql y ejecuta seeder.php
     public static function recrear(): void
     {
+        self::crearConEsquemaBase();
+        self::ejecutarSeeder();
+    }
+
+    // Borra y vuelve a crear la base de datos solo con el esquema base (database.sql), sin migraciones:
+    // es como estaba la base de datos de la versión original
+    public static function crearConEsquemaBase(): PDO
+    {
         $e = self::entorno();
         $servidor = new PDO(
             "mysql:host={$e['DB_HOST']};port={$e['DB_PORT']};charset=utf8mb4",
@@ -43,11 +51,16 @@ final class BaseDatosPrueba
         $servidor->exec("CREATE DATABASE `{$e['DB_NAME']}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
         $connection = self::conexion();
-        foreach (separarSentencias(file_get_contents(__DIR__ . '/../../config/database.sql')) as $sentencia) {
+        self::ejecutarArchivo($connection, __DIR__ . '/../../config/database.sql');
+        return $connection;
+    }
+
+    // Ejecuta un archivo SQL sentencia por sentencia
+    public static function ejecutarArchivo(PDO $connection, string $archivo): void
+    {
+        foreach (separarSentencias(file_get_contents($archivo)) as $sentencia) {
             $connection->exec($sentencia);
         }
-
-        self::ejecutarSeeder();
     }
 
     // Ejecuta seeder.php como lo hacen Docker y Electron en cada arranque

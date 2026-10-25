@@ -565,12 +565,8 @@ const GRID_COLS = 'grid grid-cols-[0.25fr_2fr_1fr_1fr_1fr_1fr]'
 function CartTableHeader() {
   return (
     <div className={`w-full bg-gray-800 ${GRID_COLS}`}>
-      {CART_COLUMNS.map(({ label }, i) => (
-        <div
-          key={label}
-          className={headerCell}
-          // className={`${headerCell} ${i === 0 ? 'pl-4' : ''} ${i === CART_COLUMNS.length - 1 ? 'pr-4' : ''}`}
-        >
+      {CART_COLUMNS.map(({ label }) => (
+        <div key={label} className={headerCell}>
           {label}
         </div>
       ))}

@@ -1,4 +1,5 @@
-const ROOT = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '')
+// En Electron el API está en un puerto libre que da el preload; en el navegador (desarrollo) se usa VITE_API_URL o el 8000
+const ROOT = (window.electronAPI?.apiURL ?? import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '')
 
 async function request(path, options = {}) {
   try {

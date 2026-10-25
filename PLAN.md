@@ -237,15 +237,17 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 
 ### Fase 6: QA y entrega · M
 
-- [ ] `docs/QA_CHECKLIST.md`: casos manuales ligados a cada RF y regla, con el resultado de cada uno.
-- [ ] Probar la **actualización** de una base de datos con datos de la versión actual: las migraciones se aplican sin pérdida.
-- [ ] Probar la app **empaquetada** en Windows y Linux (CI con tag `v*`), incluyendo el primer arranque sin internet.
-- [ ] Contraseñas al azar para el usuario de la app y para `root` en la MariaDB empaquetada (viene de la fase 1).
-- [ ] Si la app se cierra de forma anormal, el proceso de PHP puede quedar vivo ocupando el puerto 8000 y el siguiente arranque no inicia sesión (visto en pruebas). Detectar y cerrar el PHP huérfano al arrancar, o usar un puerto libre y pasárselo al renderer (viene de la fase 2).
-- [ ] Quitar código muerto: `firebase/php-jwt`, las rutas comentadas y los `console.log`.
-- [ ] Actualizar el README, `ANALISIS_SRS.md` (matriz final) y la sección de sprints del SRS.
+- [x] `docs/QA_CHECKLIST.md`: casos ligados a cada RF, regla y RNF, con la evidencia y el resultado de cada uno.
+- [x] Probar la **actualización** de una base de datos con datos de la versión original (`ActualizacionTest` y en la app empaquetada): las migraciones se aplican sin pérdida.
+- [x] Probar la app **empaquetada** de Linux sin internet y como usuario normal: primer arranque, cierre normal y forzado, credenciales perdidas y actualización. Los instaladores de Linux y Windows se compilan en el CI (`build.yml`, también en los PRs que cambian el empaquetado) con un smoke test de Linux. Falta abrir el instalador de Windows en un equipo Windows real.
+- [x] Contraseñas al azar para el usuario de la app y para `root` en la MariaDB empaquetada, sin usuarios anónimos ni base `test`, y sin contraseñas en la línea de comandos (`src/main/mariadb.js`).
+- [x] El proceso de PHP o MariaDB que queda vivo tras un cierre anormal se cierra en el siguiente arranque; los dos corren en puertos libres.
+- [x] La MariaDB empaquetada ya no lee el `my.cnf` / `my.ini` de otro MySQL instalado en el equipo (`--no-defaults`). Con uno instalado la app no arrancaba.
+- [x] Quitar código muerto: `firebase/php-jwt`, las rutas comentadas, `NavBar.jsx` y los `console.log`. Lint sin advertencias.
+- [x] El instalador ya no incluye las partes de MariaDB que la app no usa (unos 750 MB menos).
+- [x] Actualizar el README y `ANALISIS_SRS.md` (estado final y tabla de sprints para el SRS).
 
-**Listo cuando:** el checklist QA está en verde para los 13 RF y las 9 reglas.
+**Listo cuando:** el checklist QA está en verde para los 13 RF y las 9 reglas. ✅
 
 ### Fase 7: Opcional · requiere confirmación
 

@@ -7,7 +7,7 @@ import { ActionButton, Pestanas } from '../components'
 import { imprimirTicket } from '../pdf/imprimir'
 import { formatoFolio, formatoMoneda } from '../pdf/TicketPDF'
 import { rangoDias } from '../utils/fechas'
-import { capitalize } from '../utils/format'
+import { capitalize, cuenta } from '../utils/format'
 import { PrinterIcon } from '@heroicons/react/20/solid'
 
 // Historial (solo admin): ventas pasadas con su ticket y cortes de caja con su detalle
@@ -136,7 +136,7 @@ function HistorialVentas() {
         </label>
         {datos && (
           <p className="ml-auto text-sm text-gray-700">
-            <span className="font-semibold">{datos.resumen.ventas}</span> ventas · Total cobrado{' '}
+            <span className="font-semibold">{cuenta(datos.resumen.ventas, 'venta')}</span> · Total cobrado{' '}
             <span className="font-semibold">{formatoMoneda(datos.resumen.total)}</span>
           </p>
         )}
@@ -249,7 +249,7 @@ function DetalleCaja({ ID_Caja }) {
         ))}
       </div>
       <p className="text-gray-500">
-        {totales.ventas} ventas cobradas · {detalle.canceladas} canceladas
+        {cuenta(totales.ventas, 'venta cobrada', 'ventas cobradas')} · {cuenta(detalle.canceladas, 'cancelada')}
       </p>
       {detalle.ventas.length > 0 && (
         <ul className="flex flex-col gap-1">

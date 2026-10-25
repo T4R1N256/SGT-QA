@@ -5,9 +5,27 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+  # También en los PRs que cambian el empaquetado o el arranque de la app (proceso principal, dependencias)
+  pull_request:
+    paths:
+      - '.github/workflows/build.yml'
+      - 'src/main/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'electron.vite.config.mjs'
+      - 'backend/composer.json'
+      - 'backend/composer.lock'
+
+# Un push nuevo al mismo PR cancela la compilación anterior
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   MARIADB_VERSION: '12.2.2'
+  # PHP y MariaDB vienen del release público "binaries" del repositorio original (solo se descargan).
+  # Para usar los de este repositorio, crear su propio release "binaries" y cambiar esta variable.
+  BINARIES_REPO: EduardGarrido/SGT
 
 jobs:
   build:
@@ -43,7 +61,7 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           mkdir -p resources/php/linux
-          gh release download binaries --repo ${{ github.repository }} --pattern "php-linux.tar.gz" --output php-linux.tar.gz
+          gh release download binaries --repo ${{ env.BINARIES_REPO }} --pattern "php-linux.tar.gz" --output php-linux.tar.gz
           tar xz -C resources/php/linux < php-linux.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -53,7 +71,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force resources/php/win | Out-Null
-          gh release download binaries --repo ${{ github.repository }} --pattern "php-win.zip" --output php-win.zip
+          gh release download binaries --repo ${{ env.BINARIES_REPO }} --pattern "php-win.zip" --output php-win.zip
           Expand-Archive php-win.zip resources/php/win -Force
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +80,7 @@ jobs:
         if: matrix.platform == 'mac'
         run: |
           mkdir -p resources/php/mac
-          gh release download binaries --repo ${{ github.repository }} --pattern "php-mac.tar.gz" --output php-mac.tar.gz
+          gh release download binaries --repo ${{ env.BINARIES_REPO }} --pattern "php-mac.tar.gz" --output php-mac.tar.gz
           tar xz -C resources/php/mac < php-mac.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -73,7 +91,7 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           mkdir -p resources/mysql/linux
-          gh release download binaries --repo ${{ github.repository }} --pattern "mysql-linux.tar.gz" --output mysql-linux.tar.gz
+          gh release download binaries --repo ${{ env.BINARIES_REPO }} --pattern "mysql-linux.tar.gz" --output mysql-linux.tar.gz
           tar xz -C resources/mysql/linux < mysql-linux.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -83,7 +101,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force resources/mysql/win | Out-Null
-          gh release download binaries --repo ${{ github.repository }} --pattern "mysql-win.zip" --output mysql-win.zip
+          gh release download binaries --repo ${{ env.BINARIES_REPO }} --pattern "mysql-win.zip" --output mysql-win.zip
           Expand-Archive mysql-win.zip resources/mysql/win -Force
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,9 +121,37 @@ jobs:
       - name: Build
         run: npm run ${{ matrix.dist_cmd }}
 
+      # Primer arranque de la app empaquetada (Linux): MariaDB inicializa sus datos, PHP responde y se cierra.
+      # El runner trae un MySQL instalado con su /etc/mysql/my.cnf: comprueba que la app no lo lee (--no-defaults)
+      - name: Smoke test (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          xvfb-run -a release/linux-unpacked/sgt --no-sandbox > arranque.log 2>&1 &
+          listo=no
+          for i in $(seq 1 90); do
+            if [ -f ~/.config/sgt/php.json ]; then
+              puerto=$(node -p "require(process.env.HOME + '/.config/sgt/php.json').puerto")
+              if curl -sf "http://localhost:$puerto/api/ping"; then listo=si; break; fi
+            fi
+            sleep 2
+          done
+          # SIGTERM al proceso principal (el más antiguo llamado sgt): Electron se cierra de forma normal
+          kill -TERM "$(pgrep -o -x sgt)" || true
+          sleep 8
+          grep -v "dbus\|Fontconfig" arranque.log | tail -40
+          test "$listo" = si
+          grep -q "Usuario admin creado" arranque.log
+          # Al cerrarse la app se apagan MariaDB y PHP
+          ! pgrep -f mysql_data
+          ! curl -sf "http://localhost:$puerto/api/ping"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sgt-${{ matrix.platform }}
-          path: release/
+          # Solo los instaladores y comprimidos (sin la carpeta linux-unpacked / win-unpacked)
+          path: |
+            release/*.tar.gz
+            release/*.exe
+            release/*.zip
           retention-days: 14

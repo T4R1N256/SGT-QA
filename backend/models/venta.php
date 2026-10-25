@@ -83,21 +83,7 @@ class Venta
             throw new Exception("Hubo un error: " . $e->getMessage());
         }
     }//-- Fin funcion agregar producto a detalle
-/*
-        // Funcion para quitar producto del detalle
-        public static function removeProductoVenta($ID_Detalle_Venta)
-        {
-            try {
-                $connection = new Conexion();
-                $sql = $connection->prepare('DELETE FROM Detalle_Venta WHERE ID_Detalle_Venta = :ID_Detalle_Venta');
-                $sql->bindValue(':ID_Detalle_Venta', $ID_Detalle_Venta, PDO::PARAM_INT);
-                $sql->execute();
-                return $sql->rowCount() > 0 ? 1 : 0;
-            } catch (PDOException $e) {
-                throw new Exception("Hubo un error: " . $e->getMessage());
-            }
-        }//-- Fin funcion quitar producto de detalle
-    */
+
 
     // Condiciones del historial de ventas: rango de fechas, estados y, opcionalmente, forma de pago
     // Regresa [WHERE, parámetros] para readHistorial y resumenHistorial

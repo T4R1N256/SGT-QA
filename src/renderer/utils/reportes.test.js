@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { construirReporte, cuenta, formatoNumero, formatoPorcentaje } from './reportes'
+import { construirReporte, formatoPorcentaje } from './reportes'
 
 // Respuestas del backend con la forma de getSalesReport, getRestockReport, getStockReport y getSummaryReport
 const ventas = {
@@ -91,18 +91,10 @@ const resumen = {
 const indicador = (reporte, etiqueta) => reporte.indicadores.find((i) => i.etiqueta === etiqueta)
 const seccion = (reporte, titulo) => reporte.secciones.find((s) => s.titulo === titulo)
 
-describe('formatos', () => {
-  it('números con separador de miles y porcentaje con un decimal', () => {
-    expect(formatoNumero(1250)).toBe('1,250')
-    expect(formatoNumero(null)).toBe('0')
+describe('formatoPorcentaje', () => {
+  it('un decimal, o guion si no hay base', () => {
     expect(formatoPorcentaje(33.42)).toBe('33.4 %')
     expect(formatoPorcentaje(null)).toBe('—')
-  })
-
-  it('singular y plural según la cantidad', () => {
-    expect(cuenta(1, 'producto')).toBe('1 producto')
-    expect(cuenta(0, 'producto')).toBe('0 productos')
-    expect(cuenta(1200, 'venta cobrada', 'ventas cobradas')).toBe('1,200 ventas cobradas')
   })
 })
 

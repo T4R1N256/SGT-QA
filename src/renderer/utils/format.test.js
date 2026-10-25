@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { capitalize } from './format'
+import { capitalize, cuenta, formatoNumero } from './format'
 
 describe('capitalize', () => {
   it('pone en mayúscula solo la primera letra', () => {
@@ -11,5 +11,18 @@ describe('capitalize', () => {
     expect(capitalize('')).toBe('')
     expect(capitalize(null)).toBe('')
     expect(capitalize(undefined)).toBe('')
+  })
+})
+
+describe('formatoNumero y cuenta', () => {
+  it('números con separador de miles', () => {
+    expect(formatoNumero(1250)).toBe('1,250')
+    expect(formatoNumero(null)).toBe('0')
+  })
+
+  it('singular y plural según la cantidad', () => {
+    expect(cuenta(1, 'producto')).toBe('1 producto')
+    expect(cuenta(0, 'producto')).toBe('0 productos')
+    expect(cuenta(1200, 'venta cobrada', 'ventas cobradas')).toBe('1,200 ventas cobradas')
   })
 })
