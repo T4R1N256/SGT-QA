@@ -62,3 +62,10 @@ export function obtenerProductos({
   const consulta = params.toString()
   return peticion(consulta ? `productos?${consulta}` : 'productos')
 }
+
+// Carrito (fase T2): el servidor lo revisa con los precios y existencias vigentes
+export const revisarCarrito = (lineas) =>
+  peticion('carrito/revisar', {
+    metodo: 'POST',
+    datos: { productos: lineas.map(({ id, cantidad, precio }) => ({ id, cantidad, precio })) },
+  })
