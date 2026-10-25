@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filtrarProductos, normalizar } from './productos'
+import { cantidadSugerida, filtrarProductos, necesitanSurtido, normalizar } from './productos'
 
 const productos = [
   { ID_Producto: 1, Nombre_Producto: 'Azúcar estándar 1 kg', Nombre_Categoria: 'Abarrotes', Estado: 'Disponible' },
@@ -36,5 +36,25 @@ describe('filtrarProductos', () => {
 
   it('respeta el límite de resultados', () => {
     expect(filtrarProductos(productos, 'e', 2)).toHaveLength(2)
+  })
+})
+
+describe('surtido', () => {
+  it('filtrarProductos puede incluir agotados', () => {
+    expect(ids(filtrarProductos(productos, 'yogur', 8, { incluirAgotados: true }))).toEqual([3])
+  })
+
+  it('necesitanSurtido regresa los de stock bajo y agotados', () => {
+    expect(ids(necesitanSurtido(productos))).toEqual([2, 3])
+  })
+
+  it('cantidadSugerida llega al doble del mínimo', () => {
+    expect(cantidadSugerida({ Cantidad: 8, Cantidad_Minima: 10 })).toBe(12)
+    expect(cantidadSugerida({ Cantidad: 0, Cantidad_Minima: 15 })).toBe(30)
+  })
+
+  it('cantidadSugerida es al menos 1', () => {
+    expect(cantidadSugerida({ Cantidad: 50, Cantidad_Minima: 10 })).toBe(1)
+    expect(cantidadSugerida({ Cantidad: 0, Cantidad_Minima: 0 })).toBe(1)
   })
 })

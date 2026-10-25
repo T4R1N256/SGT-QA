@@ -181,23 +181,24 @@ Corrige los bugs B1 a B11 de `ANALISIS_SRS.md`.
 ### Fase 3: Surtir (reabastecimiento) · M
 
 **Migración 004**
-- [ ] `Surtir.ID_Usuario` y `Surtir.Notas`.
-- [ ] `Detalle_Surtir.Precio_Unitario` se usa como **costo**.
-- [ ] `Producto.Costo`, que guarda el último costo de compra para calcular márgenes.
+- [x] `Surtir.ID_Usuario` y `Surtir.Notas`.
+- [x] `Detalle_Surtir.Precio_Unitario` se usa como **costo**.
+- [x] `Producto.Costo`, que guarda el último costo de compra para calcular márgenes.
 
 **Backend:** `models/surtir.php` y `routes/restockRoute.php`, solo para el admin.
-- [ ] `createRestock`, en una transacción:
+- [x] `createRestock`, en una transacción:
   - insertar `Surtir` y su `Detalle_Surtir`;
   - **sumar la cantidad al inventario**;
   - recalcular el estado del producto;
   - actualizar `Producto.Costo`.
-- [ ] `getAllRestocks?desde&hasta` y `getRestock?id`.
+- [x] `getAllRestocks?desde&hasta` y `getRestock?id`.
 
 **Frontend:** página **Surtir**.
-- [ ] Elegir el proveedor y agregar productos. Por defecto se listan los de ese proveedor, con opción de ver todos.
-- [ ] Capturar cantidad y costo unitario por producto; el total se calcula solo.
-- [ ] Botón "**Sugerir productos con stock bajo**", que precarga los productos bajo el mínimo con una cantidad sugerida.
-- [ ] Lista de surtidos anteriores con su detalle.
+- [x] Elegir el proveedor y agregar productos. Por defecto se listan los de ese proveedor, con opción de ver todos.
+- [x] Capturar cantidad y costo unitario por producto; el total se calcula solo.
+- [x] Botón "**Sugerir productos con stock bajo**", que precarga los productos bajo el mínimo con una cantidad sugerida.
+- [x] Lista de surtidos anteriores con su detalle.
+- [x] Extra: se rechaza surtir de un proveedor o un producto dado de baja; la búsqueda de Surtir sí muestra los agotados; la cantidad sugerida llega al doble del mínimo.
 
 **Listo cuando:** registrar un surtido sube la existencia, cambia el estado (por ejemplo, "Stock bajo" → "Disponible") y guarda el costo (RF05).
 

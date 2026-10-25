@@ -70,6 +70,12 @@ export const completeSale = (data) => patch('completeSale', data)
 export const getAllVentas = ()     => get('getAllVentas')
 export const getVenta     = (id)   => get(`getVenta?id=${id}`)
 
+// Surtidos (compras a proveedores)
+export const createRestock = (data) => post('createRestock', data)
+export const getRestocks   = (desde, hasta) =>
+  get(`getAllRestocks?${new URLSearchParams({ ...(desde && { desde }), ...(hasta && { hasta }) })}`)
+export const getRestock    = (id)   => get(`getRestock?id=${id}`)
+
 // Configuración de la tienda (datos del ticket)
 export const getConfig    = ()     => get('getConfig')
 export const updateConfig = (data) => patch('updateConfig', data)

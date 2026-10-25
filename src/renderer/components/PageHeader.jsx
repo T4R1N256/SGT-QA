@@ -7,6 +7,7 @@ const PAGE_TITLES = {
   '/dashboard': 'Inicio',
   '/sales': 'Ventas',
   '/inventory': 'Inventario',
+  '/surtir': 'Surtir',
   '/caja': 'Caja',
   '/historial': 'Historial',
   '/report': 'Reporte',

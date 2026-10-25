@@ -70,8 +70,8 @@ class Producto
         try {
             $connection = new Conexion;
 
-            $sql = $connection->prepare('SELECT p.ID_Producto, p.Nombre_Producto, p.Precio, p.Cantidad, p.Unidad_Medida, p.Estado,
-            c.Nombre_Categoria, d.Nombre_Proveedor  FROM ' . self::TABLE . ' p 
+            $sql = $connection->prepare('SELECT p.ID_Producto, p.Nombre_Producto, p.Precio, p.Costo, p.Cantidad, p.Unidad_Medida, p.Estado,
+            p.Cantidad_Minima, c.Nombre_Categoria, d.ID_Proveedor, d.Nombre_Proveedor  FROM ' . self::TABLE . ' p 
             INNER JOIN Categoria c ON c.ID_Categoria = p.ID_Categoria
             INNER JOIN Proveedor d ON d.ID_Proveedor = p.ID_Proveedor
             WHERE p.Activo = 1');
@@ -184,6 +184,40 @@ class Producto
     }//-- Fin funcion bloquear productos
 
 
+    // Funcion para sumar al inventario lo que llegó en un surtido y guardar su último costo de compra
+    public static function sumarInventario($connection, $ID_Producto, $Cantidad, $Costo)
+    {
+        try {
+            $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Cantidad = Cantidad + :Cantidad, Costo = :Costo
+            WHERE ID_Producto = :ID_Producto');
+            $sql->bindValue(':Cantidad', $Cantidad, PDO::PARAM_INT);
+            $sql->bindValue(':Costo', $Costo);
+            $sql->bindValue(':ID_Producto', $ID_Producto, PDO::PARAM_INT);
+            $sql->execute();
+
+            self::actualizarEstado($connection, $ID_Producto);
+
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion sumar inventario
+
+
+    // Funcion para recalcular el estado de un producto según su existencia (Disponible, Stock bajo, Agotado)
+    public static function actualizarEstado($connection, $ID_Producto)
+    {
+        $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Estado =
+        CASE
+            WHEN Cantidad > Cantidad_Minima THEN "Disponible"
+            WHEN Cantidad > 0 AND Cantidad <= Cantidad_Minima THEN "Stock bajo"
+            ELSE "Agotado"
+        END
+        WHERE ID_Producto = :ID_Producto');
+        $sql->bindValue(':ID_Producto', $ID_Producto, PDO::PARAM_INT);
+        $sql->execute();
+    }//-- Fin funcion actualizar estado
+
+
     // Funcion para descontar inventario
     public static function descontarInventario($connection, $ID_Producto, $Cantidad)
     {
@@ -194,16 +228,7 @@ class Producto
             $sql->bindValue(':ID_Producto', $ID_Producto, PDO::PARAM_INT);
             $sql->execute();
 
-            // Actualizar estado según cantidad resultante
-            $sqlEstado = $connection->prepare('UPDATE ' . self::TABLE . ' SET Estado = 
-        CASE 
-            WHEN Cantidad > Cantidad_Minima THEN "Disponible"
-            WHEN Cantidad > 0 AND Cantidad <= Cantidad_Minima THEN "Stock bajo"
-            ELSE "Agotado"
-        END
-        WHERE ID_Producto = :ID_Producto');
-            $sqlEstado->bindValue(':ID_Producto', $ID_Producto, PDO::PARAM_INT);
-            $sqlEstado->execute();
+            self::actualizarEstado($connection, $ID_Producto);
 
         } catch (PDOException $e) {
             throw new Exception("Hubo un error: " . $e->getMessage());
