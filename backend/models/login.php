@@ -28,9 +28,20 @@ class Login
             $connection = NULL;
 
             if ($row) {
-                if (password_verify($Password, $row['Password']) && $row['Estado'] == 'autorizado') {
+                $valida = password_verify($Password, $row['Password']);
+
+                // Antes de la fase 1 las contraseñas se escapaban con htmlspecialchars antes de hashearlas
+                // ("a&b" se guardó como hash de "a&amp;b"). Si coincide la versión escapada, se vuelve a hashear la real.
+                $escapada = htmlspecialchars($Password);
+                if (!$valida && $escapada !== $Password && password_verify($escapada, $row['Password'])) {
+                    require_once __DIR__ . '/usuario.php';
+                    Usuario::updatePassword($ID_Usuario, $Password);
+                    $valida = true;
+                }
+
+                if ($valida && $row['Estado'] == 'autorizado') {
                     return $row;
-                } elseif (password_verify($Password, $row['Password']) && $row['Estado'] !== 'autorizado') {
+                } elseif ($valida && $row['Estado'] !== 'autorizado') {
                     return -2;
                 } else {
                     return 0;

@@ -9,14 +9,8 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $Nombre_Categoria = htmlspecialchars($data['Nombre_Categoria']);
-
-    if (!$Nombre_Categoria) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $Nombre_Categoria = campoTexto($data, 'Nombre_Categoria', true, 50);
 
     require_once __DIR__ . ('/../models/categoria.php');
 
@@ -63,13 +57,7 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
         return;
     }
 
-    $ID_Categoria = (int) $_GET['id'];
-
-    if (!$ID_Categoria) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $ID_Categoria = campoEntero($_GET, 'id', true, 1);
 
     require_once __DIR__ . '/../models/categoria.php';
 
@@ -97,16 +85,9 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Categoria = (int) htmlspecialchars($data['ID_Categoria']);
-    $Nombre_Categoria = isset($data['Nombre_Categoria']) ? htmlspecialchars($data['Nombre_Categoria']) : null;
-
-
-    if (!$ID_Categoria) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Categoria = campoEntero($data, 'ID_Categoria', true, 1);
+    $Nombre_Categoria = campoTexto($data, 'Nombre_Categoria', false, 50) ?: null;
 
     require_once __DIR__ . '/../models/categoria.php';
 
@@ -142,16 +123,8 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Categoria = (int) htmlspecialchars($data['ID_Categoria']);
-
-
-
-    if (!$ID_Categoria) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Categoria = campoEntero($data, 'ID_Categoria', true, 1);
 
     require_once __DIR__ . '/../models/categoria.php';
 

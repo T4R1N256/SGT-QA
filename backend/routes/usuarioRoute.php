@@ -27,10 +27,13 @@ if ($path === '/api/getUsers') {//Ruta que obtiene la información de todos los 
     }
 
 
-    if (isset($_GET['id'])) {
-        $ID_Usuario = (int) $_GET['id'];
-    } else {
-        $ID_Usuario = (int) $_SESSION['ID_Usuario'];
+    $ID_Usuario = campoEntero($_GET, 'id', false, 1) ?? (int) $_SESSION['ID_Usuario'];
+
+    // Un empleado solo puede consultar su propia información (datos personales, RL01)
+    if ($ID_Usuario !== (int) $_SESSION['ID_Usuario'] && !esAdmin()) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'mensaje' => 'Acceso denegado']);
+        return;
     }
 
     require_once __DIR__ . '/../models/usuario.php';
@@ -56,21 +59,15 @@ if ($path === '/api/getUsers') {//Ruta que obtiene la información de todos los 
         return;
     }
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $Password = htmlspecialchars($data['Password']);
-    $Nombre = htmlspecialchars($data['Nombre']);
-    $Puesto = htmlspecialchars($data['Puesto']);
-    $Telefono = htmlspecialchars($data['Telefono'] ?? '');
-    $Correo = htmlspecialchars($data['Correo'] ?? '');
-    $Calle = htmlspecialchars($data['Calle'] ?? '');
-    $Colonia = htmlspecialchars($data['Colonia'] ?? '');
-    $Codigo_Postal = htmlspecialchars($data['Codigo_Postal'] ?? '');
-
-    if (!$Password || !$Nombre || !$Puesto) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $Password = campoPassword($data);
+    $Nombre = campoTexto($data, 'Nombre', true, 100);
+    $Puesto = campoOpcion($data, 'Puesto', ['admin', 'empleado']);
+    $Telefono = campoTexto($data, 'Telefono', false, 20) ?? '';
+    $Correo = campoTexto($data, 'Correo', false) ?? '';
+    $Calle = campoTexto($data, 'Calle', false, 100) ?? '';
+    $Colonia = campoTexto($data, 'Colonia', false, 100) ?? '';
+    $Codigo_Postal = campoTexto($data, 'Codigo_Postal', false, 10) ?? '';
 
     require_once __DIR__ . '/../models/usuario.php';
     require_once __DIR__ . '/../models/empleado.php';
@@ -120,22 +117,15 @@ if ($path === '/api/getUsers') {//Ruta que obtiene la información de todos los 
         return;
     }
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Usuario = (int) $data['ID_Usuario'];
-    $Nombre = isset($data['Nombre']) ? htmlspecialchars($data['Nombre']) : null;
-    $Puesto = isset($data['Puesto']) ? htmlspecialchars($data['Puesto']) : null;
-    $Telefono = isset($data['Telefono']) ? htmlspecialchars($data['Telefono']) : null;
-    $Correo = isset($data['Correo']) ? htmlspecialchars($data['Correo']) : null;
-    $Calle = isset($data['Calle']) ? htmlspecialchars($data['Calle']) : null;
-    $Colonia = isset($data['Colonia']) ? htmlspecialchars($data['Colonia']) : null;
-    $Codigo_Postal = isset($data['Codigo_Postal']) ? htmlspecialchars($data['Codigo_Postal']) : null;
-
-
-    if (!$ID_Usuario) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Usuario = campoEntero($data, 'ID_Usuario', true, 1);
+    $Nombre = campoTexto($data, 'Nombre', false, 100) ?: null;
+    $Puesto = campoOpcion($data, 'Puesto', ['admin', 'empleado'], false);
+    $Telefono = campoTexto($data, 'Telefono', false, 20);
+    $Correo = campoTexto($data, 'Correo', false);
+    $Calle = campoTexto($data, 'Calle', false, 100);
+    $Colonia = campoTexto($data, 'Colonia', false, 100);
+    $Codigo_Postal = campoTexto($data, 'Codigo_Postal', false, 10);
 
     require_once __DIR__ . '/../config/database.php';
     require_once __DIR__ . '/../models/empleado.php';
@@ -204,16 +194,9 @@ if ($path === '/api/getUsers') {//Ruta que obtiene la información de todos los 
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Usuario = (int) $data['ID_Usuario'];
-    $Password = htmlspecialchars($data['Password']);
-
-
-    if (!$ID_Usuario || !$Password) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Usuario = campoEntero($data, 'ID_Usuario', true, 1);
+    $Password = campoPassword($data);
 
     require_once __DIR__ . '/../models/usuario.php';
 
@@ -242,16 +225,9 @@ if ($path === '/api/getUsers') {//Ruta que obtiene la información de todos los 
     }
 
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Usuario = (int) $data['ID_Usuario'];
-    $Estado = htmlspecialchars($data['Estado']);
-
-
-    if (!$ID_Usuario || !$Estado) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Usuario = campoEntero($data, 'ID_Usuario', true, 1);
+    $Estado = campoOpcion($data, 'Estado', ['autorizado', 'no autorizado']);
 
     require_once __DIR__ . '/../models/usuario.php';
 
@@ -279,14 +255,9 @@ if ($path === '/api/getUsers') {//Ruta que obtiene la información de todos los 
         return;
     }
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Usuario = (int) $data['ID_Usuario'];
+    $data = leerJson();
+    $ID_Usuario = campoEntero($data, 'ID_Usuario', true, 1);
 
-    if (!$ID_Usuario) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos obligatorios']);
-        return;
-    }
     require_once __DIR__ . '/../config/database.php';
     require_once __DIR__ . '/../models/empleado.php';
     require_once __DIR__ . '/../models/usuario.php';

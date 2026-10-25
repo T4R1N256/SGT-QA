@@ -9,18 +9,18 @@ class Venta
     const TABLE = 'Venta';
 
 
-    // Funcion para crear venta
-    public static function openVenta($Fecha, $ID_Caja)
+    // Funcion para crear venta en proceso
+    // Fecha y Hora definitivas se guardan al completarla (regla 9)
+    public static function openVenta($connection, $ID_Caja)
     {
 
         try {
             $Estado = 'enproceso';
 
-            $connection = new Conexion;
             $sql = $connection->prepare('INSERT INTO ' . self::TABLE . ' (Fecha, Hora, Monto, Estado, ID_Caja) 
             VALUES(:Fecha, :Hora, :Monto, :Estado, :ID_Caja)');
-            $sql->bindValue(':Fecha', $Fecha, PDO::PARAM_STR);
-            $sql->bindValue(':Hora', '00:00:00', PDO::PARAM_STR);
+            $sql->bindValue(':Fecha', date('Y-m-d'), PDO::PARAM_STR);
+            $sql->bindValue(':Hora', date('H:i:s'), PDO::PARAM_STR);
             $sql->bindValue(':Monto', '0', PDO::PARAM_STR);
             $sql->bindValue(':Estado', $Estado, PDO::PARAM_STR);
             $sql->bindValue(':ID_Caja', $ID_Caja, PDO::PARAM_INT);
@@ -31,6 +31,40 @@ class Venta
             throw new Exception("Hubo un error: " . $e->getMessage());
         }
     }//-- Fin funcion crear venta
+
+
+    // Funcion para saber si una venta sigue en proceso dentro de una caja (bloquea la fila hasta el commit)
+    public static function ventaEnProceso($connection, $ID_Venta, $ID_Caja)
+    {
+        try {
+            $sql = $connection->prepare('SELECT ID_Venta FROM ' . self::TABLE . '
+            WHERE ID_Venta = :ID_Venta AND ID_Caja = :ID_Caja AND Estado = :Estado FOR UPDATE');
+            $sql->bindValue(':ID_Venta', $ID_Venta, PDO::PARAM_INT);
+            $sql->bindValue(':ID_Caja', $ID_Caja, PDO::PARAM_INT);
+            $sql->bindValue(':Estado', 'enproceso', PDO::PARAM_STR);
+            $sql->execute();
+            return (bool) $sql->fetch();
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion venta en proceso
+
+
+    // Funcion para cancelar las ventas que quedaron en proceso en una caja (se abandonaron sin cobrar)
+    public static function cancelarEnProceso($connection, $ID_Caja)
+    {
+        try {
+            $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Estado = :Cancelada
+            WHERE ID_Caja = :ID_Caja AND Estado = :EnProceso');
+            $sql->bindValue(':Cancelada', 'cancelada', PDO::PARAM_STR);
+            $sql->bindValue(':EnProceso', 'enproceso', PDO::PARAM_STR);
+            $sql->bindValue(':ID_Caja', $ID_Caja, PDO::PARAM_INT);
+            $sql->execute();
+            return $sql->rowCount();
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion cancelar ventas en proceso
 
 
     // Funcion para agregar producto a detalle
@@ -80,16 +114,16 @@ class Venta
         }
     }//-- Fin funcion obtener detalle venta
 
-    // Funcion para completar venta 
-    public static function completeVenta($ID_Venta, $Hora, $Monto, $Forma_Pago)
+    // Funcion para completar venta (dentro de la transacción de la ruta)
+    public static function completeVenta($connection, $ID_Venta, $Fecha, $Hora, $Monto, $Forma_Pago)
     {
         try {
             $Estado = 'finalizada';
-            $connection = new Conexion();
 
-            $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Hora = :Hora,
+            $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Fecha = :Fecha, Hora = :Hora,
             Monto = :Monto, Estado = :Estado, Forma_Pago = :Forma_Pago
             WHERE ID_Venta = :ID_Venta');
+            $sql->bindValue(':Fecha', $Fecha, PDO::PARAM_STR);
             $sql->bindValue(':Hora', $Hora, PDO::PARAM_STR);
             $sql->bindValue(':Monto', $Monto, PDO::PARAM_STR);
             $sql->bindValue(':Estado', $Estado, PDO::PARAM_STR);
@@ -114,8 +148,9 @@ class Venta
         try {
             $connection = new Conexion();
             $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Estado = :Estado
-        WHERE ID_Venta = :ID_Venta');
+        WHERE ID_Venta = :ID_Venta AND Estado = :EnProceso');
             $sql->bindValue(':Estado', 'cancelada', PDO::PARAM_STR);
+            $sql->bindValue(':EnProceso', 'enproceso', PDO::PARAM_STR);
             $sql->bindValue(':ID_Venta', $ID_Venta, PDO::PARAM_INT);
             $sql->execute();
             return $sql->rowCount() > 0 ? 1 : 0;
@@ -130,19 +165,15 @@ class Venta
         try {
             $Estado = 'finalizada';
             $connection = new Conexion();
-            $sql = $connection->prepare('SELECT Fecha, Hora, Monto  FROM ' . self::TABLE . '
-        WHERE ID_Caja = :ID_Caja AND Estado = :Estado');
+            $sql = $connection->prepare('SELECT ID_Venta, Fecha, Hora, Monto, Forma_Pago FROM ' . self::TABLE . '
+        WHERE ID_Caja = :ID_Caja AND Estado = :Estado ORDER BY ID_Venta');
             $sql->bindValue(':ID_Caja', $ID_Caja, PDO::PARAM_INT);
             $sql->bindValue(':Estado', $Estado, PDO::PARAM_STR);
             $sql->execute();
             $ventas = $sql->fetchAll();
             $connection = NULL;
 
-            if ($ventas) {
-                return $ventas;
-            } else {
-                return false;
-            }
+            return $ventas;
 
         } catch (PDOException $e) {
             throw new Exception("Hubo un error: " . $e->getMessage());

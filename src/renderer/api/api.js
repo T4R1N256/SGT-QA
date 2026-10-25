@@ -12,11 +12,11 @@ async function request(path, options = {}) {
 
     if (res.status === 401) {
       window.dispatchEvent(new CustomEvent('sesion-expirada'))
-      return { ok: false, mensaje: data.mensaje ?? 'No autorizado' }
+      return { ok: false, status: 401, mensaje: data.mensaje ?? 'No autorizado' }
     }
 
     if (!res.ok) {
-      return { ok: false, mensaje: data.mensaje ?? data.error ?? `Error ${res.status}` }
+      return { ok: false, status: res.status, mensaje: data.mensaje ?? data.error ?? `Error ${res.status}` }
     }
 
     return data
@@ -37,7 +37,6 @@ export const logout = ()       => post('logout')
 // Usuarios
 export const getUsers            = ()           => get('getUsers')
 export const getUserInfo         = (id)         => get(id ? `getUserInfo?id=${id}` : 'getUserInfo')
-export const checkEmail          = (correo)     => get(`checkEmail?correo=${encodeURIComponent(correo)}`)
 export const createUser          = (data)       => post('createUser', data)
 export const modifyInfoUser      = (id, data)   => patch('modifyInfoUser',   { ID_Usuario: id, ...data })
 export const modifyPasswordUser  = (id, pw)     => post('modifyPasswordUser', { ID_Usuario: id, Password: pw })

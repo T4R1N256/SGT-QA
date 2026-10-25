@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
 const SESSION_KEY = 'usuario'
 const CAJA_KEY = 'caja'
@@ -52,6 +52,11 @@ export function AuthProvider({ children }) {
     setUserInfo(null)
     setCajaState(null)
   }
+
+  // Regla 4: el proceso principal de Electron no deja cerrar la ventana mientras haya una caja abierta
+  useEffect(() => {
+    window.electronAPI?.setCajaAbierta?.(Boolean(caja))
+  }, [caja])
 
   const esAdmin = usuario?.puesto === 'admin'
 

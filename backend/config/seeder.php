@@ -69,7 +69,7 @@ try {
 }
 
 // Datos de demostración (solo desarrollo y QA)
-if (in_array(strtolower($_ENV['SEED_DEMO'] ?? getenv('SEED_DEMO') ?: ''), ['1', 'true'], true)) {
+if (in_array(strtolower(variableEntorno('SEED_DEMO', '')), ['1', 'true'], true)) {
     require_once __DIR__ . '/seed_demo.php';
 
     try {

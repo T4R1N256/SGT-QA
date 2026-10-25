@@ -12,7 +12,18 @@ Dotenv\Dotenv::createImmutable(dirname(__DIR__, 2))->safeLoad();
 
 date_default_timezone_set('America/Mazatlan');
 
-if (($_ENV['APP_ENV'] ?? 'production') === 'development') {
+
+// Variable de entorno: primero $_ENV (lo llena el .env) y después getenv()
+// Con variables_order = "GPCS" (php.ini de Ubuntu, por ejemplo) $_ENV no trae las variables del proceso,
+// que es como Electron y Docker pasan las credenciales de la base de datos
+function variableEntorno(string $nombre, ?string $defecto = null): ?string
+{
+   $valor = $_ENV[$nombre] ?? getenv($nombre);
+   return ($valor === false || $valor === '') ? $defecto : $valor;
+}
+
+
+if (variableEntorno('APP_ENV', 'production') === 'development') {
    error_reporting(E_ALL);
    ini_set('display_errors', '1');
 } else {
@@ -27,16 +38,33 @@ class Conexion extends PDO
    {
       //Sobreescribo el método constructor de la clase PDO.
       try {
-         // Pdo\Mysql existe desde PHP 8.4; en versiones anteriores se usa la constante de PDO
-         $initCommand = class_exists('Pdo\Mysql') ? Pdo\Mysql::ATTR_INIT_COMMAND : PDO::MYSQL_ATTR_INIT_COMMAND;
+         // Pdo\Mysql existe desde PHP 8.4; en versiones anteriores se usan las constantes de PDO
+         $pdoMysql = class_exists('Pdo\Mysql');
+         $initCommand = $pdoMysql ? Pdo\Mysql::ATTR_INIT_COMMAND : PDO::MYSQL_ATTR_INIT_COMMAND;
+         $foundRows = $pdoMysql ? Pdo\Mysql::ATTR_FOUND_ROWS : PDO::MYSQL_ATTR_FOUND_ROWS;
          $options = array(
-            $initCommand => 'SET NAMES utf8',
+            $initCommand => 'SET NAMES utf8mb4',
+            // rowCount() cuenta las filas encontradas, no solo las que cambiaron:
+            // guardar un registro sin modificarlo ya no responde "no se encontró"
+            $foundRows => true,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, #Cuando haya un error retornar excep en vez de false
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC #Obtener los datos de la db en array asociativo con nombres de las columnas
          );
-         parent::__construct('mysql:host=' . $_ENV['DB_HOST'] . ';port=' . ($_ENV['DB_PORT'] ?? '3306') . ';dbname=' . $_ENV['DB_NAME'], $_ENV['DB_USER'], $_ENV['DB_PASS'], $options);
+         parent::__construct(
+            'mysql:host=' . variableEntorno('DB_HOST') . ';port=' . variableEntorno('DB_PORT', '3306') . ';dbname=' . variableEntorno('DB_NAME'),
+            variableEntorno('DB_USER'),
+            variableEntorno('DB_PASS'),
+            $options
+         );
       } catch (PDOException $e) {
-         echo 'Ha surgido un error y no se puede conectar a la base de datos. Detalle: ' . $e->getMessage();
+         $mensaje = 'Ha surgido un error y no se puede conectar a la base de datos. Detalle: ' . $e->getMessage();
+         // En el API se responde JSON con código 500 para que la app muestre el error
+         if (PHP_SAPI !== 'cli') {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'mensaje' => $mensaje]);
+         } else {
+            echo $mensaje . "\n";
+         }
          exit;
       }
    }

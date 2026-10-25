@@ -12,6 +12,16 @@ class Producto
     // -1 = hubo un error en la ejecución
 
 
+    // Estado del producto según sus existencias y su cantidad mínima
+    public static function calcularEstado(int $Cantidad, int $Cantidad_Minima): string
+    {
+        if ($Cantidad > $Cantidad_Minima) {
+            return 'Disponible';
+        }
+        return $Cantidad > 0 ? 'Stock bajo' : 'Sin stock';
+    }//-- Fin funcion calcular estado
+
+
     // Funcion para crear un Producto
     public static function crearProducto(
         $Nombre_Producto,
@@ -149,6 +159,28 @@ class Producto
             throw new Exception("Hubo un error: " . $e->getMessage());
         }
     }//--Fin funcion actualizar producto 
+
+
+    // Funcion para leer y bloquear (FOR UPDATE) los productos de una venta hasta el commit
+    // Regresa un arreglo indexado por ID_Producto
+    public static function bloquearProductos($connection, array $IDs)
+    {
+        try {
+            $marcadores = implode(', ', array_fill(0, count($IDs), '?'));
+            $sql = $connection->prepare('SELECT ID_Producto, Nombre_Producto, Precio, Cantidad, Cantidad_Minima FROM '
+                . self::TABLE . " WHERE ID_Producto IN ($marcadores) FOR UPDATE");
+            $sql->execute(array_values($IDs));
+
+            $productos = [];
+            foreach ($sql->fetchAll() as $producto) {
+                $productos[(int) $producto['ID_Producto']] = $producto;
+            }
+            return $productos;
+
+        } catch (PDOException $e) {
+            throw new Exception("Hubo un error: " . $e->getMessage());
+        }
+    }//-- Fin funcion bloquear productos
 
 
     // Funcion para descontar inventario

@@ -10,15 +10,9 @@ if ($path === '/api/login') { //Ruta para inicio de sesion
     }
     require_once __DIR__ . '/../models/login.php';
 
-    $data = json_decode(file_get_contents('php://input'), true);
-    $ID_Usuario = htmlspecialchars($data['ID_Usuario']);
-    $Password = htmlspecialchars($data['Password']);
-
-    if (!$ID_Usuario || !$Password) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'mensaje' => 'Faltan campos']);
-        return;
-    }
+    $data = leerJson();
+    $ID_Usuario = campoEntero($data, 'ID_Usuario', true, 1);
+    $Password = campoPassword($data);
 
 
     $res = Login::validar($ID_Usuario, $Password);

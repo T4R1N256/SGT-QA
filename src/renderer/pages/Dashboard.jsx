@@ -25,7 +25,8 @@ const REGISTER_INFO_ROWS = [
 
 const REGISTER_STATE_ROWS = [
   { label: 'Monto inicial', field: 'Monto_Inicial'},
-  { label: 'Monto final', field: 'Monto_Final'},
+  { label: 'Efectivo esperado', field: 'Monto_Final_Sistema'},
+  { label: 'Efectivo contado', field: 'Monto_Final'},
   { field: 'Estado_Final'}
 ]
 
@@ -49,7 +50,7 @@ export default function Dashboard() {
   useEffect(() => {
     getCashRegister()
       .then((res) => {
-        if (res.ok) setUltimaCaja(res.monto)
+        if (res.ok) setUltimaCaja(res.caja)
       })
       .finally(() => setLoadingCaja(false))
   }, [])
@@ -72,8 +73,8 @@ export default function Dashboard() {
                 {capitalize(userInfo.Estado)}
               </span>
               <hr className="border border-gray-200 my-3" />
-              {USER_INFO_ROWS.map(({id, label, field})=>(
-            <p key={id} className="text-gray-800 text-md">
+              {USER_INFO_ROWS.map(({label, field})=>(
+            <p key={field} className="text-gray-800 text-md">
               {label}: {' '}
               <span className="text-inherit font-semibold ">
            {userInfo[field]}
@@ -108,7 +109,7 @@ export default function Dashboard() {
         ) : ultimaCaja ? (
           <div className="flex flex-col gap-2 text-md">
             {REGISTER_INFO_ROWS.map(({label, field})=>(
-                <p className="text-gray-500">
+                <p key={field} className="text-gray-500">
               {label}: <span className="text-gray-800 font-semibold">{ultimaCaja[field] ?? 'Invalido'}</span>
             </p>
             ))}
@@ -117,7 +118,7 @@ export default function Dashboard() {
 
             {REGISTER_STATE_ROWS.map(({label, field}) => (
               field !== 'Estado_Final' ? (
-                            <p className="text-gray-500">
+                            <p key={field} className="text-gray-500">
              {label}: {' '}
               <span className="text-gray-800 font-semibold">
                  {formatMoney(ultimaCaja[field])}
@@ -125,6 +126,7 @@ export default function Dashboard() {
             </p>
               ) :
                             <span
+                key={field}
                 className={`text-xs w-fit px-2 py-0.5 rounded-full mt-1 ${
                   ultimaCaja.Estado_Final === 'cuadrada'
                     ? 'bg-green-100 text-green-700'

@@ -4,6 +4,8 @@
  * Autorizacion mediante sesiones de PHP
  * El estado se resetea al cerrar el navegador
  */
+require_once __DIR__ . '/config/validar.php';
+
 ini_set('session.gc_maxlifetime', 86400); // 24 hours
 session_set_cookie_params(['lifetime' => 86400]);
 session_start();
@@ -22,16 +24,18 @@ header('Pragma: no-cache');
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-// Añadir direcciones para realizar requests
-$allowed = ['http://localhost:5173', 'http://localhost:8000'];
+// Orígenes que pueden hacer peticiones con credenciales:
+// Vite en desarrollo y el servidor local con el que Electron sirve la app compilada (APP_ORIGIN, puerto variable)
+$allowed = array_filter(['http://localhost:5173', 'http://localhost:8000', getenv('APP_ORIGIN') ?: null]);
 
-// In production the renderer has no HTTP origin (file://)
-// so we allow the request through unconditionally
-if (in_array($origin, $allowed) || $origin === '') {
-    header('Access-Control-Allow-Origin: ' . ($origin ?: '*'));
-} else {
-    http_response_code(403);
-    exit;
+// Las peticiones sin Origin (mismo origen, terminal, pruebas) no son CORS y no necesitan cabecera
+if ($origin !== '') {
+    if (!in_array($origin, $allowed, true)) {
+        http_response_code(403);
+        exit;
+    }
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -72,6 +76,8 @@ function requerirAdmin(): void
 
 
 // Rutas
+// Un ErrorApi responde con su código HTTP y su mensaje (por ejemplo, datos inválidos: 400); cualquier otra excepción responde 500
+try {
 switch (true) {
 
     case $path === '/api/ping': // Ruta de prueba para verificar que PHP responde
@@ -97,11 +103,6 @@ switch (true) {
     case $path === '/api/createUser':
         requerirAdmin();
         require_once __DIR__ . '/routes/usuarioRoute.php';
-        break;
-
-    case $path === '/api/checkEmail':
-        requerirAdmin();
-        require_once __DIR__ . '/routes/checkEmailRoute.php';
         break;
 
     case $path === '/api/modifyInfoUser':
@@ -130,10 +131,12 @@ switch (true) {
         break;
 
     case $path === '/api/getProduct':
+        requerirAutorizacion();
         require_once __DIR__ . '/routes/productRoute.php';
         break;
 
     case $path === '/api/getAllProducts':
+        requerirAutorizacion();
         require_once __DIR__ . '/routes/productRoute.php';
         break;
 
@@ -148,10 +151,12 @@ switch (true) {
         break;
 
     case $path === '/api/getCategory':
+        requerirAutorizacion();
         require_once __DIR__ . '/routes/categoryRoute.php';
         break;
 
     case $path === '/api/getAllCategories':
+        requerirAutorizacion();
         require_once __DIR__ . '/routes/categoryRoute.php';
         break;
 
@@ -171,10 +176,12 @@ switch (true) {
         break;
 
     case $path === '/api/getSupplier':
+        requerirAutorizacion();
         require_once __DIR__ . '/routes/supplierRoute.php';
         break;
 
     case $path === '/api/getAllSuppliers':
+        requerirAutorizacion();
         require_once __DIR__ . '/routes/supplierRoute.php';
         break;
 
@@ -199,6 +206,7 @@ switch (true) {
         break;
 
     case $path === '/api/getCashRegister':
+        requerirAutorizacion();
         require_once __DIR__ . '/routes/cashRegisterRoute.php';
         break;
 
@@ -232,6 +240,7 @@ switch (true) {
         break;
 
     case $path === '/api/getAllVentas':
+        requerirAutorizacion();
         require_once __DIR__ . '/routes/cashRegisterRoute.php';
         break;
 
@@ -241,3 +250,13 @@ switch (true) {
         break;
 
 }// --Fin switch principal
+
+} catch (ErrorApi $e) {
+    http_response_code($e->getCode() ?: 400);
+    echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()]);
+} catch (Throwable $e) {
+    error_log('[API] ' . $path . ': ' . $e->getMessage());
+    http_response_code(500);
+    $detalle = ($_ENV['APP_ENV'] ?? getenv('APP_ENV')) === 'development' ? ': ' . $e->getMessage() : '';
+    echo json_encode(['ok' => false, 'mensaje' => 'Error interno del servidor' . $detalle]);
+}

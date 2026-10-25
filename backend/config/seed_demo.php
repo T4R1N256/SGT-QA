@@ -4,14 +4,7 @@
 // Incluye productos en los tres estados (Disponible, Stock bajo, Sin stock) y un usuario empleado
 
 
-// Funcion para calcular el estado de un producto, igual que productRoute.php
-function estadoProductoDemo(int $Cantidad, int $Cantidad_Minima): string
-{
-    if ($Cantidad > $Cantidad_Minima) {
-        return 'Disponible';
-    }
-    return $Cantidad > 0 ? 'Stock bajo' : 'Sin stock';
-}
+require_once __DIR__ . '/../models/producto.php';
 
 
 // Funcion para cargar los datos de demostración
@@ -94,7 +87,7 @@ function cargarDatosDemo(PDO $connection): bool
                 ':Precio' => $precio,
                 ':Cantidad' => $cantidad,
                 ':Unidad' => $unidad,
-                ':Estado' => estadoProductoDemo($cantidad, $minima),
+                ':Estado' => Producto::calcularEstado($cantidad, $minima),
                 ':Minima' => $minima,
                 ':Categoria' => $idsCategoria[$categoria],
                 ':Proveedor' => $idsProveedor[$proveedor],

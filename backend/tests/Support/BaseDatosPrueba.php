@@ -54,7 +54,7 @@ final class BaseDatosPrueba
     public static function ejecutarSeeder(): string
     {
         $proceso = proc_open(
-            [PHP_BINARY, '-d', 'variables_order=EGPCS', __DIR__ . '/../../config/seeder.php'],
+            [PHP_BINARY, __DIR__ . '/../../config/seeder.php'],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
             null,
