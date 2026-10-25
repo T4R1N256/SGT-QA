@@ -14,7 +14,7 @@ import {
   FormAlert,
   fieldInputClass,
 } from '../components'
-import { sanitize } from '../utils/sanitize'
+import { limpiarTexto } from '../utils/texto'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
 
@@ -36,8 +36,8 @@ const EMPTY_PROVEEDOR = { nombre: '', telefono: '', estado: 'activo' }
 
 function parseProveedor(form) {
   return {
-    nombre: sanitize(form.nombre),
-    telefono: sanitize(form.telefono),
+    nombre: limpiarTexto(form.nombre),
+    telefono: limpiarTexto(form.telefono),
     estado: form.estado,
   }
 }

@@ -10,7 +10,7 @@ import {
 } from '../api/api'
 import { useFetch } from '../hooks/useFetch'
 import { ActionButton, ConfirmModal, FormModal, FormAlert, fieldInputClass } from '../components'
-import { sanitize } from '../utils/sanitize'
+import { limpiarTexto } from '../utils/texto'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
 
@@ -43,9 +43,8 @@ const EMPTY_PRODUCT = {
 
 function parseProduct(form) {
   return {
-    nombre: sanitize(form.nombre),
-    // Se guarda tal cual (React escapa al mostrar): sanitize convertiría "&" en "&amp;"
-    descripcion: form.descripcion.trim(),
+    nombre: limpiarTexto(form.nombre),
+    descripcion: limpiarTexto(form.descripcion),
     precio: parseFloat(form.precio),
     cantidad: parseInt(form.cantidad, 10),
     unidad: form.unidad,

@@ -1,4 +1,4 @@
-import { sanitize } from './sanitize'
+import { limpiarTexto } from './texto'
 
 const TEL_REGEX = /^\d+$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -19,8 +19,8 @@ export function validateCorreo(value) {
 export function validateUserForm(form, mode) {
   const requiredMissing =
     mode === 'create'
-      ? !sanitize(form.nombre) || !form.puesto || !form.password || !form.confirmar
-      : !sanitize(form.nombre) || !form.puesto || !form.estado
+      ? !limpiarTexto(form.nombre) || !form.puesto || !form.password || !form.confirmar
+      : !limpiarTexto(form.nombre) || !form.puesto || !form.estado
 
   if (requiredMissing) {
     return {
@@ -37,10 +37,10 @@ export function validateUserForm(form, mode) {
   if ((mode === 'create' || password) && password !== confirmar)
     return { message: 'Las contraseñas no coinciden', field: 'confirmar' }
 
-  const telError = validateTelefono(sanitize(form.telefono))
+  const telError = validateTelefono(limpiarTexto(form.telefono))
   if (telError) return { message: telError, field: 'telefono' }
 
-  const correoError = validateCorreo(sanitize(form.correo))
+  const correoError = validateCorreo(limpiarTexto(form.correo))
   if (correoError) return { message: correoError, field: 'correo' }
 
   return null

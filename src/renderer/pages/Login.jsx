@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { login } from '../api/api'
 import { TopBar, ActionButton, FormAlert, fieldInputClass } from '../components'
-import { sanitize } from '../utils/sanitize'
+import { limpiarTexto } from '../utils/texto'
 
 export default function Login() {
   const [id, setId] = useState('')
@@ -12,8 +12,9 @@ export default function Login() {
   const { guardarSesion } = useAuth()
 
   async function handleLogin() {
-    const cleanId = sanitize(id)
-    const cleanPassword = sanitize(password)
+    // La contraseña se recorta igual que al guardarla en Usuarios y no se transforma de ninguna otra forma
+    const cleanId = limpiarTexto(id)
+    const cleanPassword = limpiarTexto(password)
 
     if (!cleanId || !cleanPassword) {
       setResponse({ type: 'error', message: 'Completa ambos campos' })
