@@ -75,6 +75,12 @@ Leyenda: ✅ verificado · ⏳ pendiente de verificar en el entorno indicado · 
 | Se borra `credenciales-bd.json`: se restablece root y los datos siguen | ✅ |
 | Instalación de la versión anterior (root sin contraseña, puerto 3307, datos viejos): se apaga la MariaDB anterior, se aseguran las cuentas, se aplican las migraciones y los usuarios anteriores inician sesión | ✅ |
 
+## Corregido después de la fase 6
+
+| Hallazgo | Corrección | Evidencia |
+|---|---|---|
+| Los formularios de SGT pasaban el texto por DOMPurify (`sanitize`). Con un `<` en el texto lo devolvía como HTML y borraba lo que pareciera etiqueta: "Pan & Cía <grande>" se guardaba como "Pan &amp; Cía ". La pantalla de Login también lo aplicaba a la contraseña, así que un usuario con `<` en su contraseña no podía entrar. | El texto solo se recorta (`utils/texto.js`) y se guarda tal cual; React lo escapa al mostrarlo. Se quitó DOMPurify. La migración 007 regresa `&amp;`, `&lt;`, `&gt;` y `&nbsp;` a su texto original en las columnas que llenan esos formularios (lo que DOMPurify borró no se puede recuperar). | PHPUnit `TextoEscapadoTest`; Vitest `texto.test.js`; E2E en la app compilada: entrar con la contraseña `Clave&2025<x>` y guardar "Pan & Cía <grande>" y "Frutas & Verduras <3" |
+
 ## Pendiente
 
 | Qué | Dónde | Cómo |

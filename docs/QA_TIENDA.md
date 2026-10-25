@@ -113,7 +113,7 @@ Leyenda: ✅ verificado · ➖ no aplica por una decisión del equipo (se explic
 |---|---|
 | Al confirmar, vaciar el carrito hacía que la guarda del resumen llevara al carrito en lugar del pago | Corregido en T4 |
 | Concordancia de los mensajes en plural ("Los apellidos solo *pueden*…", "Las referencias no *pueden*…") | Corregido en T3 y T4 |
-| SGT (no la tienda): `sanitize` del renderer convierte `&` en `&amp;` al guardar nombres de productos y categorías. Login y Usuarios también lo usan con la contraseña, por eso no se cambió sin migrar | Pendiente, fuera de la tienda; la descripción del producto no lo usa |
+| SGT (no la tienda): `sanitize` del renderer (DOMPurify) convertía en HTML el texto que tuviera un `<`: "Pan & Cía <grande>" se guardaba como "Pan &amp; Cía " y se veía así en SGT y en la tienda, y un usuario con `<` en su contraseña no podía iniciar sesión | Corregido después de T5: el texto se guarda tal cual y la migración 007 regresa los datos ya guardados a su texto original |
 
 ## Prueba desde cero
 

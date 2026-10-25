@@ -14,7 +14,7 @@ import {
   FormAlert,
   fieldInputClass,
 } from '../components'
-import { sanitize } from '../utils/sanitize'
+import { limpiarTexto } from '../utils/texto'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
 
@@ -36,7 +36,7 @@ const EMPTY_CATEGORIA = { nombre: '', estado: 'activo' }
 
 function parseCategoria(form) {
   return {
-    nombre: sanitize(form.nombre),
+    nombre: limpiarTexto(form.nombre),
     estado: form.estado,
   }
 }

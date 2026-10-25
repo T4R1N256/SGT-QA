@@ -17,7 +17,7 @@ import {
 } from '../api/api'
 import { useFetch } from '../hooks/useFetch'
 import { useHeader } from '../context/HeaderContext'
-import { sanitize } from '../utils/sanitize'
+import { limpiarTexto } from '../utils/texto'
 import { validateUserForm } from '../utils/validators'
 import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/20/solid'
 
@@ -86,7 +86,7 @@ function userInfoToForm(info) {
 function buildInfoPayload(form) {
   const payload = {}
   for (const [key, apiKey] of Object.entries(API_FIELD))
-    payload[apiKey] = key === 'puesto' ? form[key] : sanitize(form[key])
+    payload[apiKey] = key === 'puesto' ? form[key] : limpiarTexto(form[key])
   return payload
 }
 
