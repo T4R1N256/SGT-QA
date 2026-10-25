@@ -113,6 +113,8 @@ Ordenados por impacto. Todos se verificaron leyendo el código. B4 y B5 además 
 
 El SRS no define lo suficiente para implementar estos puntos sin suponer cosas.
 
+> **Actualización 25-oct-2026:** el equipo respondió P1–P7. Las respuestas y los supuestos para las preguntas restantes están en [`PLAN.md` §0](PLAN.md).
+
 | # | Pregunta | Por qué importa |
 |---|---|---|
 | **P1** | **Ticket:** ¿en pantalla, en PDF o en una **impresora térmica** (58 u 80 mm)? ¿Qué datos lleva: nombre de la tienda, RFC, folio, cajero, **IVA desglosado**? ¿Los precios ya incluyen IVA? | La regla 8 es obligatoria y el LEL menciona "impuestos pagados como el IVA". Si los precios no incluyen IVA, cambia el cálculo del total. |
