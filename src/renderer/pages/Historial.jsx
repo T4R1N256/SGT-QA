@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useConsulta } from '../hooks/useConsulta'
 import { getSalesHistory, getCashRegisters, getCashRegisterDetail, getVenta } from '../api/api'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { useNotify } from '../context/NotificationContext.jsx'
-import { ActionButton } from '../components'
+import { ActionButton, Pestanas } from '../components'
 import { imprimirTicket } from '../pdf/imprimir'
 import { formatoFolio, formatoMoneda } from '../pdf/TicketPDF'
 import { rangoDias } from '../utils/fechas'
@@ -18,27 +19,6 @@ const PESTANAS = [
 
 const controlCls = 'px-2 py-1.5 rounded-lg border border-gray-300 text-sm bg-white'
 const encabezadoCls = 'py-2 px-2 text-center text-xs text-white'
-
-// Llama a la API cuando cambian los filtros; ignora respuestas viejas si los filtros cambiaron antes
-function useConsulta(apiFn, filtros) {
-  const [estado, setEstado] = useState({ cargando: true, datos: null, error: null })
-  const clave = JSON.stringify(filtros)
-
-  useEffect(() => {
-    let vigente = true
-    setEstado((prev) => ({ ...prev, cargando: true }))
-    apiFn(filtros).then((res) => {
-      if (!vigente) return
-      setEstado(res.ok ? { cargando: false, datos: res, error: null } : { cargando: false, datos: null, error: res.mensaje })
-    })
-    return () => {
-      vigente = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clave])
-
-  return estado
-}
 
 function Fechas({ filtros, setFiltros }) {
   return (
@@ -347,22 +327,7 @@ function HistorialCajas() {
 export default function Historial() {
   const [pestana, setPestana] = useState('ventas')
 
-  useHeader(
-    <div className="flex gap-1 p-1 bg-gray-700 rounded-lg">
-      {PESTANAS.map((p) => (
-        <button
-          key={p.id}
-          type="button"
-          onClick={() => setPestana(p.id)}
-          className={`px-3 py-1 text-xs font-semibold rounded ${
-            pestana === p.id ? 'bg-white text-gray-900' : 'text-gray-300 hover:text-white'
-          }`}
-        >
-          {p.label}
-        </button>
-      ))}
-    </div>
-  )
+  useHeader(<Pestanas opciones={PESTANAS} activa={pestana} onCambiar={setPestana} />)
 
   return <div className="w-full">{pestana === 'ventas' ? <HistorialVentas /> : <HistorialCajas />}</div>
 }

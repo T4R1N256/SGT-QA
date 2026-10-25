@@ -9,19 +9,6 @@ require_once __DIR__ . '/../models/caja.php';
 const VENTAS_POR_PAGINA = 25;
 
 
-// Funcion para leer el rango de fechas de los filtros; por defecto, los últimos 30 días
-function rangoFechas(array $parametros): array
-{
-    $Hasta = campoFecha($parametros, 'hasta', false) ?? date('Y-m-d');
-    $Desde = campoFecha($parametros, 'desde', false) ?? date('Y-m-d', strtotime("$Hasta -30 days"));
-
-    if ($Desde > $Hasta) {
-        throw new ErrorValidacion('La fecha inicial no puede ser posterior a la final');
-    }
-    return [$Desde, $Hasta];
-}
-
-
 if ($path === '/api/getSalesHistory') { // Ruta para el historial de ventas con filtros y paginación
 
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') {

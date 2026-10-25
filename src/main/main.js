@@ -314,10 +314,16 @@ async function generarPDF({ html, carpeta, nombre, formato = 'ticket', abrir = t
       pageSize = { width: ANCHO_TICKET_MM / 25.4, height: Math.max(altoPx / PX_POR_PULGADA + 0.1, 2) }
     }
 
+    // Márgenes en pulgadas; los reportes (carta) llevan el número de página al pie
     const pdf = await ventana.webContents.printToPDF({
       pageSize,
       printBackground: true,
-      margins: esTicket ? { top: 0, bottom: 0, left: 0, right: 0 } : undefined,
+      margins: esTicket ? { top: 0, bottom: 0, left: 0, right: 0 } : { top: 0.5, bottom: 0.6, left: 0.5, right: 0.5 },
+      displayHeaderFooter: !esTicket,
+      headerTemplate: '<span></span>',
+      footerTemplate:
+        '<div style="width:100%;font-size:8px;color:#555;text-align:center;font-family:Arial,sans-serif;">' +
+        'Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>',
     })
 
     const directorio = path.join(app.getPath('documents'), 'SGT', carpeta)
