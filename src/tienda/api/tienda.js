@@ -75,3 +75,19 @@ export const obtenerCuenta = () => peticion('cuenta')
 export const registrarCliente = (datos) => peticion('registro', { metodo: 'POST', datos })
 export const ingresarCliente = (datos) => peticion('ingresar', { metodo: 'POST', datos })
 export const salirCliente = () => peticion('salir', { metodo: 'POST' })
+
+// Compra y pedidos (fase T4)
+export const obtenerEntrega = () => peticion('entrega')
+export const guardarEntrega = (datos) => peticion('entrega', { metodo: 'POST', datos })
+export const obtenerPedidos = () => peticion('pedidos')
+export const obtenerPedido = (folio) => peticion(`pedido?folio=${encodeURIComponent(folio)}`)
+export const pagarPedido = (folio, metodo) =>
+  peticion('pedido/pagar', { metodo: 'POST', datos: { folio, metodo } })
+export const confirmarPedido = (lineas, clave) =>
+  peticion('pedidos', {
+    metodo: 'POST',
+    datos: {
+      productos: lineas.map(({ id, cantidad, precio }) => ({ id, cantidad, precio })),
+      clave,
+    },
+  })

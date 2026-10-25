@@ -21,13 +21,23 @@ class ErrorValidacion extends ErrorApi
 }
 
 
-// Varios campos inválidos a la vez (formularios de la tienda en línea)
-// index.php responde {ok: false, mensaje, errores: {campo: mensaje}} para marcar cada campo
-class ErrorCampos extends ErrorApi
+// Error que lleva datos para el cliente además del mensaje; index.php los agrega a la respuesta
+// Por ejemplo, los avisos del carrito cuando un pedido no se pudo confirmar
+class ErrorDatos extends ErrorApi
 {
-    public function __construct(public readonly array $errores, string $mensaje = 'Revisa los datos marcados', int $codigo = 400)
+    public function __construct(string $mensaje, int $codigo, public readonly array $datos)
     {
         parent::__construct($mensaje, $codigo);
+    }
+}
+
+// Varios campos inválidos a la vez (formularios de la tienda en línea)
+// index.php responde {ok: false, mensaje, errores: {campo: mensaje}} para marcar cada campo
+class ErrorCampos extends ErrorDatos
+{
+    public function __construct(array $errores, string $mensaje = 'Revisa los datos marcados', int $codigo = 400)
+    {
+        parent::__construct($mensaje, $codigo, ['errores' => $errores]);
     }
 }
 
