@@ -59,7 +59,7 @@ test('reportes de ventas, surtidos, stock y resumen con sus PDF', async ({
     await cobrar(page, { pago: 50 })
     await agregar(page, 'harina', 'Harina de maíz')
     await cobrar(page, { tarjeta: true })
-    await cerrarCaja(page, /Corte de caja: cuadrada/)
+    await cerrarCaja(page, 132.5)
     await cerrarSesion(page)
   })
 

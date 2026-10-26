@@ -28,7 +28,7 @@ async function turnoDelEmpleado(page) {
   await agregar(page, 'refresco', 'Refresco de cola')
   await expect(page.getByRole('button', { name: /Limpiar carrito/ })).toBeEnabled()
   await page.getByRole('button', { name: /Limpiar carrito/ }).click()
-  await cerrarCaja(page, /Corte de caja: cuadrada/)
+  await cerrarCaja(page, 132.5)
   await cerrarSesion(page)
 }
 

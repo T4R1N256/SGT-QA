@@ -76,12 +76,13 @@ export const test = base.extend({
       env,
     })
     await use(app)
-    // Con la caja abierta la ventana no se cierra (regla 4): se termina el proceso
+    // Con la caja abierta la ventana no se cierra (regla 4) y Electron atiende SIGTERM como un cierre normal,
+    // que la misma regla bloquea: si no terminó, se mata el proceso
     await Promise.race([app.close().catch(() => {}), esperar(5000)])
     try {
-      app.process().kill()
+      app.process().kill('SIGKILL')
     } catch {
-      /* ya terminó */
+      /* ya terminó: Playwright ya soltó el proceso */
     }
     await cerrarPHP()
   },
@@ -128,16 +129,22 @@ export const aceptar = (page) => page.getByRole('button', { name: 'Aceptar' }).c
 
 export async function abrirCaja(page, monto = 0) {
   await ir(page, '#/caja')
+  // El cambio de página no es inmediato: otras páginas también tienen campos "0.00"
+  const abrir = page.getByRole('button', { name: /Abrir caja/i })
+  await abrir.waitFor()
   await page.getByPlaceholder('0.00').fill(String(monto))
-  await page.getByRole('button', { name: /Abrir caja/i }).click()
+  await abrir.click()
   await page.getByText('Efectivo esperado').first().waitFor()
 }
 
-export async function cerrarCaja(page, estado = /Corte de caja/) {
+// Corte de caja con el efectivo que se cuenta. La pantalla prellena ese campo con el efectivo esperado
+// cuando termina de cargarlo: se escribe para no depender de esa carga, y el corte debe salir cuadrado
+export async function cerrarCaja(page, contado) {
   await ir(page, '#/caja')
   await page.getByRole('button', { name: /Cerrar caja/i }).click()
+  await modal(page).getByPlaceholder('0.00').fill(String(contado))
   await page.getByRole('button', { name: /Confirmar cierre/i }).click()
-  await page.getByText(estado).waitFor()
+  await page.getByText('Corte de caja: cuadrada').waitFor()
   await aceptar(page)
 }
 

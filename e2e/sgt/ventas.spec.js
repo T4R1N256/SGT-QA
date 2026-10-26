@@ -70,7 +70,7 @@ test('la configuración de la tienda sale en el login y en el ticket; venta en e
     .poll(() => fs.existsSync(ticket), { message: 'reimprimir vuelve a generar el ticket' })
     .toBe(true)
 
-  await cerrarCaja(page)
+  await cerrarCaja(page, 62.5)
 })
 
 test('con tarjeta no se captura el pago y el ticket no muestra cambio; un pago insuficiente no se cobra', async ({
@@ -96,7 +96,7 @@ test('con tarjeta no se captura el pago y el ticket no muestra cambio; un pago i
   expect(texto).toContain('Tarjeta')
   expect(texto).not.toContain('Cambio')
 
-  await cerrarCaja(page)
+  await cerrarCaja(page, 0)
 })
 
 test('vaciar el carrito cancela la venta, la existencia baja al cobrar y los agotados no se ofrecen', async ({
@@ -123,7 +123,7 @@ test('vaciar el carrito cancela la venta, la existencia baja al cobrar y los ago
   await page.getByPlaceholder(/Buscar producto/).fill('chicles')
   await expect(page.locator('li', { hasText: 'Chicles menta' })).toHaveCount(0)
 
-  await cerrarCaja(page)
+  await cerrarCaja(page, 32.5)
 })
 
 test('eliminar un producto desde Inventario lo quita de la lista y de Ventas (RF06)', async ({
@@ -140,5 +140,5 @@ test('eliminar un producto desde Inventario lo quita de la lista y de Ventas (RF
   await ir(page, '#/sales')
   await page.getByPlaceholder(/Buscar producto/).fill('cloro')
   await expect(page.locator('li', { hasText: 'Cloro 1 L' })).toHaveCount(0)
-  await cerrarCaja(page)
+  await cerrarCaja(page, 0)
 })
