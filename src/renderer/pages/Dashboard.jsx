@@ -31,6 +31,14 @@ const REGISTER_STATE_ROWS = [
 ]
 
 
+/**
+ * Inicio: datos del usuario con sesión y el último corte de caja (efectivo esperado, contado y si cuadró).
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Dashboard() {
   const { usuario, userInfo, setUserInfo } = useAuth()
   const [loading, setLoading] = useState(!userInfo)

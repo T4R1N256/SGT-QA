@@ -1,6 +1,15 @@
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
-// Avisos del servidor al revisar el carrito: productos retirados o agotados, cantidades ajustadas y precios que cambiaron
+/**
+ * Avisos del servidor al revisar el carrito: productos retirados o agotados, cantidades ajustadas
+ * y precios que cambiaron.
+ *
+ * @param {{avisos: Array<{id: number, tipo: string, mensaje: string}>}} props
+ * @returns {JSX.Element|null} Los avisos, o nada si no hay
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Avisos({ avisos }) {
   if (avisos.length === 0) return null
   return (

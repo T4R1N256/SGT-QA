@@ -1,16 +1,30 @@
 <?php
 
-// Clase para venta 
-
 require_once __DIR__ . '/../config/database.php';
 
+/**
+ * Ventas de SGT: se crean "en proceso" al agregar el primer producto, se completan al cobrar
+ * (o se cancelan) y se consultan para el ticket y el historial.
+ * Estados: enproceso, finalizada, cancelada.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Caja
+ */
 class Venta
 {
     const TABLE = 'Venta';
 
 
-    // Funcion para crear venta en proceso
-    // Fecha y Hora definitivas se guardan al completarla (regla 9)
+    /**
+     * Crea una venta en proceso en la caja. La fecha y la hora definitivas se guardan al completarla (regla 9).
+     *
+     * @param PDO $connection Conexión con la transacción abierta
+     * @param int $ID_Caja    Caja abierta
+     * @return string ID de la venta creada
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function openVenta($connection, $ID_Caja)
     {
 
@@ -33,7 +47,15 @@ class Venta
     }//-- Fin funcion crear venta
 
 
-    // Funcion para saber si una venta sigue en proceso dentro de una caja (bloquea la fila hasta el commit)
+    /**
+     * Indica si una venta sigue en proceso dentro de una caja. Bloquea la fila hasta el commit (FOR UPDATE).
+     *
+     * @param PDO $connection Conexión con la transacción abierta
+     * @param int $ID_Venta   Venta
+     * @param int $ID_Caja    Caja abierta
+     * @return bool true si la venta existe, es de esa caja y sigue en proceso
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function ventaEnProceso($connection, $ID_Venta, $ID_Caja)
     {
         try {
@@ -50,7 +72,14 @@ class Venta
     }//-- Fin funcion venta en proceso
 
 
-    // Funcion para cancelar las ventas que quedaron en proceso en una caja (se abandonaron sin cobrar)
+    /**
+     * Cancela las ventas que quedaron en proceso en una caja (se abandonaron sin cobrar).
+     *
+     * @param PDO $connection Conexión con la transacción abierta
+     * @param int $ID_Caja    Caja
+     * @return int Número de ventas canceladas
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function cancelarEnProceso($connection, $ID_Caja)
     {
         try {
@@ -67,7 +96,17 @@ class Venta
     }//-- Fin funcion cancelar ventas en proceso
 
 
-    // Funcion para agregar producto a detalle
+    /**
+     * Agrega un producto al detalle de la venta con su precio de ese momento.
+     *
+     * @param PDO   $connection      Conexión con la transacción abierta
+     * @param int   $ID_Venta        Venta
+     * @param int   $ID_Producto     Producto
+     * @param int   $Cantidad        Piezas
+     * @param float $Precio_Unitario Precio del producto en la base de datos
+     * @return string ID del renglón de detalle
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function addProductoVenta($connection, $ID_Venta, $ID_Producto, $Cantidad, $Precio_Unitario)
     {
         try {
@@ -85,8 +124,12 @@ class Venta
     }//-- Fin funcion agregar producto a detalle
 
 
-    // Condiciones del historial de ventas: rango de fechas, estados y, opcionalmente, forma de pago
-    // Regresa [WHERE, parámetros] para readHistorial y resumenHistorial
+    /**
+     * Condiciones del historial de ventas: rango de fechas, estados y, opcionalmente, forma de pago.
+     *
+     * @param array $filtros ['desde', 'hasta', 'estados' => [...], 'forma_pago' => opcional]
+     * @return array [WHERE, parámetros] para readHistorial() y resumenHistorial()
+     */
     private static function filtroHistorial(array $filtros): array
     {
         $condiciones = ['v.Fecha BETWEEN :Desde AND :Hasta'];
@@ -108,8 +151,16 @@ class Venta
     }
 
 
-    // Funcion para leer una página del historial de ventas (la más reciente primero)
-    // El cajero de una venta cancelada es quien abrió la caja (la venta no llegó a cobrarse)
+    /**
+     * Una página del historial de ventas, la más reciente primero.
+     * El cajero de una venta cancelada es quien abrió la caja (la venta no llegó a cobrarse).
+     *
+     * @param array $filtros        Filtros del historial (ver filtroHistorial())
+     * @param int   $limite         Ventas por página
+     * @param int   $desplazamiento Ventas que se saltan (páginas anteriores)
+     * @return array Ventas con su cajero y número de artículos
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readHistorial(array $filtros, int $limite, int $desplazamiento)
     {
         try {
@@ -142,7 +193,13 @@ class Venta
     }//-- Fin funcion leer historial
 
 
-    // Funcion para el resumen del historial con los mismos filtros: número de ventas y total cobrado
+    /**
+     * Resumen del historial con los mismos filtros: número de ventas y total cobrado.
+     *
+     * @param array $filtros Filtros del historial (ver filtroHistorial())
+     * @return array ['ventas' => int, 'total' => float]
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function resumenHistorial(array $filtros)
     {
         try {
@@ -164,7 +221,13 @@ class Venta
     }//-- Fin funcion resumen historial
 
 
-    // Funcion para contar las ventas canceladas de una caja
+    /**
+     * Cuenta las ventas canceladas de una caja.
+     *
+     * @param int $ID_Caja Caja
+     * @return int Número de ventas canceladas
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function contarCanceladas($ID_Caja)
     {
         try {
@@ -180,8 +243,14 @@ class Venta
     }//-- Fin funcion contar canceladas
 
 
-    // Funcion para obtener los datos de una venta finalizada para su ticket (regla 8)
-    // Regresa false si la venta no existe o no está finalizada
+    /**
+     * Datos de una venta finalizada para su ticket (regla 8): folio, fecha, montos, pago, cambio,
+     * forma de pago, cajero y productos con su importe.
+     *
+     * @param int $ID_Venta Venta
+     * @return array|false La venta con sus productos, o false si no existe o no está finalizada
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readTicket($ID_Venta)
     {
         try {
@@ -217,7 +286,13 @@ class Venta
     }//-- Fin funcion leer ticket
 
 
-    // Funcion para obtener detalles de una venta
+    /**
+     * Productos y cantidades de una venta.
+     *
+     * @param int $ID_Venta Venta
+     * @return array Renglones con ID_Producto y Cantidad
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function getDetalleVenta($ID_Venta)
     {
         try {
@@ -232,7 +307,22 @@ class Venta
         }
     }//-- Fin funcion obtener detalle venta
 
-    // Funcion para completar venta (dentro de la transacción de la ruta)
+    /**
+     * Completa la venta al cobrar. Se llama dentro de la transacción de la ruta completeSale, que ya validó
+     * existencias y montos con los precios de la base de datos.
+     *
+     * @param PDO    $connection    Conexión con la transacción abierta
+     * @param int    $ID_Venta      Venta en proceso
+     * @param string $Fecha         Fecha del cobro (regla 9)
+     * @param string $Hora          Hora del cobro (regla 9)
+     * @param float  $Monto         Total de la venta
+     * @param float  $Pago_Recibido Pago del cliente (en efectivo; con tarjeta o transferencia, el total)
+     * @param float  $Cambio        Cambio entregado
+     * @param string $Forma_Pago    efectivo, tarjeta o transferencia
+     * @param int    $ID_Usuario    Cajero que cobra
+     * @return int 1 si se completó, 0 si la venta no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function completeVenta($connection, $ID_Venta, $Fecha, $Hora, $Monto, $Pago_Recibido, $Cambio, $Forma_Pago, $ID_Usuario)
     {
         try {
@@ -264,7 +354,13 @@ class Venta
     }//-- Fin funcion para completar venta
 
 
-    // Funcion para cancelar venta
+    /**
+     * Cancela una venta que sigue en proceso (vaciar el carrito).
+     *
+     * @param int $ID_Venta Venta
+     * @return int 1 si se canceló, 0 si no existe o ya no estaba en proceso
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function cancelVenta($ID_Venta)
     {
         try {
@@ -282,6 +378,13 @@ class Venta
     }//-- fin funcion cancelar venta
 
 
+    /**
+     * Ventas finalizadas de una caja, en orden de folio.
+     *
+     * @param int $ID_Caja Caja
+     * @return array Ventas con folio, fecha, hora, monto y forma de pago
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readAllVentas($ID_Caja)
     {
         try {

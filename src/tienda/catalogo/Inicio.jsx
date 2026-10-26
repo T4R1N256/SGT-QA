@@ -8,7 +8,14 @@ import Cargando from '../componentes/Cargando'
 import CuadriculaProductos from '../componentes/CuadriculaProductos'
 import ErrorCarga from '../componentes/ErrorCarga'
 
-// N1: el cliente entra y ve las categorías y los productos destacados, sin iniciar sesión
+/**
+ * N1: el cliente entra y ve las categorías y los productos destacados, sin iniciar sesión.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Inicio() {
   const { nombre } = useTienda()
   const categorias = useCategorias()

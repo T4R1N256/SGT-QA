@@ -3,7 +3,15 @@ import { Link } from 'react-router-dom'
 import { formatoMoneda } from '../../compartido/format'
 import Disponibilidad from './Disponibilidad'
 
-// Producto en una lista: lleva a su página de detalle
+/**
+ * Producto en una lista: lleva a su página de detalle.
+ *
+ * @param {{producto: Object}} props Producto público del API
+ * @returns {JSX.Element} La tarjeta
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function TarjetaProducto({ producto }) {
   const agotado = producto.disponibilidad === 'agotado'
 

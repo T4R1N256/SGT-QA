@@ -4,6 +4,15 @@ import { login } from '../api/api'
 import { TopBar, ActionButton, FormAlert, fieldInputClass } from '../components'
 import { limpiarTexto } from '../utils/texto'
 
+/**
+ * Inicio de sesión con el ID de usuario y la contraseña. Al entrar guarda la sesión y la caja abierta
+ * (si la hay) en AuthContext.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Login() {
   const [id, setId] = useState('')
   const [password, setPassword] = useState('')

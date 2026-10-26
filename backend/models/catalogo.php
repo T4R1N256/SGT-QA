@@ -1,9 +1,16 @@
 <?php
-// Catálogo de la tienda en línea: lo que ve el cliente
-// Solo productos activos de categorías activas. Nunca se exponen costos, proveedores ni cantidades mínimas
 
 require_once __DIR__ . '/../config/database.php';
 
+/**
+ * Catálogo de la tienda en línea: lo que ve el cliente.
+ * Solo productos activos de categorías activas. Nunca se exponen costos, proveedores ni cantidades mínimas.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Producto
+ */
 class Catalogo
 {
     const POR_PAGINA = 12;
@@ -22,7 +29,14 @@ class Catalogo
         WHERE p.Activo = 1 AND c.Estado = 'activo'";
 
 
-    // Disponibilidad que ve el cliente: la misma regla que el Estado de SGT (Producto::calcularEstado)
+    /**
+     * Disponibilidad que ve el cliente: la misma regla que el Estado de SGT.
+     *
+     * @param int $Cantidad        Existencias
+     * @param int $Cantidad_Minima Cantidad mínima
+     * @return string "agotado", "pocas_piezas" o "disponible"
+     * @see Producto::calcularEstado()
+     */
     public static function disponibilidad(int $Cantidad, int $Cantidad_Minima): string
     {
         if ($Cantidad <= 0) {
@@ -32,7 +46,12 @@ class Catalogo
     }//-- Fin funcion disponibilidad
 
 
-    // Fila de la base de datos => producto público
+    /**
+     * Convierte una fila de la base de datos en el producto público (sin costo, proveedor ni mínimo).
+     *
+     * @param array $fila Fila con las columnas de Catalogo::COLUMNAS
+     * @return array ['id', 'nombre', 'descripcion', 'precio', 'unidad', 'existencia', 'disponibilidad', 'categoria']
+     */
     private static function publico(array $fila): array
     {
         $existencia = max((int) $fila['Cantidad'], 0);
@@ -50,7 +69,12 @@ class Catalogo
     }//-- Fin funcion publico
 
 
-    // Categorías activas que tienen productos visibles, con cuántos tiene cada una
+    /**
+     * Categorías activas que tienen productos visibles, con cuántos tiene cada una.
+     *
+     * @return array Lista de ['id', 'nombre', 'productos'], por nombre
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     */
     public static function categorias(): array
     {
         $connection = new Conexion;
@@ -68,7 +92,14 @@ class Catalogo
     }//-- Fin funcion categorias
 
 
-    // Categoría visible en la tienda, o null si no existe, está desactivada o no tiene productos
+    /**
+     * Una categoría visible en la tienda.
+     *
+     * @param int $ID_Categoria Categoría
+     * @return array|null ['id', 'nombre', 'productos'], o null si no existe, está desactivada o no tiene productos
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     * @see Catalogo::categorias()
+     */
     public static function categoria(int $ID_Categoria): ?array
     {
         foreach (self::categorias() as $categoria) {
@@ -80,10 +111,19 @@ class Catalogo
     }//-- Fin funcion categoria
 
 
-    // Productos con búsqueda, filtros, orden y paginación
-    // $q: cada palabra debe aparecer en el nombre, la descripción o la categoría. La intercalación de las tablas
-    // (utf8mb4_unicode_ci) no distingue mayúsculas ni acentos: "azucar" encuentra "Azúcar"
-    // Regresa [productos de la página, total de productos que cumplen los filtros]
+    /**
+     * Productos con búsqueda, filtros, orden y paginación.
+     * Cada palabra de la búsqueda debe aparecer en el nombre, la descripción o la categoría. La intercalación
+     * de las tablas (utf8mb4_unicode_ci) no distingue mayúsculas ni acentos: "azucar" encuentra "Azúcar".
+     *
+     * @param string   $q               Texto de búsqueda (se usan hasta 8 palabras)
+     * @param int|null $ID_Categoria    Categoría, o null para todas
+     * @param bool     $soloDisponibles Si se ocultan los agotados
+     * @param string   $orden           Llave de Catalogo::ORDENES
+     * @param int      $pagina          Página (desde 1)
+     * @return array [productos de la página, total de productos que cumplen los filtros]
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     */
     public static function productos(string $q, ?int $ID_Categoria, bool $soloDisponibles, string $orden, int $pagina): array
     {
         $condiciones = '';
@@ -123,7 +163,12 @@ class Catalogo
     }//-- Fin funcion productos
 
 
-    // Productos destacados del inicio: el de más existencias de cada categoría, sin agotados
+    /**
+     * Productos destacados del inicio: el de más existencias de cada categoría, sin agotados.
+     *
+     * @return array Productos públicos, por categoría
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     */
     public static function destacados(): array
     {
         $connection = new Conexion;
@@ -137,7 +182,13 @@ class Catalogo
     }//-- Fin funcion destacados
 
 
-    // Un producto visible, o null si no existe o no se muestra en la tienda
+    /**
+     * Un producto visible en la tienda.
+     *
+     * @param int $ID_Producto Producto
+     * @return array|null El producto público, o null si no existe o no se muestra en la tienda
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     */
     public static function producto(int $ID_Producto): ?array
     {
         $connection = new Conexion;
@@ -149,7 +200,13 @@ class Catalogo
     }//-- Fin funcion producto
 
 
-    // Productos visibles con esos IDs, indexados por ID (los que no se muestran en la tienda no vienen)
+    /**
+     * Productos visibles con esos IDs (los que no se muestran en la tienda no vienen).
+     *
+     * @param array $IDs IDs de productos
+     * @return array Productos públicos indexados por ID
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     */
     public static function productosPorId(array $IDs): array
     {
         if (!$IDs) {
@@ -168,7 +225,13 @@ class Catalogo
     }//-- Fin funcion productos por ID
 
 
-    // Nombres de productos con esos IDs, aunque ya no se muestren (para avisar cuál se quitó del carrito)
+    /**
+     * Nombres de productos, aunque ya no se muestren (para avisar cuál se quitó del carrito).
+     *
+     * @param array $IDs IDs de productos
+     * @return array [ID => nombre]
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     */
     public static function nombres(array $IDs): array
     {
         if (!$IDs) {

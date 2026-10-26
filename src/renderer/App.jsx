@@ -18,6 +18,11 @@ import {
 } from './pages'
 import AppLayout from './components/AppLayout'
 
+/**
+ * Cierra la sesión y regresa al login cuando el API responde 401 (evento 'sesion-expirada' de api.js).
+ *
+ * @returns {null} No dibuja nada
+ */
 function SesionGuard() {
   const { usuario, cerrarSesion } = useAuth()
   const navigate = useNavigate()
@@ -35,6 +40,12 @@ function SesionGuard() {
   return null
 }
 
+/**
+ * Ruta solo para el admin: sin sesión regresa al login y un empleado va al inicio.
+ *
+ * @param {{children: React.ReactNode}} props
+ * @returns {JSX.Element} La página o la redirección
+ */
 function RutaAdmin({ children }) {
   const { usuario, esAdmin } = useAuth()
 
@@ -44,12 +55,27 @@ function RutaAdmin({ children }) {
   return children
 }
 
+/**
+ * Ruta sin sesión (el login): con la sesión iniciada va al inicio.
+ *
+ * @param {{children: React.ReactNode}} props
+ * @returns {JSX.Element} La página o la redirección
+ */
 function RutaPublica({ children }) {
   const { usuario } = useAuth()
 
   return usuario ? <Navigate to="/dashboard" replace /> : children
 }
 
+/**
+ * Rutas de SGT de escritorio (HashRouter). Las de administración (Historial, Reportes, Categorías,
+ * Proveedores, Inventario, Surtir, Usuarios y Configuración) usan RutaAdmin.
+ *
+ * @returns {JSX.Element} La aplicación
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function App() {
   return (
     <HashRouter>

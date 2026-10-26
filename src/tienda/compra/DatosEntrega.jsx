@@ -1,4 +1,12 @@
-// Datos de entrega en el resumen y en el pago
+/**
+ * Datos de entrega en el resumen y en el pago.
+ *
+ * @param {{entrega: Object}} props Datos de entrega (recibe, teléfono, dirección y referencias)
+ * @returns {JSX.Element} Los datos
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function DatosEntrega({ entrega }) {
   const interior = entrega.numero_interior ? `, int. ${entrega.numero_interior}` : ''
 

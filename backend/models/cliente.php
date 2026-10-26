@@ -1,9 +1,16 @@
 <?php
-// Cuentas de cliente de la tienda en línea (D5: se compra con registro)
-// Los clientes son independientes de los empleados de SGT (T-S7): su propia tabla y su propia sesión (SGT_TIENDA)
 
 require_once __DIR__ . '/../config/database.php';
 
+/**
+ * Cuentas de cliente de la tienda en línea (D5: se compra con registro).
+ * Los clientes son independientes de los empleados de SGT (T-S7): su propia tabla y su propia sesión (SGT_TIENDA).
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Pedido
+ */
 class Cliente
 {
     // Hash de relleno: al ingresar con un correo que no existe también se verifica una contraseña,
@@ -14,8 +21,14 @@ class Cliente
     private const NOMBRE = "/^\\p{L}[\\p{L}\\p{M} '.\\-]*$/u";
 
 
-    // Valida los datos del registro. Regresa los datos limpios o lanza ErrorCampos con un mensaje por campo
-    // Las reglas son las mismas que valida el navegador (src/tienda/cuenta/validaciones.js)
+    /**
+     * Valida los datos del registro. Las reglas son las mismas que valida el navegador
+     * (src/tienda/cuenta/validaciones.js).
+     *
+     * @param array $data Cuerpo de la petición: nombre, apellidos, correo, telefono y password
+     * @return array Los datos limpios (correo en minúsculas, teléfono sin espacios ni guiones)
+     * @throws ErrorCampos Con un mensaje por cada campo inválido
+     */
     public static function validar(array $data): array
     {
         $errores = [];
@@ -87,7 +100,15 @@ class Cliente
     }//-- Fin funcion validar
 
 
-    // Crea la cuenta y regresa su ID. Un correo repetido responde 409 en el campo correo
+    /**
+     * Crea la cuenta. La contraseña se guarda con password_hash.
+     *
+     * @param array $datos Datos ya validados con validar()
+     * @return int ID del cliente creado
+     * @throws ErrorCampos 409 "Ya existe una cuenta con este correo" en el campo correo
+     * @throws PDOException Si falla la consulta por otra razón
+     * @see Cliente::validar()
+     */
     public static function registrar(array $datos): int
     {
         $connection = new Conexion;
@@ -111,7 +132,15 @@ class Cliente
     }//-- Fin funcion registrar
 
 
-    // Cliente activo con ese correo y contraseña, o null
+    /**
+     * Valida el correo y la contraseña de un cliente activo. Con un correo que no existe también
+     * se verifica una contraseña (HASH_RELLENO), para que el tiempo de respuesta no delate qué correos tienen cuenta.
+     *
+     * @param string $correo   Correo (no distingue mayúsculas)
+     * @param string $password Contraseña
+     * @return array|null Los datos públicos del cliente, o null si no coinciden
+     * @throws PDOException Si falla la consulta a la base de datos
+     */
     public static function ingresar(string $correo, string $password): ?array
     {
         $connection = new Conexion;
@@ -124,7 +153,13 @@ class Cliente
     }//-- Fin funcion ingresar
 
 
-    // Cliente activo por su ID, o null (por ejemplo, si se desactivó con la sesión abierta)
+    /**
+     * Cliente activo por su ID.
+     *
+     * @param int $ID_Cliente Cliente
+     * @return array|null Los datos públicos, o null (por ejemplo, si se desactivó con la sesión abierta)
+     * @throws PDOException Si falla la consulta a la base de datos
+     */
     public static function leer(int $ID_Cliente): ?array
     {
         $connection = new Conexion;
@@ -135,7 +170,12 @@ class Cliente
     }//-- Fin funcion leer
 
 
-    // Datos que ve el cliente de su cuenta (nunca la contraseña)
+    /**
+     * Datos que ve el cliente de su cuenta (nunca la contraseña).
+     *
+     * @param array $fila Fila de la tabla Cliente
+     * @return array ['id', 'nombre', 'apellidos', 'correo', 'telefono']
+     */
     private static function publico(array $fila): array
     {
         return [

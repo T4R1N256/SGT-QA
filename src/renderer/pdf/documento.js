@@ -1,7 +1,21 @@
+/**
+ * @file Documento HTML para convertir a PDF (tickets y reportes).
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server'
 
-// Documento HTML independiente para convertir a PDF: estilos en línea y fuentes del sistema,
-// sin recursos externos (funciona sin internet). La política de contenido bloquea scripts.
+/**
+ * Documento HTML independiente para convertir a PDF: estilos en línea y fuentes del sistema,
+ * sin recursos externos (funciona sin internet). La política de contenido bloquea scripts.
+ *
+ * @param {React.ReactElement} elemento Contenido (TicketPDF o ReportePDF)
+ * @param {string} titulo Título del documento (se escapa)
+ * @param {string} [estilos=''] CSS del documento
+ * @returns {string} El HTML completo
+ */
 export function documentoHTML(elemento, titulo, estilos = '') {
   const cuerpo = renderToStaticMarkup(elemento)
   const tituloSeguro = renderToStaticMarkup(titulo)

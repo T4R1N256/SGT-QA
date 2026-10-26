@@ -134,6 +134,15 @@ function validateCreate(form) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+/**
+ * Usuarios (RF13, solo admin): alta de empleados con su contacto, edición, autorización, cambio
+ * de contraseña y baja (el usuario queda no autorizado).
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Users() {
   const { data: usersData, loading, refetch: refetchUsers } = useFetch(getUsers)
   const users = usersData?.usuarios ?? []

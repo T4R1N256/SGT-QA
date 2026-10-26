@@ -1,5 +1,10 @@
-// Contenido de los reportes (RF11): a partir de lo que regresa el backend arma el título, el periodo,
-// los indicadores y las tablas ya con formato. Lo usan la página Reportes y el PDF, así se ven igual.
+/**
+ * @file Contenido de los reportes (RF11): a partir de lo que regresa el backend arma el título, el periodo,
+ * los indicadores y las tablas ya con formato. Lo usan la página Reportes y el PDF, así se ven igual.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 import { formatoFecha, textoPeriodo } from './fechas'
 import { capitalize, cuenta, formatoMoneda, formatoNumero } from '../../compartido/format'
@@ -11,6 +16,12 @@ export const TIPOS_REPORTE = [
   { id: 'resumen', label: 'Resumen', titulo: 'Resumen del periodo' },
 ]
 
+/**
+ * Porcentaje con un decimal: 12.345 → "12.3 %".
+ *
+ * @param {number|null} valor Porcentaje
+ * @returns {string} El porcentaje con formato, o "—" si no se pudo calcular
+ */
 export function formatoPorcentaje(valor) {
   return valor == null ? '—' : `${Number(valor).toFixed(1)} %`
 }
@@ -20,12 +31,23 @@ const dineroOGuion = (monto) => (monto == null ? '—' : formatoMoneda(monto))
 // Columna de una tabla: 'texto', 'numero' (alineado a la derecha) o 'estado' (Disponible, Stock bajo, Agotado)
 const columna = (titulo, tipo = 'texto') => ({ titulo, tipo })
 
-// 2026-10-25 14:03:59 → 25/10/2026 14:03
+/**
+ * Fecha y hora en que se generó el reporte: 2026-10-25 14:03:59 → 25/10/2026 14:03.
+ *
+ * @param {string} generado Fecha y hora del backend
+ * @returns {string} La fecha y la hora para mostrar
+ */
 function formatoGenerado(generado) {
   const [fecha, hora] = String(generado ?? '').split(' ')
   return `${formatoFecha(fecha)} ${String(hora ?? '').slice(0, 5)}`.trim()
 }
 
+/**
+ * Contenido del reporte de ventas: indicadores, formas de pago, ventas por día, productos más vendidos y cajeros.
+ *
+ * @param {Object} d Respuesta de getSalesReport
+ * @returns {{indicadores: Array, secciones: Array, notas: Array<string>}} El contenido con formato
+ */
 function reporteVentas(d) {
   const r = d.resumen
   const parteDelTotal = (total) => formatoPorcentaje(r.total > 0 ? (total / r.total) * 100 : null)
@@ -69,6 +91,12 @@ function reporteVentas(d) {
   }
 }
 
+/**
+ * Contenido del reporte de surtidos y compras: indicadores, proveedores, productos surtidos y la lista de surtidos.
+ *
+ * @param {Object} d Respuesta de getRestockReport
+ * @returns {{indicadores: Array, secciones: Array, notas: Array<string>}} El contenido con formato
+ */
 function reporteSurtidos(d) {
   const r = d.resumen
 
@@ -119,6 +147,13 @@ function reporteSurtidos(d) {
   }
 }
 
+/**
+ * Contenido del reporte de stock: valor del inventario, productos por surtir (con lo que costaría surtir
+ * lo sugerido), categorías y existencias.
+ *
+ * @param {Object} d Respuesta de getStockReport
+ * @returns {{indicadores: Array, secciones: Array, notas: Array<string>}} El contenido con formato
+ */
 function reporteStock(d) {
   const r = d.resumen
   // Lo que costaría surtir lo sugerido, con el último costo de compra (en centavos para no acumular errores)
@@ -216,6 +251,12 @@ function reporteStock(d) {
   }
 }
 
+/**
+ * Contenido del resumen del periodo: ventas contra compras, utilidad estimada, cortes de caja y flujo por día.
+ *
+ * @param {Object} d Respuesta de getSummaryReport
+ * @returns {{indicadores: Array, secciones: Array, notas: Array<string>}} El contenido con formato
+ */
 function reporteResumen(d) {
   const { utilidad, cajas } = d
 
@@ -259,8 +300,17 @@ function reporteResumen(d) {
 
 const CONSTRUCTORES = { ventas: reporteVentas, surtidos: reporteSurtidos, stock: reporteStock, resumen: reporteResumen }
 
-// Reporte listo para mostrar: { tipo, titulo, periodo, generado, archivo, indicadores, secciones, notas }
-// Cada sección: { titulo, columnas: [{ titulo, tipo }], filas: [[texto]], vacio, nota }
+/**
+ * Reporte listo para mostrar en pantalla o en PDF.
+ * Cada sección trae { titulo, columnas: [{ titulo, tipo }], filas: [[texto]], vacio, nota }.
+ *
+ * @param {'ventas'|'surtidos'|'stock'|'resumen'} tipo Tipo de reporte (TIPOS_REPORTE)
+ * @param {Object} datos Respuesta del API con desde, hasta y generado
+ * @returns {{tipo: string, titulo: string, periodo: string, generado: string, archivo: string,
+ *           indicadores: Array, secciones: Array, notas: Array<string>}} El reporte
+ * @throws {Error} Si el tipo de reporte no existe
+ * @see ReportePDF
+ */
 export function construirReporte(tipo, datos) {
   const info = TIPOS_REPORTE.find((t) => t.id === tipo)
   if (!info || !CONSTRUCTORES[tipo]) throw new Error(`Tipo de reporte desconocido: ${tipo}`)

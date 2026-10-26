@@ -18,6 +18,15 @@ const PAGE_TITLES = {
   '/configuracion': 'Configuración',
 }
 
+/**
+ * Encabezado de cada página: título, contenido de la página (useHeader), estado de la caja y hora.
+ *
+ * @returns {JSX.Element} El encabezado
+ * @see useHeader
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function PageHeader() {
   const { pathname } = useLocation()
   const titulo = PAGE_TITLES[pathname] ?? ''

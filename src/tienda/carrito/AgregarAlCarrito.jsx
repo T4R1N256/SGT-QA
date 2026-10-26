@@ -6,7 +6,16 @@ import { useCarrito } from './CarritoContext'
 import SelectorCantidad from './SelectorCantidad'
 import { validarCantidad } from './carrito'
 
-// Elegir cuántas unidades y agregarlas al carrito (N5). Agotado: el botón no se puede usar (P3)
+/**
+ * Elegir cuántas unidades y agregarlas al carrito (N5). Agotado: el botón no se puede usar (P3).
+ *
+ * @param {{producto: Object}} props Producto público del API
+ * @returns {JSX.Element} El selector y el botón
+ * @see validarCantidad
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function AgregarAlCarrito({ producto }) {
   const { lineas, agregar } = useCarrito()
   const [texto, setTexto] = useState('1')

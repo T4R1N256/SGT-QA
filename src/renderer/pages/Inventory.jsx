@@ -248,6 +248,15 @@ function ProductForm({ data, setData, response, setResponse, categorias, proveed
   )
 }
 
+/**
+ * Inventario (RF04, RF06, solo admin): alta, edición y baja lógica de productos, con su categoría,
+ * su proveedor, existencias, cantidad mínima y descripción para la tienda en línea.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Inventory() {
   const {
     data: productsData,

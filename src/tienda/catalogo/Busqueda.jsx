@@ -6,7 +6,14 @@ import { useCategorias } from './CategoriasContext'
 import ListaProductos from './ListaProductos'
 import { leerFiltros } from './filtros'
 
-// N3: resultados de la búsqueda del encabezado. Sin texto muestra todo el catálogo
+/**
+ * N3: resultados de la búsqueda del encabezado. Sin texto muestra todo el catálogo.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Busqueda() {
   const [params] = useSearchParams()
   const filtros = leerFiltros(params)

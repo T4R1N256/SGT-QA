@@ -1,9 +1,16 @@
 <?php
-// Datos de entrega de un pedido (R11, R12). Se validan aquí y en el navegador con las mismas reglas
-// (src/tienda/compra/validaciones.js). El envío no se cobra (D3)
 
 require_once __DIR__ . '/../config/database.php';
 
+/**
+ * Datos de entrega de un pedido (R11, R12). Se validan aquí y en el navegador con las mismas reglas
+ * (src/tienda/compra/validaciones.js). El envío no se cobra (D3).
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Pedido
+ */
 class Entrega
 {
     const ENTIDADES = [
@@ -32,7 +39,14 @@ class Entrega
     // Número exterior o interior: 123, 123-B, S/N, #12, Depto. 4
     private const NUMERO = '/^(?=.*[\p{L}\d])[\p{L}\d#][\p{L}\d \-\/#.]*$/u';
 
-    // Valida los datos de entrega. Regresa los datos limpios o lanza ErrorCampos con un mensaje por campo
+    /**
+     * Valida los datos de entrega: obligatorios, largo máximo y formato (nombre, teléfono de 10 dígitos,
+     * números exterior e interior, código postal de 5 dígitos y entidad de la lista).
+     *
+     * @param array $data Cuerpo de la petición
+     * @return array Los datos limpios (sin espacios repetidos ni saltos de línea)
+     * @throws ErrorCampos Con un mensaje por cada campo inválido
+     */
     public static function validar(array $data): array
     {
         $datos = [];
@@ -80,7 +94,14 @@ class Entrega
     }//-- Fin funcion validar
 
 
-    // Datos de entrega del último pedido del cliente, para prellenar el formulario (T-S4), o null
+    /**
+     * Datos de entrega del último pedido del cliente, para prellenar el formulario (T-S4).
+     *
+     * @param int $ID_Cliente Cliente
+     * @return array|null Los datos de entrega, o null si no tiene pedidos
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     * @see Entrega::desdeFila()
+     */
     public static function ultima(int $ID_Cliente): ?array
     {
         $connection = new Conexion;
@@ -92,7 +113,13 @@ class Entrega
     }//-- Fin funcion ultima
 
 
-    // Columnas de Pedido => datos de entrega
+    /**
+     * Convierte las columnas de un Pedido en los datos de entrega.
+     *
+     * @param array $fila Fila de la tabla Pedido
+     * @return array ['recibe', 'telefono', 'calle', 'numero_exterior', 'numero_interior', 'colonia',
+     *               'codigo_postal', 'ciudad', 'entidad', 'referencias']
+     */
     public static function desdeFila(array $fila): array
     {
         return [

@@ -1,15 +1,34 @@
 <?php
-// Clase para surtidos (compras a proveedores que reabastecen el inventario, RF05)
-// Un surtido tiene un proveedor y uno o más productos con su cantidad y su costo de compra por unidad
 
 require_once __DIR__ . "/../config/database.php";
 
+/**
+ * Surtidos: compras a proveedores que reabastecen el inventario (RF05).
+ * Un surtido tiene un proveedor y uno o más productos con su cantidad y su costo de compra por unidad.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Producto::sumarInventario()
+ */
 class Surtir
 {
     const TABLE = 'Surtir';
     // ID_Surtir, Fecha, Hora, Monto, ID_Proveedor, ID_Usuario, Notas
 
-    // Funcion para crear el surtido (dentro de la transacción de la ruta)
+    /**
+     * Crea el surtido. Se llama dentro de la transacción de la ruta createRestock.
+     *
+     * @param PDO         $connection   Conexión con la transacción abierta
+     * @param string      $Fecha        Fecha del surtido (AAAA-MM-DD)
+     * @param string      $Hora         Hora del surtido (HH:MM:SS)
+     * @param float       $Monto        Total: suma de cantidad × costo de cada producto
+     * @param int         $ID_Proveedor Proveedor
+     * @param int         $ID_Usuario   Usuario de la sesión que lo registra
+     * @param string|null $Notas        Notas opcionales (por ejemplo, el número de factura)
+     * @return int ID del surtido creado
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function crearSurtido($connection, $Fecha, $Hora, $Monto, $ID_Proveedor, $ID_Usuario, $Notas)
     {
         try {
@@ -31,7 +50,17 @@ class Surtir
     }//-- Fin funcion crear surtido
 
 
-    // Funcion para agregar un producto al surtido (dentro de la transacción de la ruta)
+    /**
+     * Agrega un producto al surtido. Se llama dentro de la transacción de la ruta.
+     *
+     * @param PDO   $connection  Conexión con la transacción abierta
+     * @param int   $ID_Surtir   Surtido
+     * @param int   $ID_Producto Producto
+     * @param int   $Cantidad    Piezas compradas
+     * @param float $Costo       Costo de compra por unidad
+     * @return void
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function addProductoSurtido($connection, $ID_Surtir, $ID_Producto, $Cantidad, $Costo)
     {
         try {
@@ -49,7 +78,15 @@ class Surtir
     }//-- Fin funcion agregar producto al surtido
 
 
-    // Funcion para leer los surtidos de un rango de fechas (el más reciente primero)
+    /**
+     * Surtidos de un rango de fechas, el más reciente primero, con su proveedor, quién lo registró,
+     * el número de productos y las unidades.
+     *
+     * @param string $Desde Fecha inicial (AAAA-MM-DD)
+     * @param string $Hasta Fecha final (AAAA-MM-DD)
+     * @return array Lista de surtidos
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readAllSurtidos($Desde, $Hasta)
     {
         try {
@@ -78,7 +115,13 @@ class Surtir
     }//-- Fin funcion leer surtidos
 
 
-    // Funcion para leer un surtido con sus productos
+    /**
+     * Un surtido con sus productos, su costo y su importe.
+     *
+     * @param int $ID_Surtir Surtido
+     * @return array|false El surtido con la llave 'productos', o false si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readSurtido($ID_Surtir)
     {
         try {

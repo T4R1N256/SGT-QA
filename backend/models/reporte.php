@@ -1,17 +1,33 @@
 <?php
-// Clase para los reportes (RF11, solo admin): ventas, surtidos y compras, stock y resumen del periodo
-// Solo lee datos; las ventas que cuentan son las finalizadas (las canceladas se reportan aparte)
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/producto.php';
 require_once __DIR__ . '/surtir.php';
 
+/**
+ * Reportes (RF11, solo admin): ventas, surtidos y compras, stock y resumen del periodo.
+ * Solo lee datos; las ventas que cuentan son las finalizadas (las canceladas se reportan aparte).
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Venta
+ * @see Surtir
+ */
 class Reporte
 {
     const PRODUCTOS_MAS_VENDIDOS = 10;
 
 
-    // Funcion para ejecutar una consulta y regresar todas sus filas
+    /**
+     * Ejecuta una consulta y regresa todas sus filas.
+     *
+     * @param PDO    $connection Conexión
+     * @param string $sql        Consulta con marcadores
+     * @param array  $parametros Valores de los marcadores
+     * @return array Las filas
+     * @throws PDOException Si falla la consulta (la atrapa el reporte que la llama)
+     */
     private static function consultar($connection, string $sql, array $parametros = []): array
     {
         $consulta = $connection->prepare($sql);
@@ -20,7 +36,14 @@ class Reporte
     }
 
 
-    // Convierte las columnas numéricas (PDO las regresa como texto) para que el JSON tenga números
+    /**
+     * Convierte las columnas numéricas (PDO las regresa como texto) para que el JSON tenga números.
+     *
+     * @param array $filas   Filas de una consulta
+     * @param array $enteros Columnas que se convierten a entero
+     * @param array $dinero  Columnas que se convierten a número con dos decimales (null se queda null)
+     * @return array Las filas con las columnas convertidas
+     */
     private static function tipar(array $filas, array $enteros = [], array $dinero = []): array
     {
         foreach ($filas as &$fila) {
@@ -35,14 +58,27 @@ class Reporte
     }
 
 
-    // Porcentaje con un decimal; null si no hay base para calcularlo
+    /**
+     * Porcentaje con un decimal.
+     *
+     * @param float $parte Parte
+     * @param float $total Total
+     * @return float|null El porcentaje, o null si no hay base para calcularlo (total 0)
+     */
     private static function porcentaje(float $parte, float $total): ?float
     {
         return $total > 0 ? round($parte / $total * 100, 1) : null;
     }
 
 
-    // Totales de las ventas finalizadas del periodo (los usan el reporte de ventas y el resumen)
+    /**
+     * Totales de las ventas finalizadas del periodo (los usan el reporte de ventas y el resumen).
+     *
+     * @param PDO   $connection Conexión
+     * @param array $rango      [':Desde' => fecha, ':Hasta' => fecha]
+     * @return array ['ventas' => int, 'total' => float]
+     * @throws PDOException Si falla la consulta
+     */
     private static function totalesVentas($connection, array $rango): array
     {
         $fila = self::consultar($connection, "SELECT COUNT(*) AS Ventas, COALESCE(SUM(v.Monto), 0) AS Total
@@ -52,7 +88,14 @@ class Reporte
     }
 
 
-    // Totales de los surtidos del periodo (los usan el reporte de surtidos y el resumen)
+    /**
+     * Totales de los surtidos del periodo (los usan el reporte de surtidos y el resumen).
+     *
+     * @param PDO   $connection Conexión
+     * @param array $rango      [':Desde' => fecha, ':Hasta' => fecha]
+     * @return array ['surtidos' => int, 'total' => float]
+     * @throws PDOException Si falla la consulta
+     */
     private static function totalesSurtidos($connection, array $rango): array
     {
         $fila = self::consultar($connection, 'SELECT COUNT(*) AS Surtidos, COALESCE(SUM(s.Monto), 0) AS Total
@@ -62,7 +105,15 @@ class Reporte
     }
 
 
-    // Funcion para el reporte de ventas: totales, formas de pago, días, productos más vendidos y cajeros
+    /**
+     * Reporte de ventas: totales, formas de pago, días, productos más vendidos y cajeros.
+     * El cajero es quien cobró; en las ventas anteriores a la fase 2 (no lo guardaban) se toma quien abrió la caja.
+     *
+     * @param string $Desde Fecha inicial (AAAA-MM-DD)
+     * @param string $Hasta Fecha final (AAAA-MM-DD)
+     * @return array ['resumen', 'formas_pago', 'dias', 'productos', 'cajeros']
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function ventas($Desde, $Hasta): array
     {
         try {
@@ -125,7 +176,16 @@ class Reporte
     }//-- Fin funcion reporte de ventas
 
 
-    // Funcion para el reporte de surtidos y compras: totales, proveedores, productos surtidos y la lista de surtidos
+    /**
+     * Reporte de surtidos y compras: totales, proveedores, productos surtidos (con su costo promedio
+     * por unidad en el periodo) y la lista de surtidos.
+     *
+     * @param string $Desde Fecha inicial (AAAA-MM-DD)
+     * @param string $Hasta Fecha final (AAAA-MM-DD)
+     * @return array ['resumen', 'proveedores', 'productos', 'surtidos']
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Surtir::readAllSurtidos()
+     */
     public static function surtidos($Desde, $Hasta): array
     {
         try {
@@ -181,16 +241,30 @@ class Reporte
     }//-- Fin funcion reporte de surtidos
 
 
-    // Cantidad sugerida para surtir: lo necesario para llegar al doble de la cantidad mínima (al menos 1)
-    // Es la misma regla que usa la página Surtir (utils/productos.js)
+    /**
+     * Cantidad sugerida para surtir: lo necesario para llegar al doble de la cantidad mínima (al menos 1).
+     * Es la misma regla que usa la página Surtir (utils/productos.js).
+     *
+     * @param int $Cantidad        Existencias (las negativas cuentan como 0)
+     * @param int $Cantidad_Minima Cantidad mínima
+     * @return int Piezas por surtir
+     */
     public static function cantidadSugerida(int $Cantidad, int $Cantidad_Minima): int
     {
         return max($Cantidad_Minima * 2 - max($Cantidad, 0), 1);
     }//-- Fin funcion cantidad sugerida
 
 
-    // Funcion para el reporte de stock en este momento: valor del inventario, categorías, productos por surtir y existencias
-    // Solo productos activos; el valor a costo usa el último costo de compra y no incluye los productos sin costo
+    /**
+     * Reporte de stock en este momento: valor del inventario, categorías, productos por surtir
+     * (primero los agotados) y existencias. Solo productos activos; el valor a costo usa el último costo
+     * de compra y no incluye los productos sin costo. Los importes se suman en centavos.
+     *
+     * @return array ['resumen', 'categorias', 'por_surtir', 'productos']
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Reporte::cantidadSugerida()
+     * @see Producto::calcularEstado()
+     */
     public static function stock(): array
     {
         try {
@@ -284,9 +358,16 @@ class Reporte
     }//-- Fin funcion reporte de stock
 
 
-    // Funcion para el resumen del periodo: ventas contra compras, utilidad estimada y cortes de caja
-    // La utilidad se estima con el último costo de compra de cada producto: es aproximada
-    // y solo cubre lo vendido de productos que ya tienen costo
+    /**
+     * Resumen del periodo: ventas contra compras, flujo por día, utilidad estimada y cortes de caja.
+     * La utilidad se estima con el último costo de compra de cada producto: es aproximada y solo cubre
+     * lo vendido de productos que ya tienen costo (la cobertura dice qué porcentaje de las ventas cubre).
+     *
+     * @param string $Desde Fecha inicial (AAAA-MM-DD)
+     * @param string $Hasta Fecha final (AAAA-MM-DD)
+     * @return array ['ventas', 'compras', 'flujo', 'utilidad', 'cajas', 'dias']
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function resumen($Desde, $Hasta): array
     {
         try {

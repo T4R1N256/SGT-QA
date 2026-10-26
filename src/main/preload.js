@@ -1,3 +1,11 @@
+/**
+ * @file Preload de la ventana de SGT: expone window.electronAPI al renderer (contextIsolation)
+ * con la URL del API, el aviso de caja abierta (regla 4) y la generación de PDF.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 const { contextBridge, ipcRenderer } = require('electron')
 
 // URL del API: el proceso principal levanta PHP en un puerto libre y la pasa como argumento

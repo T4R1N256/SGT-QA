@@ -1,14 +1,24 @@
 <?php
-// Datos de demostración para desarrollo y QA
-// Se cargan desde seeder.php solo si SEED_DEMO=1 y la tabla Producto está vacía
-// Incluye productos en los tres estados (Disponible, Stock bajo, Agotado) y un usuario empleado
+/**
+ * Datos de demostración para desarrollo y QA.
+ * Se cargan desde seeder.php solo si SEED_DEMO=1 y la tabla Producto está vacía.
+ * Incluye productos en los tres estados (Disponible, Stock bajo, Agotado) y un usuario empleado.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 
 require_once __DIR__ . '/../models/producto.php';
 
 
-// Funcion para cargar los datos de demostración
-// Regresa false si ya había productos y no se cargó nada
+/**
+ * Carga las categorías, proveedores y productos de demostración y el usuario empleado.
+ *
+ * @param PDO $connection Conexión a la base de datos
+ * @return bool false si ya había productos y no se cargó nada
+ */
 function cargarDatosDemo(PDO $connection): bool
 {
     $hayProductos = $connection->query('SELECT COUNT(*) FROM Producto')->fetchColumn();

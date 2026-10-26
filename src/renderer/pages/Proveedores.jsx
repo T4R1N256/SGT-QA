@@ -98,6 +98,15 @@ function ProveedorForm({ data, setData, response, setResponse, mode }) {
   )
 }
 
+/**
+ * Proveedores (solo admin): alta, edición, activación y desactivación. No acepta nombres repetidos
+ * y el teléfono, si se escribe, lleva 10 o 12 dígitos.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Proveedores() {
   const {
     data: proveedoresData,

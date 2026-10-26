@@ -1,16 +1,32 @@
 <?php
 
-// Clase con CRUD para proveedores
-
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/validar.php';
 
+/**
+ * Proveedores de los productos. No se borran: se activan o desactivan. Un proveedor inactivo
+ * no se ofrece en Inventario ni en Surtir.
+ *
+ * @author Miguel Coronado
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Producto
+ * @see Surtir
+ */
 class Proveedor
 {
     const TABLE = "Proveedor";
     // ID_Proveedor, Nombre_Proveedor, Telefono, Estado
 
-    // Funcion para crear un nuevo proveedor
+    /**
+     * Crea un proveedor activo. El nombre ya se validó con validarNombreLibre().
+     *
+     * @param string      $Nombre_Proveedor Nombre
+     * @param string|null $Telefono         Teléfono (10 o 12 dígitos), opcional
+     * @return string ID del proveedor creado
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Proveedor::validarNombreLibre()
+     */
     public static function createProveedor($Nombre_Proveedor, $Telefono)
     {
         try {
@@ -33,8 +49,14 @@ class Proveedor
         }
     }//-- Fin funcion crear proveedor
 
-    // Funcion para leer los proveedores con su estado
-    // Solo los activos (Inventario, Surtir) o todos ($todos, la pantalla de Proveedores, que permite volver a activarlos)
+    /**
+     * Proveedores con su teléfono y su estado.
+     *
+     * @param bool $todos false: solo los activos (Inventario, Surtir); true: todos (la pantalla de Proveedores,
+     *                    que permite volver a activarlos)
+     * @return array|false Los proveedores, o false si no hay
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readAllProveedores(bool $todos = false)
     {
         try {
@@ -59,7 +81,13 @@ class Proveedor
 
     }//-- Fin funcion leer todos los proveedores
 
-    // Funcion para leer 1 proveedor
+    /**
+     * Lee un proveedor.
+     *
+     * @param int $ID_Proveedor Proveedor
+     * @return array|false ['Nombre_Proveedor', 'Telefono', 'Estado'], o false si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readProveedor($ID_Proveedor)
     {
         try {
@@ -86,7 +114,16 @@ class Proveedor
     }//-- Fin funcion leer proveedor
 
 
-    // Funcion para modificar un proveedor
+    /**
+     * Cambia el nombre y el teléfono de un proveedor.
+     *
+     * @param int         $ID_Proveedor     Proveedor
+     * @param string      $Nombre_Proveedor Nombre nuevo
+     * @param string|null $Telefono         Teléfono (10 o 12 dígitos), opcional
+     * @return int 1 si se actualizó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Proveedor::validarNombreLibre()
+     */
     public static function updateProveedor($ID_Proveedor, $Nombre_Proveedor, $Telefono)
     {
         try {
@@ -111,7 +148,14 @@ class Proveedor
         }
     }//-- Fin funcion modificar proveedor
 
-    // Funcion para activar o desactivar un proveedor (no se borra)
+    /**
+     * Activa o desactiva un proveedor (no se borra).
+     *
+     * @param int    $ID_Proveedor Proveedor
+     * @param string $Estado       "activo" o "inactivo"
+     * @return int 1 si se actualizó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function cambiarEstado($ID_Proveedor, $Estado)
     {
         try {
@@ -133,8 +177,17 @@ class Proveedor
     }//-- Fin funcion modificar estado
 
 
-    // No puede haber dos proveedores con el mismo nombre, activos o no
-    // La intercalación de la tabla (utf8mb4_unicode_ci) no distingue mayúsculas ni acentos
+    /**
+     * Verifica que no haya otro proveedor con el mismo nombre, activo o no.
+     * La intercalación de la tabla (utf8mb4_unicode_ci) no distingue mayúsculas ni acentos.
+     *
+     * @param string   $Nombre_Proveedor Nombre que se quiere usar
+     * @param int|null $excepto          Proveedor que se está editando (no cuenta como repetido)
+     * @return void
+     * @throws ErrorDatos 409 "Ya existe un proveedor llamado ..." con ['campo' => 'Nombre_Proveedor'];
+     *                    si el otro está inactivo, el mensaje sugiere volver a activarlo
+     * @throws PDOException Si falla la consulta
+     */
     public static function validarNombreLibre(string $Nombre_Proveedor, ?int $excepto = null): void
     {
         $connection = new Conexion();

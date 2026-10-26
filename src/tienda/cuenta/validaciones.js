@@ -1,5 +1,10 @@
-// Validación de los formularios de cuenta. Son las mismas reglas que aplica el servidor
-// (backend/models/cliente.php); el servidor siempre vuelve a validar
+/**
+ * @file Validación de los formularios de cuenta. Son las mismas reglas que aplica el servidor
+ * (backend/models/cliente.php); el servidor siempre vuelve a validar.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 // Letras (con acentos), espacios, apóstrofos, puntos y guiones: "María José", "O'Connor", "Pérez-Díaz"
 const NOMBRE = /^\p{L}[\p{L}\p{M} '.-]*$/u
@@ -7,7 +12,15 @@ const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const largo = (texto) => [...texto].length
 
-// { campo: mensaje } con los campos inválidos ({} si todo está bien)
+/**
+ * Valida el formulario de registro: nombre y apellidos, correo, teléfono de 10 dígitos y contraseña
+ * de 8 a 72 caracteres con letras y números.
+ *
+ * @param {{nombre: string, apellidos: string, correo: string, telefono: string, password: string, confirmar: string}} datos
+ *        Valores del formulario
+ * @returns {Object<string, string>} { campo: mensaje } con los campos inválidos ({} si todo está bien)
+ * @see Cliente::validar
+ */
 export function validarRegistro({
   nombre = '',
   apellidos = '',
@@ -52,6 +65,12 @@ export function validarRegistro({
   return errores
 }
 
+/**
+ * Valida el formulario de ingreso: correo y contraseña obligatorios.
+ *
+ * @param {{correo: string, password: string}} datos Valores del formulario
+ * @returns {Object<string, string>} { campo: mensaje } con los campos que faltan
+ */
 export function validarIngreso({ correo = '', password = '' }) {
   const errores = {}
   if (correo.trim() === '') errores.correo = 'Escribe tu correo'
@@ -59,8 +78,14 @@ export function validarIngreso({ correo = '', password = '' }) {
   return errores
 }
 
-// A dónde regresar después de ingresar (?siguiente=/compra/entrega). Solo rutas de la propia tienda:
-// "//sitio.com" o una URL completa llevarían a otro sitio
+/**
+ * A dónde regresar después de ingresar (?siguiente=/compra/entrega). Solo rutas de la propia tienda:
+ * "//sitio.com" o una URL completa llevarían a otro sitio.
+ *
+ * @param {*} siguiente Valor del parámetro siguiente
+ * @param {string} [porDefecto='/cuenta'] Ruta si el valor no es seguro
+ * @returns {string} La ruta a la que se regresa
+ */
 export function destinoSeguro(siguiente, porDefecto = '/cuenta') {
   if (typeof siguiente !== 'string' || !siguiente.startsWith('/') || /^\/[/\\]/.test(siguiente))
     return porDefecto

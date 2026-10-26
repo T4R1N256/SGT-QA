@@ -324,6 +324,15 @@ function HistorialCajas() {
   )
 }
 
+/**
+ * Historial (solo admin), en dos pestañas: ventas pasadas (filtros por fecha, forma de pago y estado,
+ * con su detalle y la reimpresión del ticket) y cortes de caja con su detalle.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Historial() {
   const [pestana, setPestana] = useState('ventas')
 

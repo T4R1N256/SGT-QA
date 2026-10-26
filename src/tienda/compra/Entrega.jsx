@@ -10,8 +10,16 @@ import { useFormulario } from '../cuenta/useFormulario'
 import PasosCompra from './PasosCompra'
 import { CAMPOS_ENTREGA, ENTIDADES, validarEntrega } from './validaciones'
 
-// Paso 2 (N9, R11, R12): datos de entrega, validados aquí y en el servidor con un mensaje por campo.
-// Se prellenan con lo capturado antes en esta compra o con la dirección del último pedido (T-S4)
+/**
+ * Paso 2 (N9, R11, R12): datos de entrega, validados aquí y en el servidor con un mensaje por campo.
+ * Se prellenan con lo capturado antes en esta compra o con la dirección del último pedido (T-S4).
+ *
+ * @returns {JSX.Element} La página
+ * @see validarEntrega
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Entrega() {
   const { lineas } = useCarrito()
   const consulta = useConsulta(obtenerEntrega)

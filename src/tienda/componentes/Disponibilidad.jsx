@@ -8,7 +8,16 @@ const ICONOS = {
   agotado: XCircleIcon,
 }
 
-// Etiqueta de disponibilidad: icono y texto, no solo color
+/**
+ * Etiqueta de disponibilidad: icono y texto, no solo color.
+ *
+ * @param {{valor: ('disponible'|'pocas_piezas'|'agotado')}} props
+ * @returns {JSX.Element} La etiqueta
+ * @see DISPONIBILIDAD
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Disponibilidad({ valor }) {
   const { etiqueta, clase } = DISPONIBILIDAD[valor] ?? DISPONIBILIDAD.agotado
   const Icono = ICONOS[valor] ?? XCircleIcon

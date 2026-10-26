@@ -2,7 +2,14 @@ import clsx from 'clsx'
 import { NavLink } from 'react-router-dom'
 import { useCategorias } from '../catalogo/CategoriasContext'
 
-// Accesos a las categorías bajo el encabezado. Si no cargan, no se muestra: cada página avisa del error
+/**
+ * Accesos a las categorías bajo el encabezado. Si no cargan, no se muestra: cada página avisa del error.
+ *
+ * @returns {JSX.Element|null} La barra
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function BarraCategorias() {
   const { categorias } = useCategorias()
   if (categorias.length === 0) return null

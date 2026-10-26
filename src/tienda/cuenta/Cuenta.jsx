@@ -5,7 +5,14 @@ import Cargando from '../componentes/Cargando'
 import MisPedidos from './MisPedidos'
 import { useSesion } from './SesionContext'
 
-// Mi cuenta: datos del cliente y cierre de sesión. Sin sesión lleva a Ingresar
+/**
+ * Mi cuenta: datos del cliente y cierre de sesión. Sin sesión lleva a Ingresar.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Cuenta() {
   const { cliente, cargando, salir } = useSesion()
   const [saliendo, setSaliendo] = useState(false)

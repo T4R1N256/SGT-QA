@@ -1,15 +1,27 @@
 <?php
-// Pedidos de la tienda en línea. Se crean "pendientes de pago" (D4): no descuentan ni apartan existencias.
-// El pago nunca se procesa (D6): no hay conexión con bancos ni pasarelas
 
 require_once __DIR__ . '/carrito.php';
 require_once __DIR__ . '/entrega.php';
 
+/**
+ * Pedidos de la tienda en línea. Se crean "pendientes de pago" (D4): no descuentan ni apartan existencias.
+ * El pago nunca se procesa (D6): no hay conexión con bancos ni pasarelas.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Carrito
+ * @see Entrega
+ */
 class Pedido
 {
     const ESTADO_PENDIENTE = 'pendiente_pago';
 
-    // Folio que ve el cliente: P + fecha + 5 caracteres al azar (sin 0/O ni 1/I para dictarlo sin confusión)
+    /**
+     * Folio que ve el cliente: P + fecha + 5 caracteres al azar (sin 0/O ni 1/I para dictarlo sin confusión).
+     *
+     * @return string El folio, por ejemplo P261026-K7M2Q
+     */
     private static function nuevoFolio(): string
     {
         $letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -21,9 +33,20 @@ class Pedido
     }//-- Fin funcion nuevo folio
 
 
-    // Crea el pedido con el carrito revisado y los datos de entrega
-    // $clave: la genera el navegador por cada confirmación (ver folioPorClave)
-    // Regresa [folio, true si se creó ahora, false si otro envío con la misma clave lo creó primero]
+    /**
+     * Crea el pedido con el carrito revisado otra vez (T-S5) y los datos de entrega.
+     * Si algo cambió (existencias, precios, bajas) no se crea y el cliente ve qué se ajustó antes de confirmar de nuevo.
+     *
+     * @param int    $ID_Cliente Cliente con la sesión iniciada
+     * @param array  $lineas     Carrito leído con Carrito::leer()
+     * @param array  $entrega    Datos de entrega ya validados
+     * @param string $clave      Clave que genera el navegador por cada confirmación (ver folioPorClave())
+     * @return array [folio, true si se creó ahora, false si otro envío con la misma clave lo creó primero]
+     * @throws ErrorDatos 409 "Tu carrito cambió..." con la revisión del carrito si hay avisos
+     * @throws ErrorApi 409 "Tu carrito está vacío"
+     * @throws PDOException Si falla la consulta, o si el folio se repite tres veces
+     * @see Carrito::revisar()
+     */
     public static function crear(int $ID_Cliente, array $lineas, array $entrega, string $clave): array
     {
         // T-S5: se revisa otra vez. Si algo cambió (existencias, precios, bajas) no se crea el pedido
@@ -101,8 +124,15 @@ class Pedido
     }//-- Fin funcion crear
 
 
-    // Folio del pedido que ya se creó con esa clave, o null. El mismo envío repetido (doble clic, P12)
-    // regresa ese pedido en lugar de crear otro
+    /**
+     * Folio del pedido que ya se creó con esa clave. El mismo envío repetido (doble clic, P12)
+     * regresa ese pedido en lugar de crear otro.
+     *
+     * @param int    $ID_Cliente Cliente
+     * @param string $clave      Clave de la confirmación
+     * @return string|null El folio, o null si no hay pedido con esa clave
+     * @throws PDOException Si falla la consulta a la base de datos
+     */
     public static function folioPorClave(int $ID_Cliente, string $clave): ?string
     {
         $connection = new Conexion;
@@ -113,7 +143,13 @@ class Pedido
     }
 
 
-    // Pedidos del cliente, del más reciente al más antiguo
+    /**
+     * Pedidos del cliente, del más reciente al más antiguo.
+     *
+     * @param int $ID_Cliente Cliente
+     * @return array Lista de ['folio', 'fecha', 'hora', 'estado', 'total', 'productos', 'piezas']
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     */
     public static function listar(int $ID_Cliente): array
     {
         $connection = new Conexion;
@@ -137,7 +173,14 @@ class Pedido
     }//-- Fin funcion listar
 
 
-    // Un pedido del cliente con sus productos y datos de entrega, o null si no es suyo o no existe
+    /**
+     * Un pedido del cliente con sus productos, su resumen y sus datos de entrega.
+     *
+     * @param int    $ID_Cliente Cliente
+     * @param string $folio      Folio del pedido
+     * @return array|null El pedido, o null si no existe o no es de ese cliente
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     */
     public static function leer(int $ID_Cliente, string $folio): ?array
     {
         $connection = new Conexion;

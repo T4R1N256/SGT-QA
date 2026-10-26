@@ -1,8 +1,13 @@
 <?php
-/*
- * Punto de entrada para la API
- * Autorizacion mediante sesiones de PHP
- * El estado se resetea al cerrar el navegador
+/**
+ * Punto de entrada del API. Autorización mediante sesiones de PHP.
+ * SGT y la tienda en línea usan cookies de sesión distintas. Un ErrorApi responde con su código HTTP
+ * y su mensaje; cualquier otra excepción responde 500.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see ErrorApi
  */
 require_once __DIR__ . '/config/validar.php';
 
@@ -60,16 +65,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 
+/**
+ * Indica si hay un usuario de SGT con la sesión iniciada.
+ *
+ * @return bool true con sesión
+ */
 function esAutorizado(): bool
 {
     return isset($_SESSION['ID_Usuario']);
 }
 
+/**
+ * Indica si el usuario de la sesión es administrador.
+ *
+ * @return bool true si su puesto es admin
+ */
 function esAdmin(): bool
 {
     return isset($_SESSION['Puesto']) && $_SESSION['Puesto'] === 'admin';
 }
 
+/**
+ * Exige sesión iniciada: sin ella responde 401 "No autorizado" y termina.
+ *
+ * @return void
+ */
 function requerirAutorizacion(): void
 {
     if (!esAutorizado()) {
@@ -79,6 +99,13 @@ function requerirAutorizacion(): void
     }
 }
 
+/**
+ * Exige un administrador (reglas 3 y 5): sin sesión responde 401 y con otro puesto
+ * responde 403 "Acceso denegado"; en los dos casos termina.
+ *
+ * @return void
+ * @see requerirAutorizacion()
+ */
 function requerirAdmin(): void
 {
     requerirAutorizacion();

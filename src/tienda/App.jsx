@@ -18,8 +18,15 @@ import Producto from './catalogo/Producto'
 import Diseno from './componentes/Diseno'
 import NoEncontrada from './componentes/NoEncontrada'
 
-// Rutas de la tienda. Flujo: explorar → carrito → cuenta → entrega → resumen → pago (PLAN_TIENDA.md)
-// Los pasos de la compra piden sesión (D5); cada paso revisa además que el anterior esté hecho (P7)
+/**
+ * Rutas de la tienda. Flujo: explorar → carrito → cuenta → entrega → resumen → pago (PLAN_TIENDA.md).
+ * Los pasos de la compra piden sesión (D5); cada paso revisa además que el anterior esté hecho (P7).
+ *
+ * @returns {JSX.Element} La tienda
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function App() {
   return (
     <TiendaProvider>

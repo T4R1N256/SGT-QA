@@ -13,10 +13,16 @@ Dotenv\Dotenv::createImmutable(dirname(__DIR__, 2))->safeLoad();
 date_default_timezone_set('America/Mazatlan');
 
 
-// Variable de entorno: primero la del proceso (getenv) y después la del .env ($_ENV)
-// Electron y Docker pasan las credenciales de la base de datos en el entorno del proceso, y deben ganarle a un .env
-// que haya en la carpeta: con `php -S`, Dotenv no ve las variables del proceso y escribe en $_ENV las del .env.
-// Con variables_order = "GPCS" (php.ini de Ubuntu, por ejemplo) $_ENV no trae las variables del proceso
+/**
+ * Lee una variable de entorno: primero la del proceso (getenv) y después la del .env ($_ENV).
+ * Electron y Docker pasan las credenciales de la base de datos en el entorno del proceso, y deben ganarle
+ * a un .env que haya en la carpeta: con `php -S`, Dotenv no ve las variables del proceso y escribe en $_ENV
+ * las del .env. Con variables_order = "GPCS" (php.ini de Ubuntu, por ejemplo) $_ENV no trae las del proceso.
+ *
+ * @param string      $nombre  Nombre de la variable
+ * @param string|null $defecto Valor si no está definida o está vacía
+ * @return string|null El valor de la variable o $defecto
+ */
 function variableEntorno(string $nombre, ?string $defecto = null): ?string
 {
    $valor = getenv($nombre);
@@ -36,8 +42,22 @@ if (variableEntorno('APP_ENV', 'production') === 'development') {
 }
 
 
+/**
+ * Conexión a MySQL/MariaDB con PDO, configurada con las variables DB_HOST, DB_PORT, DB_NAME,
+ * DB_USER y DB_PASS. Los errores se lanzan como excepciones y las filas llegan como arreglos asociativos.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see variableEntorno()
+ */
 class Conexion extends PDO
 {
+   /**
+    * Abre la conexión en UTF-8. rowCount() cuenta las filas encontradas, no solo las que cambiaron:
+    * guardar un registro sin modificarlo no responde "no se encontró".
+    * Si no se puede conectar, en el API responde 500 con el mensaje (en la terminal lo imprime) y termina.
+    */
    public function __construct()
    {
       //Sobreescribo el método constructor de la clase PDO.

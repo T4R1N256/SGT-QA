@@ -4,7 +4,15 @@ import BarraCategorias from './BarraCategorias'
 import Encabezado from './Encabezado'
 import Pie from './Pie'
 
-// Estructura de todas las páginas de la tienda
+/**
+ * Estructura de todas las páginas de la tienda: encabezado, barra de categorías, la página y el pie.
+ * Cada página nueva empieza arriba.
+ *
+ * @returns {JSX.Element} El diseño
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Diseno() {
   const { pathname, search } = useLocation()
 

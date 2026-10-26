@@ -1,9 +1,25 @@
+/**
+ * @file Hook para los formularios de la tienda en línea (cuenta y entrega).
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 import { useRef, useState } from 'react'
 
-// Estado de un formulario con validación por campo (P8–P10):
-// - al enviar se validan todos los campos y se enfoca el primero con error
-// - después del primer intento, cada campo se vuelve a validar mientras se escribe
-// - los errores del servidor ({ errores: { campo: mensaje } }) se muestran en su campo
+/**
+ * Estado de un formulario con validación por campo (P8–P10):
+ * - al enviar se validan todos los campos y se enfoca el primero con error
+ * - después del primer intento, cada campo se vuelve a validar mientras se escribe
+ * - los errores del servidor ({ errores: { campo: mensaje } }) se muestran en su campo
+ *
+ * @param {Object<string, string>} inicial Valores iniciales; su orden es el de los campos en pantalla
+ * @param {function(Object): Object<string, string>} validar Regresa { campo: mensaje } con los campos inválidos
+ * @returns {{campo: function(string): Object, enviar: function(function(Object): Promise<Object>): function(Event),
+ *           mensaje: (string|null), enviando: boolean}}
+ *          campo(nombre) da las props del componente Campo; enviar(fn) da el onSubmit, que llama a fn(valores)
+ *          con el API y regresa su respuesta
+ */
 export function useFormulario(inicial, validar) {
   const [valores, setValores] = useState(inicial)
   const [errores, setErrores] = useState({})

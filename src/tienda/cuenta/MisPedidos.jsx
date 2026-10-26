@@ -7,7 +7,14 @@ import Cargando from '../componentes/Cargando'
 import ErrorCarga from '../componentes/ErrorCarga'
 import { ESTADOS_PEDIDO } from '../compra/validaciones'
 
-// Mis pedidos (T-S6): los pendientes de pago se pueden retomar desde aquí
+/**
+ * Mis pedidos (T-S6): los pendientes de pago se pueden retomar desde aquí.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function MisPedidos() {
   const { datos, error, reintentar } = useConsulta(obtenerPedidos)
 

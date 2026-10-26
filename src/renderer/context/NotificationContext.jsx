@@ -1,3 +1,10 @@
+/**
+ * @file Avisos modales de SGT: NotificationProvider y useNotify.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 
 const NotificationContext = createContext(null)
@@ -16,6 +23,12 @@ const BUTTON = {
   warning: 'bg-amber-600 hover:bg-amber-700',
 }
 
+/**
+ * Muestra un aviso modal (dialog) con título, mensaje y botón Aceptar, con el color de su tipo.
+ *
+ * @param {{children: React.ReactNode}} props
+ * @returns {JSX.Element} El proveedor del contexto y el dialog
+ */
 export function NotificationProvider({ children }) {
   const dialogRef = useRef(null)
   const [notification, setNotification] = useState(null)
@@ -69,6 +82,12 @@ export function NotificationProvider({ children }) {
   )
 }
 
+/**
+ * Título por defecto según el tipo de aviso.
+ *
+ * @param {'info'|'success'|'error'|'warning'} type Tipo de aviso
+ * @returns {string} "Aviso", "Listo", "Error" o "Atención"
+ */
 function defaultTitle(type) {
   switch (type) {
     case 'error':
@@ -82,6 +101,12 @@ function defaultTitle(type) {
   }
 }
 
+/**
+ * Función para mostrar un aviso: notify({ title?, message, type? }).
+ *
+ * @returns {function({title: (string|undefined), message: string, type: (string|undefined)}): void} notify
+ * @throws {Error} Si se usa fuera de NotificationProvider
+ */
 export function useNotify() {
   const ctx = useContext(NotificationContext)
   if (!ctx) throw new Error('useNotify debe usarse dentro de NotificationProvider')

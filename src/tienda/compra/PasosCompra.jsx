@@ -3,7 +3,15 @@ import { CheckIcon } from '@heroicons/react/20/solid'
 
 const PASOS = ['Carrito', 'Entrega', 'Resumen', 'Pago']
 
-// Dónde va el cliente en la compra: carrito → datos de entrega → resumen → pago
+/**
+ * Dónde va el cliente en la compra: carrito → datos de entrega → resumen → pago.
+ *
+ * @param {{actual: ('Carrito'|'Entrega'|'Resumen'|'Pago')}} props Paso actual
+ * @returns {JSX.Element} Los pasos
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function PasosCompra({ actual }) {
   const indice = PASOS.indexOf(actual)
 

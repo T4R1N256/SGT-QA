@@ -1,7 +1,14 @@
 <?php
-//Se ejecuta en cada arranque: aplica migraciones pendientes y crea el usuario administrador por defecto
-// ID = 1
-// Password = passadmin
+/**
+ * Se ejecuta en cada arranque (Docker y Electron): aplica las migraciones pendientes y crea el usuario
+ * administrador por defecto (ID 1, contraseña passadmin). Con SEED_TIENDA=1 o SEED_DEMO=1 carga además
+ * el catálogo de la tienda o los datos de demostración, si la tabla de productos está vacía.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see aplicarMigraciones()
+ */
 
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/migrate.php';

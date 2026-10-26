@@ -1,17 +1,31 @@
 <?php
 
-// Clase con CRUD para categorias
-
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/validar.php';
 
+/**
+ * Categorías de productos. No se borran: se activan o desactivan. Una categoría inactiva
+ * no se ofrece en Inventario y sus productos dejan de mostrarse en la tienda en línea.
+ *
+ * @author Miguel Coronado
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Producto
+ */
 class Categoria
 {
     const TABLE = "Categoria";
     // ID_Categoria, Nombre_Categoria, Estado
 
 
-    // Funcion para crear una nueva categoria
+    /**
+     * Crea una categoría activa. El nombre ya se validó con validarNombreLibre().
+     *
+     * @param string $Nombre_Categoria Nombre
+     * @return string ID de la categoría creada
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Categoria::validarNombreLibre()
+     */
     public static function createCategoria($Nombre_Categoria)
     {
         try {
@@ -33,8 +47,14 @@ class Categoria
         }
     }//-- Fin funcion crear categoria
 
-    // Funcion para leer las categorias con su estado y cuántos productos activos tiene cada una
-    // Solo las activas (Inventario) o todas ($todas, la pantalla de Categorías, que permite volver a activarlas)
+    /**
+     * Categorías con su estado y cuántos productos activos tiene cada una.
+     *
+     * @param bool $todas false: solo las activas (Inventario); true: todas (la pantalla de Categorías,
+     *                    que permite volver a activarlas)
+     * @return array|false Las categorías, o false si no hay
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readAllCategoria(bool $todas = false)
     {
         try {
@@ -61,7 +81,13 @@ class Categoria
 
     }//-- Fin funcion leer todas las categorias
 
-    // Funcion para leer 1 categoria
+    /**
+     * Lee una categoría.
+     *
+     * @param int $ID_Categoria Categoría
+     * @return array|false ['Nombre_Categoria', 'Estado'], o false si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readCategoria($ID_Categoria)
     {
         try {
@@ -88,7 +114,15 @@ class Categoria
     }//-- Fin funcion leer categoria
 
 
-    // Funcion para modificar una categoria
+    /**
+     * Cambia el nombre de una categoría.
+     *
+     * @param int    $ID_Categoria     Categoría
+     * @param string $Nombre_Categoria Nombre nuevo
+     * @return int 1 si se actualizó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Categoria::validarNombreLibre()
+     */
     public static function updateCategoria($ID_Categoria, $Nombre_Categoria)
     {
         try {
@@ -112,7 +146,15 @@ class Categoria
     }//-- Fin funcion modificar categoria
 
 
-    // Funcion para activar o desactivar una categoria (no se borra)
+    /**
+     * Activa o desactiva una categoría (no se borra).
+     *
+     * @param int    $ID_Categoria Categoría
+     * @param string $Estado       "activo" o "inactivo"
+     * @return int 1 si se actualizó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Categoria::validarDesactivar()
+     */
     public static function cambiarEstado($ID_Categoria, $Estado)
     {
         try {
@@ -134,8 +176,17 @@ class Categoria
     }//-- Fin funcion cambiar estado
 
 
-    // No puede haber dos categorías con el mismo nombre, activas o no
-    // La intercalación de la tabla (utf8mb4_unicode_ci) no distingue mayúsculas ni acentos: "lacteos" = "Lácteos"
+    /**
+     * Verifica que no haya otra categoría con el mismo nombre, activa o no.
+     * La intercalación de la tabla (utf8mb4_unicode_ci) no distingue mayúsculas ni acentos: "lacteos" = "Lácteos".
+     *
+     * @param string   $Nombre_Categoria Nombre que se quiere usar
+     * @param int|null $excepto          Categoría que se está editando (no cuenta como repetida)
+     * @return void
+     * @throws ErrorDatos 409 "Ya existe una categoría llamada ..." con ['campo' => 'Nombre_Categoria'];
+     *                    si la otra está inactiva, el mensaje sugiere volver a activarla
+     * @throws PDOException Si falla la consulta
+     */
     public static function validarNombreLibre(string $Nombre_Categoria, ?int $excepto = null): void
     {
         $connection = new Conexion();
@@ -154,8 +205,17 @@ class Categoria
     }//-- Fin funcion validar nombre libre
 
 
-    // Desactivar una categoría con productos activos los quita de la tienda en línea: el admin debe confirmarlo
-    // Sin confirmación se bloquea con 409 y se responde cuántos productos tiene para que la pantalla lo avise
+    /**
+     * Desactivar una categoría con productos activos los quita de la tienda en línea: el admin debe confirmarlo.
+     *
+     * @param int    $ID_Categoria     Categoría
+     * @param string $Nombre_Categoria Nombre (para el mensaje)
+     * @param bool   $confirmado       Si el admin ya confirmó
+     * @return void
+     * @throws ErrorDatos 409 sin confirmación y con productos activos, con
+     *                    ['requiere_confirmacion' => true, 'productos' => cuántos] para que la pantalla lo avise
+     * @throws PDOException Si falla la consulta
+     */
     public static function validarDesactivar(int $ID_Categoria, string $Nombre_Categoria, bool $confirmado): void
     {
         if ($confirmado) {

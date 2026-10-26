@@ -9,9 +9,6 @@ import { fechaLocal, periodo } from '../utils/fechas'
 import { construirReporte, TIPOS_REPORTE } from '../utils/reportes'
 import { DocumentArrowDownIcon } from '@heroicons/react/20/solid'
 
-// Reportes (RF11, solo admin; regla 5): ventas, surtidos y compras, stock y resumen del periodo
-// Lo que se ve en pantalla es lo mismo que se exporta a PDF (construirReporte)
-
 const API = { ventas: getSalesReport, surtidos: getRestockReport, stock: getStockReport, resumen: getSummaryReport }
 
 // La respuesta lleva su tipo: al cambiar de pestaña no se arma un reporte con los datos de otra
@@ -186,6 +183,16 @@ function ContenidoReporte({ reporte, actualizando }) {
   )
 }
 
+/**
+ * Reportes (RF11, solo admin; regla 5): ventas, surtidos y compras, stock y resumen del periodo
+ * (día, semana, mes o rango). Lo que se ve en pantalla es lo mismo que se exporta a PDF.
+ *
+ * @returns {JSX.Element} La página
+ * @see construirReporte
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Reportes() {
   const notify = useNotify()
   const [tipo, setTipo] = useState('ventas')

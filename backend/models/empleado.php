@@ -1,8 +1,17 @@
 <?php
-//Clase con CRUD para administrar empleados
 
 require_once __DIR__ . "/../config/database.php";
 
+/**
+ * Datos de la persona detrás de cada usuario: nombre, puesto (admin o empleado) y estado
+ * (activo o inactivo). Un empleado inactivo no aparece en la lista de usuarios.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Usuario
+ * @see Contacto_Empleado
+ */
 class Empleado
 {
     const TABLE = 'Empleado';
@@ -11,7 +20,18 @@ class Empleado
     // 0 = no hay registro o no se encontró 
     // -1 = hubo un error en la ejecución
 
-    //Funcion para crear empleado 
+    /**
+     * Crea el empleado de un usuario. Se llama dentro de la transacción que crea el usuario.
+     *
+     * @param PDO    $connection           Conexión con la transacción abierta
+     * @param string $Nombre               Nombre completo
+     * @param string $Puesto               "admin" o "empleado"
+     * @param string $Estado               "activo"
+     * @param int    $ID_Contacto_Empleado Contacto ya creado
+     * @param int    $ID_Usuario           Usuario ya creado
+     * @return string ID del empleado creado
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function crearEmpleado($connection, $Nombre, $Puesto, $Estado, $ID_Contacto_Empleado, $ID_Usuario)
     {
 
@@ -34,7 +54,13 @@ class Empleado
         }
     }//-- Fin funcion crear empleado 
 
-    //Funcion para obtener los IDs de empleado y contacto mediante ID de usuario
+    /**
+     * IDs del empleado y de su contacto a partir del usuario.
+     *
+     * @param int $ID_Usuario Usuario
+     * @return array|false ['ID_Empleado', 'ID_Contacto_Empleado'], o false si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function getIDsByUsuario($ID_Usuario)
     {
         try {
@@ -60,7 +86,17 @@ class Empleado
 
     }//-- Fin funcion obtener IDs
 
-    //Funcion para actualizar empleado
+    /**
+     * Actualiza nombre, puesto y estado de un empleado.
+     *
+     * @param PDO    $connection  Conexión con la transacción abierta
+     * @param int    $ID_Empleado Empleado
+     * @param string $Nombre      Nombre completo
+     * @param string $Puesto      "admin" o "empleado"
+     * @param string $Estado      "activo" o "inactivo"
+     * @return int 1 si se actualizó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function updateEmpleado($connection, $ID_Empleado, $Nombre, $Puesto, $Estado)
     {
 
@@ -87,7 +123,16 @@ class Empleado
         }
     }//-- Fin funcion actualizar empleado 
 
-    //Funcion eliminar (desactivar) empleado 
+    /**
+     * Da de baja a un empleado (Estado = inactivo); su usuario se marca como no autorizado
+     * en la misma transacción.
+     *
+     * @param PDO $connection  Conexión con la transacción abierta
+     * @param int $ID_Empleado Empleado
+     * @return int 1 si se desactivó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Usuario::updateEstado()
+     */
     public static function desactivarEmpleado($connection, $ID_Empleado)
     {
         try {

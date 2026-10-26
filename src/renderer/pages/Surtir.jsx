@@ -8,9 +8,6 @@ import { aCentavos } from '../../compartido/money'
 import { cantidadSugerida, filtrarProductos, necesitanSurtido } from '../utils/productos'
 import { PlusIcon, TrashIcon, SparklesIcon, TruckIcon } from '@heroicons/react/20/solid'
 
-// Surtir (RF05): registrar lo que llega de un proveedor con su costo de compra.
-// Suma al inventario, guarda el último costo de cada producto y queda en el historial de surtidos.
-
 function formatMoney(n) {
   const valor = Number(n)
   return `$${(Number.isFinite(valor) ? valor : 0).toFixed(2)}`
@@ -22,6 +19,16 @@ const inputCls =
 const COLUMNAS = 'grid grid-cols-[2fr_0.8fr_0.8fr_1fr_1fr_1fr_0.4fr]'
 const HISTORIAL_COLUMNAS = 'grid grid-cols-[1fr_0.7fr_2fr_0.8fr_0.8fr_1fr]'
 
+/**
+ * Surtir (RF05, solo admin): registra lo que llega de un proveedor con su costo de compra.
+ * Sugiere los productos en stock bajo o agotados, suma al inventario, guarda el último costo de cada
+ * producto y deja el surtido en el historial.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Surtir() {
   const notify = useNotify()
   const { data: productosData, refetch: refetchProductos } = useFetch(getProducts)

@@ -52,6 +52,14 @@ function NavSection({ title, items, esAdmin }) {
   )
 }
 
+/**
+ * Menú lateral con los módulos; los de administración solo los ve el admin.
+ *
+ * @returns {JSX.Element} El menú
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function SideNav() {
   const { esAdmin } = useAuth()
 

@@ -1,8 +1,17 @@
 <?php
-//Clase con CRUD y funciones necesarias para tabla usuarios 
 
 require_once __DIR__ . "/../config/database.php";
 
+/**
+ * Cuentas de acceso a SGT (RF13): contraseña (hash) y estado (autorizado o no autorizado).
+ * Los datos de la persona están en Empleado y Contacto_Empleado.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Empleado
+ * @see Login
+ */
 class Usuario
 {
     const TABLE = 'Usuario';
@@ -13,7 +22,16 @@ class Usuario
 
 
 
-    //Funcion para crear un usuario
+    /**
+     * Crea un usuario. La contraseña se guarda con password_hash.
+     * Se llama dentro de la transacción que también crea el empleado y su contacto.
+     *
+     * @param PDO    $connection Conexión con la transacción abierta
+     * @param string $Password   Contraseña en texto plano
+     * @param string $Estado     "autorizado" o "no autorizado"
+     * @return string ID del usuario creado (es el que se usa para iniciar sesión)
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function createUsuario($connection, $Password, $Estado)
     {
 
@@ -33,7 +51,12 @@ class Usuario
     }//-- Fin funcion crear usuario
 
 
-    //Funcion para leer todos los usuarios y retorna el array 
+    /**
+     * Usuarios de los empleados activos, con su nombre y su estado.
+     *
+     * @return array|int Los usuarios, o 0 si no hay
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readAllUsuario()
     {
         try {
@@ -58,7 +81,13 @@ class Usuario
         }
     }//-- Fin funcion leer todos los usuarios
 
-    //Funcion para leer toda la información de un usuario 
+    /**
+     * Datos completos de un usuario: nombre, puesto, estado y contacto.
+     *
+     * @param int $ID_Usuario Usuario
+     * @return array|int Los datos, o 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readInfoUsuario($ID_Usuario)
     {
         try {
@@ -86,7 +115,15 @@ class Usuario
         }
     }//-- Fin funcion info de usuario
 
-    //Funcion actualizar estado de usuario
+    /**
+     * Cambia el estado de un usuario (autorizado o no autorizado).
+     *
+     * @param int      $ID_Usuario Usuario
+     * @param string   $Estado     "autorizado" o "no autorizado"
+     * @param PDO|null $connection Conexión de la transacción en curso, o null para abrir una
+     * @return int 1 si se actualizó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function updateEstado($ID_Usuario, $Estado, $connection = NULL)
     {
 
@@ -115,7 +152,14 @@ class Usuario
         }
     }//-- Fin funcion actualizar estado de usuario
 
-    //Funcion actualizar password de usuario
+    /**
+     * Cambia la contraseña de un usuario (se guarda con password_hash).
+     *
+     * @param int    $ID_Usuario Usuario
+     * @param string $Password   Contraseña nueva en texto plano
+     * @return int 1 si se actualizó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function updatePassword($ID_Usuario, $Password)
     {
 

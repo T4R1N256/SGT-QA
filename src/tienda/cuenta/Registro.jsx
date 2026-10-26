@@ -8,7 +8,15 @@ import { destinoSeguro, validarRegistro } from './validaciones'
 
 const VACIO = { nombre: '', apellidos: '', correo: '', telefono: '', password: '', confirmar: '' }
 
-// Registro del cliente (D5). Cada campo se valida aquí y en el servidor, con su propio mensaje (P8–P10)
+/**
+ * Registro del cliente (D5). Cada campo se valida aquí y en el servidor, con su propio mensaje (P8–P10).
+ *
+ * @returns {JSX.Element} La página
+ * @see validarRegistro
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Registro() {
   const { cliente, cargando, registrar } = useSesion()
   const [params] = useSearchParams()

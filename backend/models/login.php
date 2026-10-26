@@ -1,9 +1,16 @@
 <?php
-//Clase con funcion que valida credenciales para el login
 
 require_once __DIR__ . "/../config/database.php";
 
 
+/**
+ * Validación de credenciales para el inicio de sesión en SGT.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Usuario
+ */
 class Login
 {
     const TABLE = 'Usuario';
@@ -12,7 +19,18 @@ class Login
     // 0 = no hay registro o no se encontró 
     // -1 = hubo un error en la ejecución
 
-    //Función para validar credenciales
+    /**
+     * Valida el ID de usuario y la contraseña.
+     * Antes de la fase 1 las contraseñas se escapaban con htmlspecialchars antes de hashearlas; si coincide
+     * la versión escapada, la contraseña se vuelve a guardar con el hash de la real.
+     *
+     * @param int|string $ID_Usuario ID con el que se inicia sesión
+     * @param string     $Password   Contraseña en texto plano
+     * @return array|int ['Password', 'Estado', 'Puesto'] si es válida y está autorizado;
+     *                   0 si la contraseña no coincide; -1 si el usuario no existe; -2 si no está autorizado
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Usuario::updatePassword()
+     */
     public static function validar($ID_Usuario, $Password)
     {
 

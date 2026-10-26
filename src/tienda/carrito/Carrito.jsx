@@ -17,8 +17,16 @@ import Totales from './Totales'
 import { validarCantidad } from './carrito'
 import { useRevisionCarrito } from './useRevisionCarrito'
 
-// Carrito (N5–N8): cada cambio se revisa en el servidor, que da los importes, el IVA y el total con
-// los precios y existencias vigentes, y avisa si algo se ajustó (P4, P5)
+/**
+ * Carrito (N5–N8): cada cambio se revisa en el servidor, que da los importes, el IVA y el total con
+ * los precios y existencias vigentes, y avisa si algo se ajustó (P4, P5).
+ *
+ * @returns {JSX.Element} La página
+ * @see useRevisionCarrito
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Carrito() {
   const { lineas, cambiar, quitar, vaciar } = useCarrito()
   const { cliente } = useSesion()
