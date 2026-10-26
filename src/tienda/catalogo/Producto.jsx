@@ -17,7 +17,15 @@ const NO_ENCONTRADO = {
   texto: 'El producto que buscas no existe o ya no está a la venta.',
 }
 
-// N4: nombre, descripción, categoría, precio con IVA incluido y disponibilidad. P14: producto inexistente
+/**
+ * N4: nombre, descripción, categoría, precio con IVA incluido y disponibilidad.
+ * P14: un producto inexistente muestra la página de no encontrado.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Producto() {
   const id = enteroPositivo(useParams().id)
   return id ? <DetalleProducto key={id} id={id} /> : <NoEncontrada {...NO_ENCONTRADO} />

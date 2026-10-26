@@ -1,6 +1,22 @@
 import { MinusIcon, PlusIcon } from '@heroicons/react/20/solid'
 
-// Cantidad con botones − y +. El texto se valida afuera: aquí se puede escribir cualquier cosa (P2)
+/**
+ * Cantidad con botones − y +. El texto se valida afuera: aquí se puede escribir cualquier cosa (P2).
+ *
+ * @param {Object} props
+ * @param {string} props.id ID del campo
+ * @param {string} props.valor Texto de la cantidad
+ * @param {function(string): void} props.onCambiar Recibe el texto nuevo
+ * @param {number} [props.minimo=1] Límite del botón −
+ * @param {number} props.maximo Límite del botón +
+ * @param {string} props.etiqueta Etiqueta para los lectores de pantalla
+ * @param {boolean} [props.invalido] Marca el campo con error
+ * @param {string} [props.descripcion] ID del mensaje que describe el campo
+ * @returns {JSX.Element} El selector
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function SelectorCantidad({
   id,
   valor,

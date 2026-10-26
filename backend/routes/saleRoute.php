@@ -12,7 +12,15 @@ require_once __DIR__ . '/../models/venta.php';
 const FORMAS_PAGO = ['efectivo', 'tarjeta', 'transferencia'];
 
 
-// Funcion para armar los datos del ticket de una venta finalizada: venta, productos, cajero y datos de la tienda
+/**
+ * Arma los datos del ticket de una venta finalizada: venta, productos, cajero y datos de la tienda.
+ *
+ * @param int $ID_Venta Venta
+ * @return array|null Los datos del ticket con la llave 'tienda', o null si la venta no existe o no está finalizada
+ * @throws Exception Si falla la consulta a la base de datos
+ * @see Venta::readTicket()
+ * @see Configuracion::readConfiguracion()
+ */
 function datosTicket(int $ID_Venta): ?array
 {
     require_once __DIR__ . '/../models/configuracion.php';

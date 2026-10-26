@@ -1,5 +1,10 @@
-// Reporte en hoja tamaño carta (RF11). Recibe el reporte ya armado por construirReporte (utils/reportes.js)
-// y los datos de la tienda. Las tablas repiten su encabezado en cada página y los renglones no se parten.
+/**
+ * @file Reporte en hoja tamaño carta (RF11). Recibe el reporte ya armado por construirReporte (utils/reportes.js)
+ * y los datos de la tienda. Las tablas repiten su encabezado en cada página y los renglones no se parten.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 export const ESTILOS_REPORTE = `
   body { font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.35; color: #111; }
@@ -28,6 +33,12 @@ export const ESTILOS_REPORTE = `
   .notas p { margin: 0 0 2px; }
 `
 
+/**
+ * Tabla de una sección del reporte; las columnas numéricas se alinean a la derecha.
+ *
+ * @param {{seccion: {columnas: Array, filas: Array, vacio: string}}} props
+ * @returns {JSX.Element} La tabla, o el texto de vacío si no hay filas
+ */
 function Tabla({ seccion }) {
   if (seccion.filas.length === 0) return <p className="vacio">{seccion.vacio}</p>
 
@@ -57,6 +68,12 @@ function Tabla({ seccion }) {
   )
 }
 
+/**
+ * Reporte para PDF: encabezado con la tienda, título y periodo, indicadores, secciones y notas.
+ *
+ * @param {{reporte: Object, tienda: (Object|null)}} props
+ * @returns {JSX.Element} El reporte
+ */
 export default function ReportePDF({ reporte, tienda }) {
   return (
     <div>

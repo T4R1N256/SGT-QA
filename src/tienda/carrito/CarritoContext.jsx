@@ -1,10 +1,21 @@
+/**
+ * @file Carrito de la tienda en línea: CarritoProvider y useCarrito.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 import { CLAVE_GUARDADO, leerGuardado, reducer, totalPiezas } from './carrito'
 
-// Carrito compartido por toda la tienda. Se guarda en localStorage (se conserva al recargar, N7)
-// y se mantiene igual en todas las pestañas abiertas
 const CarritoContext = createContext(null)
 
+/**
+ * Carrito guardado en localStorage al abrir la tienda.
+ *
+ * @returns {Array<Object>} Las líneas válidas ([] sin localStorage)
+ * @see leerGuardado
+ */
 function cargar() {
   try {
     return leerGuardado(localStorage.getItem(CLAVE_GUARDADO))
@@ -13,6 +24,15 @@ function cargar() {
   }
 }
 
+/**
+ * Carrito compartido por toda la tienda. Se guarda en localStorage (se conserva al recargar, N7)
+ * y se mantiene igual en todas las pestañas abiertas (evento storage).
+ * useCarrito() da { lineas, piezas, agregar, cambiar, quitar, vaciar, sincronizar }.
+ *
+ * @param {{children: React.ReactNode}} props
+ * @returns {JSX.Element} El proveedor del contexto
+ * @see reducer
+ */
 export function CarritoProvider({ children }) {
   const [lineas, dispatch] = useReducer(reducer, undefined, cargar)
 

@@ -98,6 +98,15 @@ function CategoriaForm({ data, setData, response, setResponse, mode, aviso }) {
   )
 }
 
+/**
+ * Categorías (solo admin): alta, edición, activación y desactivación. No acepta nombres repetidos
+ * y, si la categoría tiene productos activos, pide confirmar antes de desactivarla.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Categorias() {
   const {
     data: categoriasData,

@@ -5,7 +5,19 @@ import { paginasVisibles } from '../catalogo/filtros'
 
 const base = 'min-w-9 h-9 px-2 inline-flex items-center justify-center rounded-lg text-sm'
 
-// Enlaces a las páginas de una lista. enlace(n) regresa la dirección de la página n
+/**
+ * Enlaces a las páginas de una lista.
+ *
+ * @param {Object} props
+ * @param {number} props.pagina Página actual
+ * @param {number} props.paginas Total de páginas
+ * @param {function(number): string} props.enlace Regresa la dirección de la página n
+ * @returns {JSX.Element|null} Los enlaces, o nada si hay una sola página
+ * @see paginasVisibles
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Paginacion({ pagina, paginas, enlace }) {
   if (paginas <= 1) return null
 

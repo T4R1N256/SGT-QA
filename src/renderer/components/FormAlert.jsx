@@ -17,6 +17,15 @@ const STYLES = {
   },
 }
 
+/**
+ * Mensaje de error o de éxito de un formulario, con icono.
+ *
+ * @param {{response: ({type: ('error'|'success'), message: string}|null)}} props
+ * @returns {JSX.Element|null} El mensaje, o nada si no hay respuesta
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function FormAlert({ response }) {
   if (!response) return null
   const s = STYLES[response.type]

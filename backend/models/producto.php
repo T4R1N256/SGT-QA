@@ -1,8 +1,18 @@
 <?php
-//Clase con CRUD para productos 
 
 require_once __DIR__ . "/../config/database.php";
 
+/**
+ * Catálogo de productos de SGT (RF04, RF06) y movimientos de inventario.
+ * Los productos dados de baja quedan con Activo = 0: no se muestran ni se venden, pero sus ventas
+ * pasadas los siguen referenciando.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Venta
+ * @see Surtir
+ */
 class Producto
 {
     const TABLE = 'Producto';
@@ -12,7 +22,13 @@ class Producto
     // -1 = hubo un error en la ejecución
 
 
-    // Estado del producto según sus existencias y su cantidad mínima
+    /**
+     * Estado del producto según sus existencias y su cantidad mínima.
+     *
+     * @param int $Cantidad        Existencias
+     * @param int $Cantidad_Minima Cantidad mínima
+     * @return string "Disponible" si hay más que el mínimo, "Stock bajo" si hay pocas y "Agotado" si no hay
+     */
     public static function calcularEstado(int $Cantidad, int $Cantidad_Minima): string
     {
         if ($Cantidad > $Cantidad_Minima) {
@@ -22,7 +38,22 @@ class Producto
     }//-- Fin funcion calcular estado
 
 
-    // Funcion para crear un Producto
+    /**
+     * Registra un producto.
+     *
+     * @param string $Nombre_Producto Nombre
+     * @param float  $Precio          Precio de venta
+     * @param int    $Cantidad        Existencias iniciales
+     * @param string $Unidad_Medida   Unidad de medida (pieza, kg, litro...)
+     * @param string $Estado          Estado calculado con calcularEstado()
+     * @param int    $Cantidad_Minima Cantidad mínima antes de marcar stock bajo
+     * @param int    $ID_Categoria    Categoría
+     * @param int    $ID_Proveedor    Proveedor
+     * @param string $Descripcion     Descripción opcional (la muestra la tienda en línea)
+     * @return string ID del producto creado
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Producto::calcularEstado()
+     */
     public static function crearProducto(
         $Nombre_Producto,
         $Precio,
@@ -65,7 +96,13 @@ class Producto
     }//-- Fin funcion crear producto
 
 
-    //Funcion para leer todos los productos activos (los dados de baja no se muestran ni se venden)
+    /**
+     * Productos activos (los dados de baja no se muestran ni se venden), con su categoría,
+     * su proveedor y su último costo de compra.
+     *
+     * @return array|false Los productos, o false si no hay
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readAllProductos()
     {
 
@@ -92,7 +129,13 @@ class Producto
         }
     }//--Fin funcion leer todos los productos 
 
-    //Funcion para leer producto 
+    /**
+     * Un producto activo con su categoría y su proveedor.
+     *
+     * @param int $ID_Producto Producto
+     * @return array|false El producto, o false si no existe o está dado de baja
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readProducto($ID_Producto)
     {
 
@@ -120,7 +163,22 @@ class Producto
         }
     }//--Fin funcion leer producto 
 
-    //Funcion actualizar producto
+    /**
+     * Actualiza los datos de un producto.
+     *
+     * @param int    $ID_Producto     Producto
+     * @param string $Nombre_Producto Nombre
+     * @param float  $Precio          Precio de venta
+     * @param int    $Cantidad        Existencias
+     * @param string $Unidad_Medida   Unidad de medida
+     * @param string $Estado          Estado calculado con calcularEstado()
+     * @param int    $Cantidad_Minima Cantidad mínima
+     * @param int    $ID_Categoria    Categoría
+     * @param int    $ID_Proveedor    Proveedor
+     * @param string $Descripcion     Descripción opcional
+     * @return int 1 si se actualizó, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function updateProducto(
         $ID_Producto,
         $Nombre_Producto,
@@ -166,8 +224,15 @@ class Producto
     }//--Fin funcion actualizar producto 
 
 
-    // Funcion para leer y bloquear (FOR UPDATE) los productos de una venta hasta el commit
-    // Regresa un arreglo indexado por ID_Producto
+    /**
+     * Lee y bloquea (FOR UPDATE) los productos de una venta o un surtido hasta el commit,
+     * para que dos operaciones al mismo tiempo no vendan las mismas existencias.
+     *
+     * @param PDO   $connection Conexión con la transacción abierta
+     * @param array $IDs        IDs de los productos
+     * @return array Productos (ID, nombre, precio, cantidad, mínimo y Activo) indexados por ID_Producto
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function bloquearProductos($connection, array $IDs)
     {
         try {
@@ -188,7 +253,18 @@ class Producto
     }//-- Fin funcion bloquear productos
 
 
-    // Funcion para sumar al inventario lo que llegó en un surtido y guardar su último costo de compra
+    /**
+     * Suma al inventario lo que llegó en un surtido, guarda su último costo de compra
+     * y recalcula su estado.
+     *
+     * @param PDO   $connection  Conexión con la transacción abierta
+     * @param int   $ID_Producto Producto
+     * @param int   $Cantidad    Piezas que llegaron
+     * @param float $Costo       Costo de compra por unidad
+     * @return void
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Producto::actualizarEstado()
+     */
     public static function sumarInventario($connection, $ID_Producto, $Cantidad, $Costo)
     {
         try {
@@ -207,7 +283,16 @@ class Producto
     }//-- Fin funcion sumar inventario
 
 
-    // Funcion para recalcular el estado de un producto según su existencia (Disponible, Stock bajo, Agotado)
+    /**
+     * Recalcula el estado de un producto según su existencia (Disponible, Stock bajo, Agotado),
+     * con la misma regla que calcularEstado().
+     *
+     * @param PDO $connection  Conexión con la transacción abierta
+     * @param int $ID_Producto Producto
+     * @return void
+     * @throws PDOException Si falla la consulta (la atrapa quien la llama)
+     * @see Producto::calcularEstado()
+     */
     public static function actualizarEstado($connection, $ID_Producto)
     {
         $sql = $connection->prepare('UPDATE ' . self::TABLE . ' SET Estado =
@@ -222,7 +307,16 @@ class Producto
     }//-- Fin funcion actualizar estado
 
 
-    // Funcion para descontar inventario
+    /**
+     * Descuenta del inventario lo vendido y recalcula el estado del producto.
+     *
+     * @param PDO $connection  Conexión con la transacción abierta
+     * @param int $ID_Producto Producto
+     * @param int $Cantidad    Piezas vendidas
+     * @return void
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Producto::actualizarEstado()
+     */
     public static function descontarInventario($connection, $ID_Producto, $Cantidad)
     {
         try {
@@ -239,8 +333,13 @@ class Producto
         }
     }//-- Fin funcion descontar inventario
 
-    // Funcion para dar de baja un producto (baja lógica, RF06)
-    // No se borra: sus ventas pasadas lo siguen referenciando
+    /**
+     * Da de baja un producto (baja lógica, RF06). No se borra: sus ventas pasadas lo siguen referenciando.
+     *
+     * @param int $ID_Producto Producto
+     * @return int 1 si se dio de baja, 0 si no existe o ya estaba dado de baja
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function desactivarProducto($ID_Producto)
     {
         try {

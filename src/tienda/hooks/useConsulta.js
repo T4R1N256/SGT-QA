@@ -1,8 +1,21 @@
+/**
+ * @file Hook para las consultas al API de la tienda en línea.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 import { useCallback, useEffect, useState } from 'react'
 
-// Llama al API cuando cambian los argumentos y permite reintentar si falló (P15)
-// Ignora las respuestas viejas si los argumentos cambiaron antes de que llegaran
-// Regresa { cargando, datos, error, reintentar }; error es la respuesta fallida ({ status, mensaje })
+/**
+ * Llama al API cuando cambian los argumentos y permite reintentar si falló (P15).
+ * Ignora las respuestas viejas si los argumentos cambiaron antes de que llegaran.
+ *
+ * @param {function(...*): Promise<Object>} apiFn Función de api/tienda.js
+ * @param {...*} args Argumentos de la función (se comparan como JSON)
+ * @returns {{cargando: boolean, datos: (Object|null), error: (Object|null), reintentar: function(): void}}
+ *          error es la respuesta fallida ({ status, mensaje })
+ */
 export function useConsulta(apiFn, ...args) {
   const [estado, setEstado] = useState({ cargando: true, datos: null, error: null })
   const [intento, setIntento] = useState(0)

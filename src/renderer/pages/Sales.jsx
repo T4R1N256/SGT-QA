@@ -55,6 +55,17 @@ function formatMoney(n) {
   return `$${(Number.isFinite(n) ? n : 0).toFixed(2)}`
 }
 
+/**
+ * Punto de venta (RF03). Necesita una caja abierta (regla 2). Busca productos por nombre o categoría
+ * (los agotados no aparecen), arma el carrito y cobra en efectivo, con tarjeta o con transferencia.
+ * La venta se crea en el servidor con el primer producto y se cancela si el carrito se vacía; al cobrar,
+ * el servidor valida existencias y precios y la página imprime el ticket (regla 8), que se puede reimprimir.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Sales() {
   const { caja } = useAuth()
   const notify = useNotify()

@@ -1,3 +1,11 @@
+/**
+ * @file Proceso principal de Electron: arranca MariaDB (app instalada), PHP y el servidor del renderer,
+ * aplica la regla 4 (no se cierra con la caja abierta) y genera los PDF de tickets y reportes.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 import * as mariadb from './mariadb'
 import { puertoLibre } from './puertos'
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
@@ -20,6 +28,11 @@ let apiURL = null
 // Helpers
 const getPlatform = mariadb.plataforma
 
+/**
+ * Ruta del ejecutable de PHP: el del sistema en desarrollo, el incluido en la app instalada.
+ *
+ * @returns {string} La ruta o el nombre del ejecutable
+ */
 function getPhpBinary() {
   if (!app.isPackaged) return 'php'
   const platform = getPlatform()
@@ -27,6 +40,11 @@ function getPhpBinary() {
   return path.join(process.resourcesPath, 'php', platform, binary)
 }
 
+/**
+ * Carpeta del backend PHP: la del repositorio en desarrollo, la de resources en la app instalada.
+ *
+ * @returns {string} La ruta del backend
+ */
 function getBackendPath() {
   if (!app.isPackaged) return path.join(__dirname, '../../backend')
   return path.join(process.resourcesPath, 'backend')
@@ -37,8 +55,12 @@ function getBackendPath() {
 // pid y puerto del PHP en ejecución, para encontrarlo si la app se cierra mal y queda vivo
 const rutaEstadoPHP = () => path.join(app.getPath('userData'), 'php.json')
 
-// Un PHP que quedó vivo de una ejecución que terminó mal se cierra al arrancar,
-// solo si en su puerto responde el API con el mismo pid (así no se cierra otro proceso)
+/**
+ * Un PHP que quedó vivo de una ejecución que terminó mal se cierra al arrancar,
+ * solo si en su puerto responde el API con el mismo pid (así no se cierra otro proceso).
+ *
+ * @returns {Promise<void>}
+ */
 async function cerrarPHPHuerfano() {
   let anterior
   try {
@@ -58,6 +80,13 @@ async function cerrarPHPHuerfano() {
   }
 }
 
+/**
+ * Levanta el servidor de PHP (php -S) con backend/index.php como router y guarda su pid y su puerto
+ * en userData/php.json.
+ *
+ * @param {number} puerto Puerto en el que escucha PHP
+ * @returns {void}
+ */
 function spawnPHP(puerto) {
   const phpBin = getPhpBinary()
   const backend = getBackendPath()
@@ -74,6 +103,13 @@ function spawnPHP(puerto) {
   phpProcess.on('close', (code) => console.log('[PHP] cerrado con código:', code))
 }
 
+/**
+ * Espera a que el API responda en /api/ping.
+ *
+ * @param {number} [tries=20] Intentos, cada medio segundo
+ * @returns {Promise<void>}
+ * @throws {Error} "El servidor PHP no respondió" si no responde o el proceso terminó
+ */
 async function waitPHP(tries = 20) {
   for (let i = 0; i < tries; i++) {
     // No se pudo lanzar (no hay PHP) o ya terminó: no tiene caso seguir esperando
@@ -90,6 +126,12 @@ async function waitPHP(tries = 20) {
   throw new Error('El servidor PHP no respondió')
 }
 
+/**
+ * Ejecuta seeder.php: migraciones, admin inicial y datos de demostración. Un error se registra
+ * en la consola y no detiene el arranque.
+ *
+ * @returns {void}
+ */
 function runSeeders() {
   const phpBin = getPhpBinary()
   const configDir = path.join(getBackendPath(), 'config')
@@ -119,6 +161,12 @@ const TIPOS_MIME = {
   '.woff2': 'font/woff2',
 }
 
+/**
+ * Levanta el servidor HTTP del renderer compilado en un puerto libre (ver la explicación de arriba).
+ * Solo sirve archivos dentro de la carpeta del renderer.
+ *
+ * @returns {Promise<string>} La URL del servidor
+ */
 function servirRenderer() {
   const raiz = path.join(__dirname, '../renderer')
 
@@ -162,6 +210,20 @@ const CARPETAS_PDF = ['Tickets', 'Reportes']
 const ANCHO_TICKET_MM = 80
 const PX_POR_PULGADA = 96
 
+/**
+ * Convierte a PDF el HTML que armó el renderer. El ticket mide 80 mm de ancho y su alto se ajusta
+ * al contenido; los reportes son tamaño carta con el número de página al pie. Se guarda como
+ * Documentos/SGT/<carpeta>/<nombre>.pdf y se abre con el visor del sistema sin esperarlo.
+ *
+ * @param {Object} opciones
+ * @param {string} opciones.html Documento completo
+ * @param {'Tickets'|'Reportes'} opciones.carpeta Carpeta dentro de Documentos/SGT
+ * @param {string} opciones.nombre Nombre del archivo sin extensión (letras, números, punto, guion)
+ * @param {'ticket'|'carta'} [opciones.formato='ticket'] Tamaño de la hoja
+ * @param {boolean} [opciones.abrir=true] Si se abre al terminar
+ * @returns {Promise<string>} La ruta del PDF
+ * @throws {Error} Si el documento está vacío o es muy grande, la carpeta no está permitida o el nombre no es válido
+ */
 async function generarPDF({ html, carpeta, nombre, formato = 'ticket', abrir = true } = {}) {
   if (typeof html !== 'string' || html.length === 0 || html.length > 5_000_000) {
     throw new Error('El documento está vacío o es demasiado grande')
@@ -221,6 +283,11 @@ async function generarPDF({ html, carpeta, nombre, formato = 'ticket', abrir = t
 
 // ── Create window ─────────────────────────────────────────────────────────────
 
+/**
+ * Crea la ventana principal. Regla 4: con la caja abierta no se deja cerrar y se avisa al usuario.
+ *
+ * @returns {void}
+ */
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,

@@ -1,6 +1,14 @@
 import { formatoMoneda } from '../../compartido/format'
 
-// Productos de la compra, sin editar: cantidad, precio con IVA incluido e importe
+/**
+ * Productos de la compra, sin editar: cantidad, precio con IVA incluido e importe.
+ *
+ * @param {{lineas: Array<Object>}} props Líneas del carrito revisado o del pedido
+ * @returns {JSX.Element} La tabla
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function TablaProductos({ lineas }) {
   return (
     <table className="w-full text-sm bg-white rounded-xl border border-gray-200 overflow-hidden">

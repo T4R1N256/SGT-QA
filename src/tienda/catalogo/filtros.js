@@ -1,5 +1,10 @@
-// Filtros de la lista de productos. Viven en la dirección (?q=&categoria=&disponibles=1&orden=&pagina=):
-// Atrás y Adelante del navegador los respetan y una búsqueda se puede compartir
+/**
+ * @file Filtros de la lista de productos. Viven en la dirección (?q=&categoria=&disponibles=1&orden=&pagina=):
+ * Atrás y Adelante del navegador los respetan y una búsqueda se puede compartir.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 export const ORDENES = [
   { valor: 'nombre', etiqueta: 'Nombre (A-Z)' },
@@ -9,12 +14,22 @@ export const ORDENES = [
 
 const ORDEN_POR_DEFECTO = 'nombre'
 
-// Entero positivo escrito en la dirección ("12"), o null si no lo es
+/**
+ * Entero positivo escrito en la dirección ("12").
+ *
+ * @param {string|null} texto Valor del parámetro
+ * @returns {number|null} El número, o null si no es un entero positivo
+ */
 export function enteroPositivo(texto) {
   return /^[1-9]\d{0,8}$/.test(texto ?? '') ? Number(texto) : null
 }
 
-// Lo que no sea válido se ignora: cualquiera puede escribir la dirección
+/**
+ * Lee los filtros de la dirección. Lo que no sea válido se ignora: cualquiera puede escribir la dirección.
+ *
+ * @param {URLSearchParams} params Parámetros de la dirección
+ * @returns {{q: string, categoria: (number|null), disponibles: boolean, orden: string, pagina: number}} Los filtros
+ */
 export function leerFiltros(params) {
   const orden = params.get('orden')
   return {
@@ -26,8 +41,14 @@ export function leerFiltros(params) {
   }
 }
 
-// Parámetros con los filtros cambiados. Los valores por defecto no se escriben en la dirección,
-// y cambiar cualquier filtro que no sea la página regresa a la página 1
+/**
+ * Parámetros con los filtros cambiados. Los valores por defecto no se escriben en la dirección,
+ * y cambiar cualquier filtro que no sea la página regresa a la página 1.
+ *
+ * @param {URLSearchParams} params Parámetros actuales
+ * @param {Object} cambios Filtros que cambian, por ejemplo { orden: 'precio_asc' }
+ * @returns {URLSearchParams} Los parámetros nuevos
+ */
 export function cambiarFiltros(params, cambios) {
   const nuevos = new URLSearchParams(params)
   if (!('pagina' in cambios)) nuevos.delete('pagina')
@@ -45,8 +66,14 @@ export function cambiarFiltros(params, cambios) {
   return nuevos
 }
 
-// Números de página que se muestran: la primera, la última y las vecinas de la actual,
-// con '…' donde se saltan páginas. Ej. (7, 15) → [1, '…', 6, 7, 8, '…', 15]
+/**
+ * Números de página que se muestran: la primera, la última y las vecinas de la actual,
+ * con '…' donde se saltan páginas. Ej. (7, 15) → [1, '…', 6, 7, 8, '…', 15].
+ *
+ * @param {number} pagina Página actual
+ * @param {number} paginas Total de páginas
+ * @returns {Array<number|string>} Los números y los '…'
+ */
 export function paginasVisibles(pagina, paginas) {
   const numeros = [...new Set([1, pagina - 1, pagina, pagina + 1, paginas])]
     .filter((n) => n >= 1 && n <= paginas)

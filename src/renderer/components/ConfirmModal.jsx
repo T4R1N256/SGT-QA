@@ -6,6 +6,24 @@ const VARIANTS = {
   success: { Icon: CheckCircleIcon, iconClass: 'text-green-600' },
 }
 
+/**
+ * Diálogo para confirmar una acción (por ejemplo, eliminar) o avisar que se hizo.
+ * Se abre con ref.current.showModal().
+ *
+ * @param {Object} props
+ * @param {string} props.title Título
+ * @param {React.ReactNode} props.children Mensaje
+ * @param {string} [props.error] Error de la última acción
+ * @param {boolean} [props.busy=false] Deshabilita los botones mientras se procesa
+ * @param {'danger'|'success'} [props.variant='danger'] Icono y color
+ * @param {function(): void} [props.onConfirm] Acción al confirmar (sin ella solo hay botón para cerrar)
+ * @param {function(): void} [props.onClose] Al cerrar
+ * @param {React.Ref<HTMLDialogElement>} ref Referencia al dialog
+ * @returns {JSX.Element} El dialog
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 const ConfirmModal = forwardRef(function ConfirmModal(
   {
     title,

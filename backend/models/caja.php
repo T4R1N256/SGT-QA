@@ -1,16 +1,35 @@
 <?php
 
-//Rutas de caja
-
 require_once __DIR__ . "/../config/database.php";
 
+/**
+ * Caja registradora: apertura, corte y consultas del historial de cajas.
+ * Solo puede haber una caja abierta a la vez (regla 2: sin caja abierta no hay ventas).
+ * Tabla Caja: ID_Caja, Fecha, Hora, Monto_Inicial, Monto_Final, Monto_Final_Sistema, Estado, Estado_Final,
+ * ID_Usuario, ID_Usuario_Cierre, Hora_Final.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Venta
+ */
 class Caja
 {
 
     const TABLE = "Caja";
     // ID_Caja, Fecha, Hora, Monto_Inicial, Monto_Final, Monto_Final_Sistema, Estado, Estado_Final, ID_Usuario, ID_Usuario_Cierre, Hora_Final
 
-    // Funcion para abrir (crear) caja
+    /**
+     * Abre (crea) una caja.
+     *
+     * @param string $Fecha         Fecha de apertura (AAAA-MM-DD)
+     * @param string $Hora          Hora de apertura (HH:MM:SS)
+     * @param float  $Monto_Inicial Efectivo con el que se abre
+     * @param string $Estado        Estado inicial ("abierta")
+     * @param int    $ID_Usuario    Usuario de la sesión que la abre
+     * @return string ID de la caja creada
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function openCaja($Fecha, $Hora, $Monto_Inicial, $Estado, $ID_Usuario)
     {
         try {
@@ -40,7 +59,19 @@ class Caja
     }//-- Fin funcion abrir caja
 
 
-    //Funcion cerrar caja (dentro de la transacción de la ruta)
+    /**
+     * Cierra la caja y guarda el corte. Se llama dentro de la transacción de la ruta closeCashRegister.
+     *
+     * @param PDO    $connection          Conexión con la transacción abierta
+     * @param int    $ID_Caja             Caja que se cierra
+     * @param float  $Monto_Final         Efectivo que contó el cajero
+     * @param float  $Monto_Final_Sistema Efectivo esperado: monto inicial + ventas en efectivo
+     * @param string $Estado_Final        "cuadrada" o "descuadrada"
+     * @param string $Hora_Final          Hora del corte (HH:MM:SS)
+     * @param int    $ID_Usuario_Cierre   Usuario de la sesión que hace el corte
+     * @return int 1 si se cerró la caja, 0 si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function closeCaja($connection, $ID_Caja, $Monto_Final, $Monto_Final_Sistema, $Estado_Final, $Hora_Final, $ID_Usuario_Cierre)
     {
         try {
@@ -67,8 +98,15 @@ class Caja
     }//-- Fin funcion cerrar caja
 
 
-    // Funcion para obtener los totales de las ventas finalizadas de una caja, por forma de pago
-    // El cuadre de caja solo cuenta el efectivo
+    /**
+     * Totales de las ventas finalizadas de una caja, por forma de pago.
+     * El cuadre de caja solo cuenta el efectivo.
+     *
+     * @param int      $ID_Caja    Caja
+     * @param PDO|null $connection Conexión de la transacción en curso, o null para abrir una
+     * @return array ['efectivo', 'tarjeta', 'transferencia', 'total' => float, 'ventas' => int]
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function totalesVentas($ID_Caja, $connection = NULL)
     {
         try {
@@ -100,7 +138,12 @@ class Caja
     }//-- Fin funcion totales de ventas
 
 
-    // Funcion para saber si existe alguna caja abierta
+    /**
+     * Caja abierta en este momento.
+     *
+     * @return array|false ID_Caja, Fecha, Hora, Monto_Inicial e ID_Usuario, o false si no hay caja abierta
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function cajaAbierta()
     {
         try {
@@ -120,7 +163,13 @@ class Caja
     }//-- Fin funcion caja abierta
 
 
-    // Funcion para obtener la caja abierta o responder 409 (regla 2: sin caja abierta no hay ventas)
+    /**
+     * Caja abierta, o error si no hay (regla 2: sin caja abierta no hay ventas).
+     *
+     * @return array La caja abierta
+     * @throws ErrorApi 409 "No hay caja abierta"
+     * @see Caja::cajaAbierta()
+     */
     public static function requerirAbierta()
     {
         $caja = self::cajaAbierta();
@@ -142,7 +191,15 @@ class Caja
             LEFT JOIN Empleado ec ON ec.ID_Usuario = c.ID_Usuario_Cierre';
 
 
-    // Funcion para leer las cajas abiertas en un rango de fechas (la más reciente primero)
+    /**
+     * Cajas abiertas en un rango de fechas, la más reciente primero, con quién abrió y cerró,
+     * su diferencia, el número de ventas y su total.
+     *
+     * @param string $Desde Fecha inicial (AAAA-MM-DD)
+     * @param string $Hasta Fecha final (AAAA-MM-DD)
+     * @return array Lista de cajas
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readHistorial($Desde, $Hasta)
     {
         try {
@@ -166,7 +223,14 @@ class Caja
     }//-- Fin funcion leer historial de cajas
 
 
-    // Funcion para leer una caja del historial
+    /**
+     * Una caja del historial con los mismos datos que readHistorial().
+     *
+     * @param int $ID_Caja Caja
+     * @return array|false La caja, o false si no existe
+     * @throws Exception Si falla la consulta a la base de datos
+     * @see Caja::readHistorial()
+     */
     public static function readCajaHistorial($ID_Caja)
     {
         try {
@@ -188,7 +252,12 @@ class Caja
     }//-- Fin funcion leer caja del historial
 
 
-    // Funcion para leer el último corte (la caja cerrada más reciente)
+    /**
+     * Último corte: la caja cerrada más reciente.
+     *
+     * @return array|false La caja con el nombre de quien la abrió, o false si no hay cortes
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readCaja()
     {
         try {

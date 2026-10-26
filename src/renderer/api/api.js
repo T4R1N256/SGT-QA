@@ -1,10 +1,27 @@
-// En desarrollo manda VITE_API_URL (backend de Docker o PHP local). La app compilada usa el puerto libre
-// en el que el proceso principal levantó PHP, que llega por el preload
+/**
+ * @file Cliente del API de SGT. Cada función llama a una ruta de backend/index.php y regresa su respuesta JSON:
+ * {ok: true, ...datos} o {ok: false, status, mensaje}. Nunca lanza: un error de red también llega como {ok: false}.
+ * La URL del API: en desarrollo manda VITE_API_URL (backend de Docker o PHP local); la app compilada usa el puerto
+ * libre en el que el proceso principal levantó PHP, que llega por el preload (window.electronAPI.apiURL).
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 const urlAPI = import.meta.env.DEV
   ? (import.meta.env.VITE_API_URL ?? window.electronAPI?.apiURL)
   : (window.electronAPI?.apiURL ?? import.meta.env.VITE_API_URL)
 const ROOT = (urlAPI ?? 'http://localhost:8000/api').replace(/\/$/, '')
 
+/**
+ * Hace una petición al API con la cookie de sesión.
+ * Un 401 avisa a la app con el evento 'sesion-expirada' (SesionGuard, en App.jsx, cierra la sesión y regresa al login).
+ *
+ * @param {string} path Ruta sin /api/, con su query string
+ * @param {RequestInit} [options] Método y cuerpo de la petición
+ * @returns {Promise<Object>} La respuesta del API; si falla, {ok: false, status, mensaje} con los datos
+ *                            que acompañan al error (por ejemplo, qué campo marcar o si hace falta confirmar)
+ */
 async function request(path, options = {}) {
   try {
     const res = await fetch(`${ROOT}/${path}`, {

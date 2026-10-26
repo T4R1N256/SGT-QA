@@ -1,6 +1,12 @@
 <?php
-// Catálogo de prueba de la tienda en línea (catalogo_tienda.php)
-// Se carga desde seeder.php solo si SEED_TIENDA=1 y la tabla Producto está vacía (por ejemplo, con Docker)
+/**
+ * Catálogo de prueba de la tienda en línea (catalogo_tienda.php).
+ * Se carga desde seeder.php solo si SEED_TIENDA=1 y la tabla Producto está vacía (por ejemplo, con Docker).
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 require_once __DIR__ . '/../models/producto.php';
 
@@ -8,8 +14,13 @@ require_once __DIR__ . '/../models/producto.php';
 const CLIENTE_PRUEBA = ['cliente@ejemplo.mx', 'prueba123'];
 
 
-// Funcion para cargar el catálogo de la tienda
-// Regresa false si ya había productos y no se cargó nada
+/**
+ * Carga las 12 categorías y los 180 productos de catalogo_tienda.php y el cliente de prueba.
+ *
+ * @param PDO $connection Conexión a la base de datos
+ * @return bool false si ya había productos y no se cargó nada
+ * @see CLIENTE_PRUEBA
+ */
 function cargarCatalogoTienda(PDO $connection): bool
 {
     $hayProductos = $connection->query('SELECT COUNT(*) FROM Producto')->fetchColumn();

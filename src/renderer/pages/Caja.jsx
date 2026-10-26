@@ -22,6 +22,16 @@ function formatMoney(n) {
   return `$${(Number.isFinite(valor) ? valor : 0).toFixed(2)}`
 }
 
+/**
+ * Caja: apertura con el monto inicial y corte. El corte compara el efectivo contado con el esperado
+ * (monto inicial + ventas en efectivo, calculado por el backend) y queda cuadrado o descuadrado.
+ * Muestra las ventas de la caja abierta y sus totales por forma de pago.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Caja() {
   const { caja, setCaja } = useAuth()
   const notify = useNotify()

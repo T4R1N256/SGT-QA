@@ -1,12 +1,27 @@
 <?php
-// Migraciones del esquema de la base de datos
-// database.sql es el esquema base; los cambios posteriores van en migrations/NNN_descripcion.sql
-// Cada archivo se aplica una sola vez, en orden por nombre, y queda registrado en la tabla Migracion
-// Se ejecuta desde seeder.php en cada arranque (Docker y Electron), o directo: php config/migrate.php
+/**
+ * Migraciones del esquema de la base de datos.
+ * database.sql es el esquema base; los cambios posteriores van en migrations/NNN_descripcion.sql.
+ * Cada archivo se aplica una sola vez, en orden por nombre, y queda registrado en la tabla Migracion.
+ * Se ejecuta desde seeder.php en cada arranque (Docker y Electron), o directo: php config/migrate.php
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 
-// Funcion para aplicar las migraciones pendientes de un directorio
-// Regresa la lista de versiones aplicadas en esta ejecución
+/**
+ * Aplica las migraciones pendientes de un directorio, en orden por nombre.
+ * MariaDB confirma cada sentencia DDL, así que no hay rollback: si una sentencia falla, la migración
+ * no se registra y se reintenta en el siguiente arranque.
+ *
+ * @param PDO    $connection Conexión a la base de datos
+ * @param string $directorio Carpeta con los archivos NNN_descripcion.sql
+ * @return array Versiones aplicadas en esta ejecución (vacío si no había pendientes)
+ * @throws Exception "La migración NNN falló: ..." si una sentencia falla
+ * @see separarSentencias()
+ */
 function aplicarMigraciones(PDO $connection, string $directorio): array
 {
     $connection->exec('CREATE TABLE IF NOT EXISTS Migracion (
@@ -46,8 +61,13 @@ function aplicarMigraciones(PDO $connection, string $directorio): array
 }//-- Fin funcion aplicar migraciones
 
 
-// Funcion para separar un archivo SQL en sentencias
-// Ignora comentarios de línea (--) y separa por ';' al final de la línea
+/**
+ * Separa un archivo SQL en sentencias.
+ * Ignora los comentarios de línea (--) y separa por ';' al final de la línea.
+ *
+ * @param string $sql Contenido del archivo
+ * @return array Las sentencias, sin vacías
+ */
 function separarSentencias(string $sql): array
 {
     $lineas = array_filter(

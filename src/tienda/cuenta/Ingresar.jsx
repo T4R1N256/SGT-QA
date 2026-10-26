@@ -6,7 +6,15 @@ import { useSesion } from './SesionContext'
 import { useFormulario } from './useFormulario'
 import { destinoSeguro, validarIngreso } from './validaciones'
 
-// Inicio de sesión del cliente. Con ?siguiente= regresa a donde iba, por ejemplo, a la compra (T-S2)
+/**
+ * Inicio de sesión del cliente. Con ?siguiente= regresa a donde iba, por ejemplo, a la compra (T-S2).
+ *
+ * @returns {JSX.Element} La página
+ * @see destinoSeguro
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Ingresar() {
   const { cliente, cargando, ingresar } = useSesion()
   const [params] = useSearchParams()

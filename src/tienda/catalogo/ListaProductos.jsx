@@ -7,10 +7,21 @@ import ErrorCarga from '../componentes/ErrorCarga'
 import Paginacion from '../componentes/Paginacion'
 import { ORDENES, cambiarFiltros } from './filtros'
 
-// Lista paginada con sus controles (solo disponibles, orden y, en la búsqueda, categoría)
-// Los cambios se escriben en la dirección; la página que la usa vuelve a pedir los productos.
-// Los controles no son controlados: cambian al instante y, con la key, se reinician si la dirección
-// cambia por otro lado (Atrás, Adelante o un enlace)
+/**
+ * Lista de productos con filtros, orden y paginación. Los cambios se escriben en la dirección;
+ * la página que la usa vuelve a pedir los productos. Los controles no son controlados: cambian al instante
+ * y, con la key, se reinician si la dirección cambia por otro lado (Atrás, Adelante o un enlace).
+ *
+ * @param {Object} props
+ * @param {Object} props.filtros Filtros leídos de la dirección (leerFiltros)
+ * @param {Object} props.consulta Resultado de useConsulta con los productos
+ * @param {Array<Object>|null} [props.categorias=null] Categorías para filtrar (en la búsqueda)
+ * @param {React.ReactNode} props.vacio Qué mostrar si no hay productos
+ * @returns {JSX.Element} La lista
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function ListaProductos({ filtros, consulta, categorias = null, vacio }) {
   const [params, setParams] = useSearchParams()
   const { datos, error, cargando, reintentar } = consulta

@@ -4,8 +4,6 @@ import { ActionButton, FormAlert, fieldInputClass } from '../components'
 import { imprimirTicket } from '../pdf/imprimir'
 import { DocumentTextIcon } from '@heroicons/react/20/solid'
 
-// Datos de la tienda que aparecen en el ticket de venta (solo admin)
-
 const CAMPOS = [
   { name: 'Nombre_Tienda', label: 'Nombre de la tienda *', maxLength: 100, required: true },
   { name: 'Direccion', label: 'Dirección', maxLength: 255 },
@@ -37,6 +35,15 @@ function ventaDeEjemplo(tienda) {
   }
 }
 
+/**
+ * Configuración (solo admin): datos de la tienda que aparecen en el ticket (nombre, dirección,
+ * teléfono, RFC y mensaje), con un ticket de ejemplo para revisar cómo se ve.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Configuracion() {
   const [form, setForm] = useState(VACIO)
   const [cargando, setCargando] = useState(true)

@@ -5,7 +5,14 @@ import { useTienda } from '../TiendaContext'
 import { useCarrito } from '../carrito/CarritoContext'
 import { useSesion } from '../cuenta/SesionContext'
 
-// Encabezado de todas las páginas: nombre de la tienda, búsqueda, carrito y cuenta
+/**
+ * Encabezado de todas las páginas: nombre de la tienda, búsqueda, carrito y cuenta.
+ *
+ * @returns {JSX.Element} El encabezado
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Encabezado() {
   const { nombre } = useTienda()
   const { piezas } = useCarrito()

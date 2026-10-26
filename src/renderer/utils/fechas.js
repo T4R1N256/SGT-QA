@@ -1,5 +1,16 @@
-// Fechas en formato AAAA-MM-DD con la hora local (toISOString usa UTC y de noche cambiaría el día)
+/**
+ * @file Fechas en formato AAAA-MM-DD con la hora local (toISOString usa UTC y de noche cambiaría el día).
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
+/**
+ * Fecha en formato AAAA-MM-DD con la hora local.
+ *
+ * @param {Date} [fecha=new Date()] Fecha
+ * @returns {string} La fecha, por ejemplo 2026-10-25
+ */
 export function fechaLocal(fecha = new Date()) {
   const anio = fecha.getFullYear()
   const mes = String(fecha.getMonth() + 1).padStart(2, '0')
@@ -7,21 +18,38 @@ export function fechaLocal(fecha = new Date()) {
   return `${anio}-${mes}-${dia}`
 }
 
-// Rango de los últimos `dias` días, incluyendo hoy
+/**
+ * Rango de los últimos `dias` días, incluyendo hoy.
+ *
+ * @param {number} dias Días hacia atrás
+ * @param {Date} [hoy=new Date()] Fecha final
+ * @returns {{desde: string, hasta: string}} El rango en formato AAAA-MM-DD
+ */
 export function rangoDias(dias, hoy = new Date()) {
   const desde = new Date(hoy)
   desde.setDate(desde.getDate() - dias)
   return { desde: fechaLocal(desde), hasta: fechaLocal(hoy) }
 }
 
-// Fecha AAAA-MM-DD como Date local (new Date('2026-10-25') la tomaría en UTC)
+/**
+ * Convierte una fecha AAAA-MM-DD en Date local (new Date('2026-10-25') la tomaría en UTC).
+ *
+ * @param {string} texto Fecha AAAA-MM-DD
+ * @returns {Date} La fecha a medianoche, hora local
+ */
 export function aFecha(texto) {
   const [anio, mes, dia] = String(texto).split('-').map(Number)
   return new Date(anio, mes - 1, dia)
 }
 
-// Periodo de un reporte que contiene a `fecha` (AAAA-MM-DD):
-// 'dia' → ese día, 'semana' → de lunes a domingo, 'mes' → del día 1 al último del mes
+/**
+ * Periodo de un reporte que contiene a `fecha`: 'dia' es ese día, 'semana' de lunes a domingo
+ * y 'mes' del día 1 al último del mes.
+ *
+ * @param {'dia'|'semana'|'mes'} tipo Tipo de periodo
+ * @param {string} fecha Fecha AAAA-MM-DD dentro del periodo
+ * @returns {{desde: string, hasta: string}} El periodo en formato AAAA-MM-DD
+ */
 export function periodo(tipo, fecha) {
   const base = aFecha(fecha)
 
@@ -40,13 +68,24 @@ export function periodo(tipo, fecha) {
   return { desde: fechaLocal(base), hasta: fechaLocal(base) }
 }
 
-// 2026-10-25 → 25/10/2026
+/**
+ * Fecha para mostrar: 2026-10-25 → 25/10/2026.
+ *
+ * @param {string} fecha Fecha AAAA-MM-DD
+ * @returns {string} La fecha DD/MM/AAAA ('' si viene vacía)
+ */
 export function formatoFecha(fecha) {
   const [anio, mes, dia] = String(fecha ?? '').split('-')
   return dia ? `${dia}/${mes}/${anio}` : ''
 }
 
-// Texto del periodo: "25/10/2026" o "Del 01/10/2026 al 31/10/2026"
+/**
+ * Texto del periodo: "25/10/2026" o "Del 01/10/2026 al 31/10/2026".
+ *
+ * @param {string} desde Fecha inicial AAAA-MM-DD
+ * @param {string} hasta Fecha final AAAA-MM-DD
+ * @returns {string} El periodo para mostrar
+ */
 export function textoPeriodo(desde, hasta) {
   return desde === hasta ? formatoFecha(desde) : `Del ${formatoFecha(desde)} al ${formatoFecha(hasta)}`
 }

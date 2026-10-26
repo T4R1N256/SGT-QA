@@ -1,8 +1,16 @@
 <?php
-// Clase para los datos de la tienda que aparecen en el ticket (una sola fila, ID_Configuracion = 1)
 
 require_once __DIR__ . "/../config/database.php";
 
+/**
+ * Datos de la tienda que aparecen en el ticket y en la tienda en línea
+ * (una sola fila, ID_Configuracion = 1).
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Venta::readTicket()
+ */
 class Configuracion
 {
     const TABLE = 'Configuracion';
@@ -10,7 +18,12 @@ class Configuracion
 
     const CAMPOS = ['Nombre_Tienda', 'Direccion', 'Telefono', 'RFC', 'Mensaje_Ticket'];
 
-    // Funcion para leer la configuración de la tienda
+    /**
+     * Lee la configuración de la tienda.
+     *
+     * @return array|false Nombre_Tienda, Direccion, Telefono, RFC y Mensaje_Ticket, o false si no hay fila
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function readConfiguracion()
     {
         try {
@@ -30,7 +43,12 @@ class Configuracion
     }//-- Fin funcion leer configuracion
 
 
-    // Funcion para leer la tasa de IVA en porcentaje (16.0 si no está configurada)
+    /**
+     * Tasa de IVA en porcentaje; la usan el carrito, los pedidos y la configuración de la tienda en línea.
+     *
+     * @return float La tasa (16.0 si no está configurada)
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function tasaIVA(): float
     {
         try {
@@ -46,8 +64,13 @@ class Configuracion
     }//-- Fin funcion tasa de IVA
 
 
-    // Funcion para actualizar la configuración de la tienda
-    // $datos trae solo los campos que cambian
+    /**
+     * Actualiza la configuración de la tienda. Los campos ya vienen validados por la ruta.
+     *
+     * @param array $datos Solo los campos que cambian (de Configuracion::CAMPOS), con su valor
+     * @return int 1 si se actualizó o no había cambios, 0 si no existe la fila
+     * @throws Exception Si falla la consulta a la base de datos
+     */
     public static function updateConfiguracion(array $datos)
     {
         try {

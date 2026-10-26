@@ -1,9 +1,22 @@
+/**
+ * @file Sesión del cliente de la tienda en línea: SesionProvider y useSesion.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ingresarCliente, obtenerCuenta, registrarCliente, salirCliente } from '../api/tienda'
 
-// Sesión del cliente: se pregunta al servidor al cargar la tienda y se actualiza al ingresar, registrarse o salir
 const SesionContext = createContext(null)
 
+/**
+ * Pregunta al servidor por la sesión al cargar la tienda y la actualiza al ingresar, registrarse o salir.
+ * useSesion() da { cargando, cliente, ingresar, registrar, salir }; las tres funciones regresan la respuesta del API.
+ *
+ * @param {{children: React.ReactNode}} props
+ * @returns {JSX.Element} El proveedor del contexto
+ */
 export function SesionProvider({ children }) {
   const [estado, setEstado] = useState({ cargando: true, cliente: null })
 

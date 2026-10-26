@@ -2,8 +2,19 @@ import clsx from 'clsx'
 import { formatoMoneda } from '../../compartido/format'
 import { cantidadConUnidad } from '../catalogo/disponibilidad'
 
-// Totales con el desglose del IVA (R09, R10). Los precios ya lo incluyen (D2) y el envío no se cobra (D3)
-// children: las acciones del paso (continuar, confirmar, pagar)
+/**
+ * Totales con el desglose del IVA (R09, R10). Los precios ya lo incluyen (D2) y el envío no se cobra (D3).
+ *
+ * @param {Object} props
+ * @param {Object} props.resumen Resumen del servidor (subtotal, iva, tasa_iva, envio, total)
+ * @param {boolean} [props.actualizando=false] Atenúa los montos mientras llega la revisión
+ * @param {string} [props.titulo='Resumen'] Título
+ * @param {React.ReactNode} props.children Acciones del paso (continuar, confirmar, pagar)
+ * @returns {JSX.Element} Los totales
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Totales({ resumen, actualizando = false, titulo = 'Resumen', children }) {
   return (
     <aside

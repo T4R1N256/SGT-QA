@@ -1,6 +1,22 @@
 import { forwardRef } from 'react'
 import ActionButton from './ActionButton'
 
+/**
+ * Diálogo con un formulario y los botones Cancelar y Guardar. Se abre con ref.current.showModal().
+ *
+ * @param {Object} props
+ * @param {string} props.title Título
+ * @param {React.ReactNode} props.children Campos del formulario
+ * @param {boolean} [props.busy=false] Deshabilita los botones mientras se guarda
+ * @param {boolean} [props.canSubmit=true] Si se puede guardar
+ * @param {function(): void} [props.onSubmit] Acción de guardar
+ * @param {function(): void} [props.onClose] Al cerrar
+ * @param {React.Ref<HTMLDialogElement>} ref Referencia al dialog
+ * @returns {JSX.Element} El dialog
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 const FormModal = forwardRef(function FormModal(
   {
     title,

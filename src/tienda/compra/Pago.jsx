@@ -25,8 +25,15 @@ const METODOS = [
   { valor: 'efectivo', etiqueta: 'Efectivo en tienda de conveniencia', Icono: BanknotesIcon },
 ]
 
-// Paso 4 (N11, R14, D6): métodos de pago y el botón "Pagar", que avisa que el pago en línea no está disponible.
-// No hay campos de tarjeta ni conexión con bancos o pasarelas; el pedido sigue pendiente de pago
+/**
+ * Paso 4 (N11, R14, D6): métodos de pago y el botón "Pagar", que avisa que el pago en línea no está
+ * disponible. No hay campos de tarjeta ni conexión con bancos o pasarelas; el pedido sigue pendiente de pago.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Pago() {
   const { folio } = useParams()
   const { datos, error, reintentar } = useConsulta(obtenerPedido, folio)

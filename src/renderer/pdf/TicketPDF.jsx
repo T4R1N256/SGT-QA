@@ -1,5 +1,10 @@
-// Ticket de venta (regla 8) para imprimir en papel de 80 mm
-// Recibe los datos que regresa el backend en completeSale y getVenta: venta, productos, cajero y tienda
+/**
+ * @file Ticket de venta (regla 8) para imprimir en papel de 80 mm.
+ * Recibe los datos que regresa el backend en completeSale y getVenta: venta, productos, cajero y tienda.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 import { formatoMoneda } from '../../compartido/format'
 
@@ -15,12 +20,23 @@ export const ESTILOS_TICKET = `
 `
 
 
-// Folio de 6 dígitos: 000123
+/**
+ * Folio de 6 dígitos: 123 → 000123.
+ *
+ * @param {number|string} ID_Venta Venta
+ * @returns {string} El folio
+ */
 export function formatoFolio(ID_Venta) {
   return String(ID_Venta ?? '').padStart(6, '0')
 }
 
-// 2026-10-25 + 14:03:59 → 25/10/2026 14:03
+/**
+ * Fecha y hora del ticket: 2026-10-25 + 14:03:59 → 25/10/2026 14:03.
+ *
+ * @param {string} fecha Fecha AAAA-MM-DD
+ * @param {string} hora Hora HH:MM:SS
+ * @returns {string} La fecha y la hora para el ticket
+ */
 export function formatoFechaHora(fecha, hora) {
   const [anio, mes, dia] = String(fecha ?? '').split('-')
   return `${dia}/${mes}/${anio} ${String(hora ?? '').slice(0, 5)}`
@@ -28,6 +44,13 @@ export function formatoFechaHora(fecha, hora) {
 
 const FORMAS_PAGO = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia' }
 
+/**
+ * Ticket: datos de la tienda, folio, fecha, cajero, productos, total, forma de pago y,
+ * en efectivo, el pago recibido y el cambio.
+ *
+ * @param {{venta: Object}} props Venta con sus productos y la llave tienda
+ * @returns {JSX.Element} El ticket
+ */
 export default function TicketPDF({ venta }) {
   const tienda = venta.tienda ?? {}
   const productos = venta.productos ?? []

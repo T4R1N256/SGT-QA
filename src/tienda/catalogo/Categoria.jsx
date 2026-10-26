@@ -11,7 +11,14 @@ const NO_ENCONTRADA = {
   texto: 'La categoría que buscas no existe o ya no tiene productos a la venta.',
 }
 
-// N2: los productos de una categoría, paginados, con precio y disponibilidad
+/**
+ * N2: los productos de una categoría, paginados, con precio y disponibilidad.
+ *
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Categoria() {
   const id = enteroPositivo(useParams().id)
   return id ? <ProductosDeCategoria key={id} id={id} /> : <NoEncontrada {...NO_ENCONTRADA} />

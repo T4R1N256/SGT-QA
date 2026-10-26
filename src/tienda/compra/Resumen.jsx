@@ -14,8 +14,16 @@ import PasosCompra from './PasosCompra'
 import TablaProductos from './TablaProductos'
 import { nuevaClave } from './validaciones'
 
-// Paso 3 (N9, N10, R13): resumen final con productos, importes, IVA, total y datos de entrega.
-// Se puede corregir la entrega o el carrito. Al confirmar se crea el pedido "pendiente de pago" (D4)
+/**
+ * Paso 3 (N9, N10, R13): resumen final con productos, importes, IVA, total y datos de entrega.
+ * Se puede corregir la entrega o el carrito. Al confirmar se crea el pedido "pendiente de pago" (D4).
+ *
+ * @returns {JSX.Element} La página
+ * @see nuevaClave
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function Resumen() {
   const { lineas, vaciar } = useCarrito()
   const revision = useRevisionCarrito()

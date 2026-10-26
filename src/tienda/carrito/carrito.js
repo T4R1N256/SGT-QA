@@ -1,12 +1,30 @@
-// Carrito del cliente: vive en el navegador (localStorage) como una lista de { id, cantidad, precio }.
-// El precio es el último que vio el cliente y solo sirve para que el servidor avise si cambió (P5);
-// los importes y el total siempre los calcula el servidor al revisar el carrito
+/**
+ * @file Carrito del cliente: vive en el navegador (localStorage) como una lista de { id, cantidad, precio }.
+ * El precio es el último que vio el cliente y solo sirve para que el servidor avise si cambió (P5);
+ * los importes y el total siempre los calcula el servidor al revisar el carrito.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 export const CLAVE_GUARDADO = 'tienda-carrito'
 export const MAX_LINEAS = 100
 
 const iguales = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
+/**
+ * Reducer del carrito (CarritoContext). Acciones:
+ * - agregar { producto, cantidad }: suma a la línea existente o agrega una (hasta MAX_LINEAS)
+ * - cambiar { id, cantidad } y quitar { id }
+ * - vaciar
+ * - sincronizar { lineas }: lo que respondió el servidor (quita lo retirado o agotado, ajusta cantidades
+ *   y guarda el precio vigente). Si no cambió nada regresa la misma lista, para no volver a revisar
+ * - reemplazar { lineas }: el carrito cambió en otra pestaña
+ *
+ * @param {Array<{id: number, cantidad: number, precio: (number|null)}>} lineas Carrito actual
+ * @param {{tipo: string}} accion Acción
+ * @returns {Array<{id: number, cantidad: number, precio: (number|null)}>} El carrito nuevo
+ */
 export function reducer(lineas, accion) {
   switch (accion.tipo) {
     case 'agregar': {
@@ -39,7 +57,14 @@ export function reducer(lineas, accion) {
   }
 }
 
-// Carrito guardado en localStorage. Lo que no tenga forma de carrito se descarta: cualquiera puede editarlo
+/**
+ * Lee el carrito guardado en localStorage. Lo que no tenga forma de carrito se descarta:
+ * cualquiera puede editarlo.
+ *
+ * @param {string|null} texto Lo que hay en localStorage
+ * @returns {Array<{id: number, cantidad: number, precio: (number|null)}>} Las líneas válidas, sin repetidos
+ *                                                                          y hasta MAX_LINEAS
+ */
 export function leerGuardado(texto) {
   let datos
   try {
@@ -69,8 +94,15 @@ export function leerGuardado(texto) {
 
 export const totalPiezas = (lineas) => lineas.reduce((suma, l) => suma + l.cantidad, 0)
 
-// Cantidad escrita por el cliente (P1, P2). enCarrito: lo que ya tiene de ese producto al agregar más
-// Regresa { cantidad } si es válida o { mensaje } si no
+/**
+ * Valida la cantidad que escribe el cliente (P1, P2).
+ *
+ * @param {string} texto Lo que se escribió
+ * @param {Object} limites
+ * @param {number} limites.existencia Existencia del producto
+ * @param {number} [limites.enCarrito=0] Lo que ya tiene en el carrito de ese producto al agregar más
+ * @returns {{cantidad: number}|{mensaje: string}} La cantidad si es válida, o el mensaje si no
+ */
 export function validarCantidad(texto, { existencia, enCarrito = 0 }) {
   const limpio = String(texto ?? '').trim()
 

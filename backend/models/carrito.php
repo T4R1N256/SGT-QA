@@ -1,17 +1,31 @@
 <?php
-// Carrito de la tienda en línea. Vive en el navegador; el servidor lo revisa en cada paso (T-S3):
-// precios vigentes, existencias, productos dados de baja y el desglose del IVA.
-// El precio que manda el navegador solo sirve para avisar si cambió: los importes usan siempre el de la base de datos
 
 require_once __DIR__ . '/catalogo.php';
 require_once __DIR__ . '/configuracion.php';
 
+/**
+ * Carrito de la tienda en línea. Vive en el navegador; el servidor lo revisa en cada paso (T-S3):
+ * precios vigentes, existencias, productos dados de baja y el desglose del IVA.
+ * El precio que manda el navegador solo sirve para avisar si cambió: los importes usan siempre el de la base de datos.
+ *
+ * @author Jesus Garrido
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see Catalogo
+ * @see Pedido
+ */
 class Carrito
 {
     const MAX_LINEAS = 100;
 
-    // Desglose de un total que ya incluye IVA (D2), en centavos: subtotal = total ÷ (1 + tasa) redondeado,
-    // y el IVA es la diferencia, para que subtotal + IVA dé siempre el total exacto (igual que desglosarIVA en la tienda)
+    /**
+     * Desglose de un total que ya incluye IVA (D2), en centavos: subtotal = total ÷ (1 + tasa) redondeado,
+     * y el IVA es la diferencia, para que subtotal + IVA dé siempre el total exacto (igual que desglosarIVA en la tienda).
+     *
+     * @param int   $totalCentavos Total con IVA, en centavos
+     * @param float $tasa          Tasa de IVA en porcentaje (16.0)
+     * @return array [subtotal, IVA] en centavos
+     */
     public static function desglose(int $totalCentavos, float $tasa): array
     {
         $subtotal = (int) round($totalCentavos / (1 + $tasa / 100));
@@ -19,19 +33,39 @@ class Carrito
     }//-- Fin funcion desglose
 
 
+    /**
+     * Convierte centavos a pesos con dos decimales.
+     *
+     * @param int $centavos Cantidad en centavos
+     * @return float La cantidad en pesos
+     */
     private static function dinero(int $centavos): float
     {
         return round($centavos / 100, 2);
     }
 
+    /**
+     * Formato de dinero para los avisos: $1,234.50.
+     *
+     * @param float $monto Cantidad en pesos
+     * @return string La cantidad con signo de pesos
+     */
     private static function pesos(float $monto): string
     {
         return '$' . number_format($monto, 2);
     }
 
 
-    // $lineas: [[id, cantidad, precio que vio el cliente o null], ...] ya validadas
-    // Regresa las líneas vigentes (con la cantidad ajustada a la existencia), los avisos y el resumen
+    /**
+     * Revisa el carrito contra la base de datos. Quita los productos retirados y agotados, ajusta
+     * la cantidad a la existencia y avisa si cambió algún precio.
+     *
+     * @param array $lineas [[id, cantidad, precio que vio el cliente o null], ...] ya validadas con leer()
+     * @return array ['lineas' => vigentes, 'avisos' => [...], 'resumen' => piezas, subtotal, IVA, envío y total]
+     * @throws PDOException Si falla la consulta a la base de datos (index.php responde 500)
+     * @see Carrito::leer()
+     * @see Carrito::desglose()
+     */
     public static function revisar(array $lineas): array
     {
         $productos = Catalogo::productosPorId(array_column($lineas, 0));
@@ -102,8 +136,14 @@ class Carrito
     }//-- Fin funcion revisar
 
 
-    // Lee y valida el carrito que manda el navegador: {productos: [{id, cantidad, precio?}, ...]}
-    // Regresa [[id, cantidad, precio o null], ...]
+    /**
+     * Lee y valida el carrito que manda el navegador: {productos: [{id, cantidad, precio?}, ...]}.
+     *
+     * @param array $data Cuerpo de la petición
+     * @return array [[id, cantidad, precio o null], ...]
+     * @throws ErrorValidacion Si no es una lista, pasa de Carrito::MAX_LINEAS productos, algún dato no es válido
+     *                         o un producto viene repetido
+     */
     public static function leer(array $data): array
     {
         $productos = $data['productos'] ?? null;

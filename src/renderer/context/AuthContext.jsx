@@ -1,8 +1,20 @@
+/**
+ * @file Sesión del usuario de SGT y caja abierta: AuthProvider y useAuth.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+
 import { createContext, useContext, useEffect, useState } from 'react'
 
 const SESSION_KEY = 'usuario'
 const CAJA_KEY = 'caja'
 
+/**
+ * Usuario guardado en sessionStorage (sobrevive a recargar la ventana).
+ *
+ * @returns {{id: string, puesto: string}|null} El usuario, o null si no hay sesión
+ */
 function leerSesion() {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY)
@@ -12,6 +24,11 @@ function leerSesion() {
   }
 }
 
+/**
+ * Caja abierta guardada en sessionStorage.
+ *
+ * @returns {Object|null} La caja, o null si no hay caja abierta
+ */
 function leerCaja() {
   try {
     const raw = sessionStorage.getItem(CAJA_KEY)
@@ -23,6 +40,13 @@ function leerCaja() {
 
 const AuthContext = createContext(null)
 
+/**
+ * Guarda el usuario con sesión, sus datos y la caja abierta. Avisa al proceso principal de Electron
+ * si hay caja abierta (regla 4: no deja cerrar la ventana mientras haya una caja abierta).
+ *
+ * @param {{children: React.ReactNode}} props
+ * @returns {JSX.Element} El proveedor del contexto
+ */
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(leerSesion())
   const [userInfo, setUserInfo] = useState(null)
@@ -78,7 +102,12 @@ export function AuthProvider({ children }) {
   )
 }
 
-// custom hook — any component calls this to read auth state
+/**
+ * Estado de la sesión: { usuario, esAdmin, guardarSesion, cerrarSesion, userInfo, setUserInfo, caja, setCaja }.
+ *
+ * @returns {Object} El contexto de AuthProvider
+ * @throws {Error} Si se usa fuera de AuthProvider
+ */
 export function useAuth() {
   const context = useContext(AuthContext)
 

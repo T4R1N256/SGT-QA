@@ -1,8 +1,21 @@
 import clsx from 'clsx'
 import { forwardRef, useId } from 'react'
 
-// Campo de formulario con su etiqueta y su mensaje de error, ligados para los lectores de pantalla
-// como: 'input' (por defecto), 'select' (con sus <option> como children) o 'textarea'
+/**
+ * Campo de formulario con su etiqueta y su mensaje de error, ligados para los lectores de pantalla.
+ *
+ * @param {Object} props
+ * @param {string} props.etiqueta Etiqueta
+ * @param {string} [props.error] Mensaje de error
+ * @param {string} [props.ayuda] Texto de ayuda (se muestra si no hay error)
+ * @param {'input'|'select'|'textarea'} [props.como='input'] Control (select con sus <option> como children)
+ * @param {React.Ref} ref Referencia al control (para enfocarlo)
+ * @returns {JSX.Element} El campo
+ * @see useFormulario
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 const Campo = forwardRef(function Campo(
   { etiqueta, error, ayuda, className, como: Control = 'input', ...props },
   ref

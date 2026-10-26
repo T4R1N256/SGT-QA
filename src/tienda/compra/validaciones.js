@@ -1,5 +1,10 @@
-// Validación de los datos de entrega. Son las mismas reglas que aplica el servidor
-// (backend/models/entrega.php); el servidor siempre vuelve a validar
+/**
+ * @file Validación de los datos de entrega. Son las mismas reglas que aplica el servidor
+ * (backend/models/entrega.php); el servidor siempre vuelve a validar.
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 
 export const ENTIDADES = [
   'Aguascalientes',
@@ -59,7 +64,14 @@ const limpiar = (texto) =>
     .replace(/\s+/gu, ' ')
     .trim()
 
-// { campo: mensaje } con los campos inválidos ({} si todo está bien)
+/**
+ * Valida los datos de entrega: obligatorios, largo máximo y formato (nombre, teléfono de 10 dígitos,
+ * números exterior e interior, código postal de 5 dígitos y entidad de la lista).
+ *
+ * @param {Object} datos Valores del formulario (los campos de CAMPOS_ENTREGA)
+ * @returns {Object<string, string>} { campo: mensaje } con los campos inválidos ({} si todo está bien)
+ * @see Entrega::validar
+ */
 export function validarEntrega(datos) {
   const errores = {}
   const valores = {}
@@ -107,8 +119,13 @@ export function validarEntrega(datos) {
   return errores
 }
 
-// Clave de cada confirmación: si el mismo envío llega dos veces (doble clic, P12) el servidor
-// regresa el pedido que ya creó. getRandomValues funciona también fuera de HTTPS (randomUUID no)
+/**
+ * Clave de cada confirmación: si el mismo envío llega dos veces (doble clic, P12) el servidor
+ * regresa el pedido que ya creó. getRandomValues funciona también fuera de HTTPS (randomUUID no).
+ *
+ * @returns {string} 32 caracteres hexadecimales al azar
+ * @see Pedido::folioPorClave
+ */
 export function nuevaClave() {
   const bytes = crypto.getRandomValues(new Uint8Array(16))
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')

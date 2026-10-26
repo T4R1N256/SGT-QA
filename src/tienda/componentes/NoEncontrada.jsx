@@ -1,7 +1,17 @@
 import { Link } from 'react-router-dom'
 import { useTitulo } from '../TiendaContext'
 
-// Dirección que no existe (también producto o categoría inexistentes, P14)
+/**
+ * Dirección que no existe (también producto o categoría inexistentes, P14).
+ *
+ * @param {Object} props
+ * @param {string} [props.titulo='Página no encontrada'] Título
+ * @param {string} [props.texto] Explicación
+ * @returns {JSX.Element} La página
+ * @author Alejandro Tarin
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 export default function NoEncontrada({
   titulo = 'Página no encontrada',
   texto = 'La dirección que abriste no existe en la tienda.',
