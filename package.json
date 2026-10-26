@@ -18,7 +18,8 @@
     "dev:tienda": "vite --config vite.tienda.config.mjs",
     "build:tienda": "vite build --config vite.tienda.config.mjs",
     "test:watch": "vitest",
-    "test:e2e:tienda": "playwright test"
+    "test:e2e:tienda": "playwright test --project=tienda",
+    "test:e2e:sgt": "electron-vite build && playwright test --project=sgt"
   },
   "build": {
     "appId": "com.tuempresa.sgt",

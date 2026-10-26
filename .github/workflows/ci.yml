@@ -72,6 +72,71 @@ jobs:
           DB_USER: sgt_test
           DB_PASS: sgt_test
 
+  sgt:
+    name: SGT (Electron)
+    runs-on: ubuntu-latest
+
+    # La app de escritorio compilada, manejada con Playwright: arranca el PHP del sistema en el 8000 y usa esta MariaDB
+    services:
+      mariadb:
+        image: mariadb:12.2.2
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: sgtdb_test
+          MARIADB_USER: sgt_test
+          MARIADB_PASSWORD: sgt_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_mysql
+          coverage: none
+
+      - name: Instalar dependencias de Composer
+        run: composer install --no-interaction --no-progress --working-dir=backend
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Con el binario de Electron (el job de la tienda lo omite)
+      - name: Instalar dependencias de Node
+        run: npm ci
+
+      # pdftotext y pdfinfo leen los tickets y reportes en PDF que genera la app
+      - name: Instalar poppler-utils
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Pruebas de la app de escritorio
+        run: xvfb-run -a npm run test:e2e:sgt
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: sgtdb_test
+          DB_USER: sgt_test
+          DB_PASS: sgt_test
+
+      - name: Reporte de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-sgt
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   tienda:
     name: Tienda (Docker)
     runs-on: ubuntu-latest

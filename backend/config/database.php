@@ -13,13 +13,17 @@ Dotenv\Dotenv::createImmutable(dirname(__DIR__, 2))->safeLoad();
 date_default_timezone_set('America/Mazatlan');
 
 
-// Variable de entorno: primero $_ENV (lo llena el .env) y después getenv()
-// Con variables_order = "GPCS" (php.ini de Ubuntu, por ejemplo) $_ENV no trae las variables del proceso,
-// que es como Electron y Docker pasan las credenciales de la base de datos
+// Variable de entorno: primero la del proceso (getenv) y después la del .env ($_ENV)
+// Electron y Docker pasan las credenciales de la base de datos en el entorno del proceso, y deben ganarle a un .env
+// que haya en la carpeta: con `php -S`, Dotenv no ve las variables del proceso y escribe en $_ENV las del .env.
+// Con variables_order = "GPCS" (php.ini de Ubuntu, por ejemplo) $_ENV no trae las variables del proceso
 function variableEntorno(string $nombre, ?string $defecto = null): ?string
 {
-   $valor = $_ENV[$nombre] ?? getenv($nombre);
-   return ($valor === false || $valor === '') ? $defecto : $valor;
+   $valor = getenv($nombre);
+   if ($valor === false || $valor === '') {
+      $valor = $_ENV[$nombre] ?? '';
+   }
+   return $valor === '' ? $defecto : $valor;
 }
 
 

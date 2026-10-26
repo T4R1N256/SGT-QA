@@ -8,7 +8,7 @@ Leyenda: ✅ verificado · ➖ no aplica por una decisión del equipo (se explic
 
 | Tipo | Qué es | Cómo se corre |
 |---|---|---|
-| **PHPUnit** | 109 pruebas del API de la tienda contra MariaDB real (`backend/tests/Api/Tienda`), dentro de las 272 del backend. La base de datos se recrea en cada prueba. | `cd backend && vendor/bin/phpunit` (también en el CI) |
+| **PHPUnit** | 109 pruebas del API de la tienda contra MariaDB real (`backend/tests/Api/Tienda`), dentro de las 336 del backend. La base de datos se recrea en cada prueba. | `cd backend && vendor/bin/phpunit` (también en el CI) |
 | **Vitest** | 65 pruebas de la tienda y de las utilidades compartidas: filtros de la dirección, paginación, disponibilidad, carrito, validaciones, desglose del IVA y cliente del API. | `npm test` (también en el CI) |
 | **Playwright** | 18 pruebas en Chromium (`e2e/tienda`) contra la tienda levantada con Docker. Cada una falla si la página tiene errores de JavaScript **o si el navegador se conecta a cualquier sitio fuera de la tienda**. Los cambios de existencias, precios y bajas los hace un admin de SGT con su propio API, con productos creados para la prueba. | `npm run test:e2e:tienda` con la tienda en `:8080` (también en el CI) |
 | **CI con Docker** | El job *Tienda (Docker)* hace `cp .env.example .env && docker compose up --build`, revisa con `curl` el API (catálogo, carrito, registro, entrega, pedido y pago) y corre las pruebas de Playwright. | En cada PR y en cada push a `main` |
@@ -138,3 +138,12 @@ Se hizo de dos formas:
 | Las revisiones con `curl` del CI (catálogo, carrito, registro, entrega, pedido y pago; el API de SGT responde 404 por el `8080`) | ✅ |
 | Las 18 pruebas de Playwright contra `:8080` (nginx) y `:8001` (backend) | ✅ |
 | Sin errores fatales en el registro del backend | ✅ |
+
+**Re-verificación (26-oct-2026)**, después de corregir el texto de los formularios de SGT (migración 007): clon nuevo de `main` (`fa71fe5`), mismos pasos.
+
+| Verificación | Resultado |
+|---|---|
+| El backend aplica las migraciones 001–007, crea el admin y carga 12 categorías, 180 productos y el cliente de prueba | ✅ |
+| PHPUnit (274, 109 de la tienda), Vitest (117, 65 de la tienda) y lint | ✅ |
+| Las 14 revisiones con `curl` del CI | ✅ |
+| Las 18 pruebas de Playwright | ✅ |
