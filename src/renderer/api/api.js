@@ -20,8 +20,9 @@ async function request(path, options = {}) {
       return { ok: false, status: 401, mensaje: data.mensaje ?? 'No autorizado' }
     }
 
+    // Los datos que acompañan al error llegan a la pantalla (por ejemplo, qué campo marcar o si hace falta confirmar)
     if (!res.ok) {
-      return { ok: false, status: res.status, mensaje: data.mensaje ?? data.error ?? `Error ${res.status}` }
+      return { ...data, ok: false, status: res.status, mensaje: data.mensaje ?? data.error ?? `Error ${res.status}` }
     }
 
     return data
@@ -57,10 +58,11 @@ export const deleteProduct = (id)     => del('deleteProduct', { ID_Producto: id 
 
 // Catálogos — Categorías
 export const getCategorias    = ()       => get('getAllCategories')
+export const getTodasCategorias = ()     => get('getAllCategories?todas=1')
 export const getCategoria     = (id)     => get(`getCategory?id=${id}`)
 export const createCategoria  = (data)   => post('createCategory', data)
-export const modifyCategoria  = (id, data) => patch('modifyCategory', { ID_Categoria: id, ...data })
-export const deleteCategoria  = (id)     => patch('deleteCategory', { ID_Categoria: id })
+export const modifyCategoria  = (id, data, confirmar = false) => patch('modifyCategory', { ID_Categoria: id, ...data, Confirmar: confirmar })
+export const deleteCategoria  = (id, confirmar = false) => patch('deleteCategory', { ID_Categoria: id, Confirmar: confirmar })
 
 // Caja
 export const openCaja        = (data) => post('openCashRegister', data)
@@ -101,6 +103,7 @@ export const updateConfig = (data) => patch('updateConfig', data)
 
 // Catálogos — Proveedores
 export const getProveedores   = ()       => get('getAllSuppliers')
+export const getTodosProveedores = ()    => get('getAllSuppliers?todos=1')
 export const getProveedor     = (id)     => get(`getSupplier?id=${id}`)
 export const createProveedor  = (data)   => post('createSupplier', data)
 export const modifyProveedor  = (id, data) => patch('modifySupplier', { ID_Proveedor: id, ...data })

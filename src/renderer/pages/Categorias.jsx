@@ -1,20 +1,19 @@
 import { useState, useRef } from 'react'
 import {
-  getCategorias,
+  getTodasCategorias,
   getCategoria,
   createCategoria,
   modifyCategoria,
   deleteCategoria,
 } from '../api/api'
 import { useFetch } from '../hooks/useFetch'
+import { ActionButton, ConfirmModal, FormModal, FormAlert, fieldInputClass } from '../components'
 import {
-  ActionButton,
-  ConfirmModal,
-  FormModal,
-  FormAlert,
-  fieldInputClass,
-} from '../components'
-import { limpiarTexto } from '../utils/texto'
+  avisoDesactivarCategoria,
+  errorDelApi,
+  parseCategoria,
+  validateCategoria,
+} from '../utils/catalogos'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
 
@@ -34,27 +33,14 @@ const ESTADO_OPTIONS = [
 
 const EMPTY_CATEGORIA = { nombre: '', estado: 'activo' }
 
-function parseCategoria(form) {
-  return {
-    nombre: limpiarTexto(form.nombre),
-    estado: form.estado,
-  }
-}
+// El API marca el nombre cuando ya existe otra categoría con ese nombre
+const CAMPOS_API = { Nombre_Categoria: 'nombre' }
 
 function buildCategoriaPayload(parsed) {
   return {
     Nombre_Categoria: parsed.nombre,
     Estado: parsed.estado,
   }
-}
-
-function validateCategoria(parsed) {
-  if (!parsed.nombre) return { message: 'El nombre es obligatorio', field: 'nombre' }
-  if (parsed.nombre.length > 50)
-    return { message: 'El nombre no puede exceder 50 caracteres', field: 'nombre' }
-  if (!['activo', 'inactivo'].includes(parsed.estado))
-    return { message: 'Estado inválido', field: 'estado' }
-  return null
 }
 
 function categoriaToForm(c) {
@@ -64,7 +50,7 @@ function categoriaToForm(c) {
   }
 }
 
-function CategoriaForm({ data, setData, response, setResponse, mode }) {
+function CategoriaForm({ data, setData, response, setResponse, mode, aviso }) {
   function onChange(field) {
     return (e) => {
       setResponse(null)
@@ -98,6 +84,14 @@ function CategoriaForm({ data, setData, response, setResponse, mode }) {
               </option>
             ))}
           </select>
+          {aviso && (
+            <p
+              role="alert"
+              className="mt-2 text-xs text-amber-800 bg-amber-50 border border-amber-300 rounded-lg px-3 py-2"
+            >
+              {aviso}
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -109,7 +103,7 @@ export default function Categorias() {
     data: categoriasData,
     loading: loadingCategorias,
     refetch: refetchCategorias,
-  } = useFetch(getCategorias)
+  } = useFetch(getTodasCategorias)
 
   const categorias = categoriasData?.categorias ?? []
 
@@ -125,9 +119,13 @@ export default function Categorias() {
   const [editing, setEditing] = useState(false)
   const [editResponse, setEditResponse] = useState(null)
   const [loadingEdit, setLoadingEdit] = useState(false)
+  // Productos activos que se avisaron al desactivar desde Editar: el siguiente guardado ya va confirmado
+  const [editAviso, setEditAviso] = useState(null)
 
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  // Productos activos que muestra el aviso de Desactivar (de la lista o, si cambiaron, de la respuesta del API)
+  const [productosAviso, setProductosAviso] = useState(0)
 
   const newModalRef = useRef(null)
   const editModalRef = useRef(null)
@@ -163,9 +161,8 @@ export default function Categorias() {
     (c.Nombre_Categoria ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const editChanged = Object.keys(editCategoria).some(
-    (k) => editCategoria[k] !== originalEdit[k]
-  )
+  const editChanged = Object.keys(editCategoria).some((k) => editCategoria[k] !== originalEdit[k])
+  const editDesactiva = originalEdit.estado === 'activo' && editCategoria.estado === 'inactivo'
 
   async function openEditModal() {
     setLoadingEdit(true)
@@ -179,6 +176,7 @@ export default function Categorias() {
     const loaded = categoriaToForm(res.categoria)
     setEditCategoria(loaded)
     setOriginalEdit(loaded)
+    setEditAviso(null)
     editModalRef.current.showModal()
   }
 
@@ -196,7 +194,7 @@ export default function Categorias() {
       setCreateResponse(null)
       refetchCategorias()
     } else {
-      setCreateResponse({ type: 'error', message: res.mensaje ?? 'Error al crear la categoría' })
+      setCreateResponse(errorDelApi(res, CAMPOS_API, 'Error al crear la categoría'))
     }
   }
 
@@ -205,30 +203,40 @@ export default function Categorias() {
     const err = validateCategoria(parsed)
     if (err) return setEditResponse({ type: 'error', ...err })
 
+    // Desactivar una categoría con productos activos se confirma: el primer intento muestra el aviso del API
+    const confirmado = editDesactiva && editAviso !== null
     setEditing(true)
-    const res = await modifyCategoria(selectedId, buildCategoriaPayload(parsed))
+    const res = await modifyCategoria(selectedId, buildCategoriaPayload(parsed), confirmado)
     setEditing(false)
     if (res.ok) {
       editModalRef.current.close()
       setEditResponse(null)
+      setEditAviso(null)
       refetchCategorias()
+    } else if (res.requiere_confirmacion) {
+      setEditAviso(res.productos)
+      setEditResponse(null)
     } else {
-      setEditResponse({
-        type: 'error',
-        message: res.mensaje ?? 'Error al actualizar la categoría',
-      })
+      setEditResponse(errorDelApi(res, CAMPOS_API, 'Error al actualizar la categoría'))
     }
   }
 
+  // El aviso ya dice cuántos productos activos tiene: confirmar el diálogo confirma la desactivación.
+  // Si mientras tanto cambiaron, el API la bloquea y el aviso se actualiza para confirmar otra vez
   async function handleDeleteConfirm() {
     setDeleting(true)
     setDeleteError(null)
-    const res = await deleteCategoria(selectedId)
+    const res = await deleteCategoria(selectedId, productosAviso > 0)
     setDeleting(false)
     if (res.ok) {
       deleteModalRef.current.close()
       setSelectedId(null)
       refetchCategorias()
+    } else if (res.requiere_confirmacion) {
+      setProductosAviso(res.productos)
+      setDeleteError(
+        'Los productos de la categoría cambiaron. Revisa el aviso y confirma otra vez.'
+      )
     } else {
       setDeleteError(res.mensaje ?? 'Error al desactivar la categoría')
     }
@@ -246,14 +254,12 @@ export default function Categorias() {
         title="Desactivar categoría"
         busy={deleting}
         busyLabel="Desactivando..."
-        confirmLabel="Desactivar"
+        confirmLabel={productosAviso > 0 ? 'Desactivar de todas formas' : 'Desactivar'}
         error={deleteError}
         onConfirm={handleDeleteConfirm}
         onClose={() => setDeleteError(null)}
       >
-        ¿Estás seguro de que deseas desactivar{' '}
-        <span className="font-semibold">{selected?.Nombre_Categoria}</span>? La categoría no podrá
-        usarse para productos nuevos hasta que vuelvas a activarla.
+        {avisoDesactivarCategoria(selected?.Nombre_Categoria, productosAviso)}
       </ConfirmModal>
 
       <FormModal
@@ -282,12 +288,15 @@ export default function Categorias() {
         title="Editar categoría"
         busy={editing}
         canSubmit={editChanged && !loadingEdit}
-        submitLabel="Guardar cambios"
+        submitLabel={
+          editDesactiva && editAviso !== null ? 'Desactivar de todas formas' : 'Guardar cambios'
+        }
         onSubmit={handleUpdate}
         onClose={() => {
           setEditCategoria(EMPTY_CATEGORIA)
           setOriginalEdit(EMPTY_CATEGORIA)
           setEditResponse(null)
+          setEditAviso(null)
         }}
       >
         {loadingEdit ? (
@@ -295,10 +304,19 @@ export default function Categorias() {
         ) : (
           <CategoriaForm
             data={editCategoria}
-            setData={setEditCategoria}
+            setData={(cambio) => {
+              // Si cambia algo, el aviso se vuelve a pedir al guardar
+              setEditAviso(null)
+              setEditCategoria(cambio)
+            }}
             response={editResponse}
             setResponse={setEditResponse}
             mode="edit"
+            aviso={
+              editDesactiva && editAviso !== null
+                ? avisoDesactivarCategoria(originalEdit.nombre, editAviso)
+                : null
+            }
           />
         )}
       </FormModal>
@@ -340,6 +358,7 @@ export default function Categorias() {
           className="font-normal rounded-lg"
           onClick={() => {
             setDeleteError(null)
+            setProductosAviso(selected?.Productos ?? 0)
             deleteModalRef.current.showModal()
           }}
           disabled={!canDelete}
@@ -383,7 +402,7 @@ function CategoriaTableRow({ categoria, selected, onSelect }) {
     >
       {TABLE_COLUMNS.map(({ field, grow, format }) => (
         <span key={field} className={`${rowCell} ${grow ? 'col-span-2' : ''}`}>
-          {format ? format(categoria[field]) : categoria[field] ?? '—'}
+          {format ? format(categoria[field]) : (categoria[field] ?? '—')}
         </span>
       ))}
     </li>

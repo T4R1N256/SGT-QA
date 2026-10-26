@@ -1,20 +1,14 @@
 import { useState, useRef } from 'react'
 import {
-  getProveedores,
+  getTodosProveedores,
   getProveedor,
   createProveedor,
   modifyProveedor,
   deleteProveedor,
 } from '../api/api'
 import { useFetch } from '../hooks/useFetch'
-import {
-  ActionButton,
-  ConfirmModal,
-  FormModal,
-  FormAlert,
-  fieldInputClass,
-} from '../components'
-import { limpiarTexto } from '../utils/texto'
+import { ActionButton, ConfirmModal, FormModal, FormAlert, fieldInputClass } from '../components'
+import { errorDelApi, parseProveedor, validateProveedor } from '../utils/catalogos'
 import { useHeader } from '../context/HeaderContext.jsx'
 import { PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
 
@@ -34,13 +28,8 @@ const ESTADO_OPTIONS = [
 
 const EMPTY_PROVEEDOR = { nombre: '', telefono: '', estado: 'activo' }
 
-function parseProveedor(form) {
-  return {
-    nombre: limpiarTexto(form.nombre),
-    telefono: limpiarTexto(form.telefono),
-    estado: form.estado,
-  }
-}
+// El API marca el nombre cuando ya existe otro proveedor con ese nombre
+const CAMPOS_API = { Nombre_Proveedor: 'nombre' }
 
 function buildProveedorPayload(parsed) {
   return {
@@ -48,17 +37,6 @@ function buildProveedorPayload(parsed) {
     Telefono: parsed.telefono,
     Estado: parsed.estado,
   }
-}
-
-function validateProveedor(parsed) {
-  if (!parsed.nombre) return { message: 'El nombre es obligatorio', field: 'nombre' }
-  if (parsed.nombre.length > 255)
-    return { message: 'El nombre no puede exceder 255 caracteres', field: 'nombre' }
-  if (parsed.telefono && parsed.telefono.length > 20)
-    return { message: 'El teléfono no puede exceder 20 caracteres', field: 'telefono' }
-  if (!['activo', 'inactivo'].includes(parsed.estado))
-    return { message: 'Estado inválido', field: 'estado' }
-  return null
 }
 
 function proveedorToForm(p) {
@@ -98,10 +76,10 @@ function ProveedorForm({ data, setData, response, setResponse, mode }) {
         <input
           className={cls('telefono')}
           type="tel"
-          placeholder="1234567890"
+          placeholder="10 o 12 dígitos"
           value={data.telefono}
           onChange={onChange('telefono')}
-          maxLength={20}
+          maxLength={12}
         />
       </div>
       {mode === 'edit' && (
@@ -125,7 +103,7 @@ export default function Proveedores() {
     data: proveedoresData,
     loading: loadingProveedores,
     refetch: refetchProveedores,
-  } = useFetch(getProveedores)
+  } = useFetch(getTodosProveedores)
 
   const proveedores = proveedoresData?.proveedores ?? []
 
@@ -179,9 +157,7 @@ export default function Proveedores() {
     (p.Nombre_Proveedor ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const editChanged = Object.keys(editProveedor).some(
-    (k) => editProveedor[k] !== originalEdit[k]
-  )
+  const editChanged = Object.keys(editProveedor).some((k) => editProveedor[k] !== originalEdit[k])
 
   async function openEditModal() {
     setLoadingEdit(true)
@@ -212,7 +188,7 @@ export default function Proveedores() {
       setCreateResponse(null)
       refetchProveedores()
     } else {
-      setCreateResponse({ type: 'error', message: res.mensaje ?? 'Error al crear el proveedor' })
+      setCreateResponse(errorDelApi(res, CAMPOS_API, 'Error al crear el proveedor'))
     }
   }
 
@@ -229,10 +205,7 @@ export default function Proveedores() {
       setEditResponse(null)
       refetchProveedores()
     } else {
-      setEditResponse({
-        type: 'error',
-        message: res.mensaje ?? 'Error al actualizar el proveedor',
-      })
+      setEditResponse(errorDelApi(res, CAMPOS_API, 'Error al actualizar el proveedor'))
     }
   }
 
@@ -399,7 +372,7 @@ function ProveedorTableRow({ proveedor, selected, onSelect }) {
     >
       {TABLE_COLUMNS.map(({ field, grow, format }) => (
         <span key={field} className={`${rowCell} ${grow ? 'col-span-2' : ''}`}>
-          {format ? format(proveedor[field]) : proveedor[field] ?? '—'}
+          {format ? format(proveedor[field]) : (proveedor[field] ?? '—')}
         </span>
       ))}
     </li>
