@@ -261,6 +261,7 @@ backend/        PHP 8 sin framework — router único en index.php
   routes/       Controladores por módulo (routes/tienda/: API de la tienda)
   tests/        Pruebas PHPUnit (Unit y Api)
 docker/web/     Imagen de la tienda (Node para compilar, nginx para servir)
+e2e/sgt/        Pruebas de la app de escritorio compilada (Playwright + Electron)
 e2e/tienda/     Pruebas de la tienda en el navegador (Playwright)
 resources/      Binarios empaquetados (en .gitignore — descargar por separado)
 ```
@@ -305,9 +306,32 @@ DB_PORT=3307 DB_USER=root DB_PASS=root composer test
 
 Los valores por defecto (`127.0.0.1:3306`, base `sgtdb_test`, usuario `sgt_test`) están en `backend/phpunit.xml` y se pueden cambiar con variables de entorno.
 
+### App de escritorio (Playwright + Electron)
+
+Las pruebas de `e2e/sgt` abren la app compilada y la usan como una persona: inicio de sesión y permisos, ventas con su ticket en PDF, caja y regla 4, surtir, historial, reportes con sus PDF, categorías, proveedores, inventario y usuarios. Cada prueba empieza con una base de datos nueva con los datos demo y su propia carpeta personal, donde la app guarda los PDF. Fallan si la app tiene errores de JavaScript.
+
+Necesitan lo mismo que PHPUnit (PHP con `pdo_mysql`, `composer install` en `backend` y el usuario `sgt_test` de MariaDB) y además `pdftotext` (`poppler-utils`), que lee los PDF:
+
+```bash
+npm ci                                  # con el binario de Electron
+npm run test:e2e:sgt                    # compila la app y corre las pruebas
+xvfb-run -a npm run test:e2e:sgt        # en Linux sin pantalla (como en el CI)
+```
+
+La app levanta el PHP del sistema en el `8000`, así que ese puerto debe estar libre. Usan las mismas variables que PHPUnit (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`); con la base de datos de Docker Compose: `DB_PORT=3307 DB_USER=root DB_PASS=root npm run test:e2e:sgt`. Un `.env` en la carpeta no estorba: las variables que pasa la app le ganan.
+
 ### CI
 
-`.github/workflows/ci.yml` corre el lint, las dos suites de pruebas y la compilación de la tienda en cada PR y en cada push a `main`. El job **Tienda (Docker)** levanta todo con `docker compose up --build`, revisa con `curl` el API de la tienda en el `8080` y corre las pruebas de Playwright. `build.yml` genera los instaladores (ver *Instaladores en el CI*).
+`.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
+
+| Job | Qué hace |
+|---|---|
+| **Frontend** | Lint, Vitest y la compilación de la tienda |
+| **Backend** | PHPUnit contra MariaDB |
+| **SGT (Electron)** | Las pruebas de `e2e/sgt` con la app compilada, MariaDB y el PHP del runner |
+| **Tienda (Docker)** | Levanta todo con `docker compose up --build`, revisa con `curl` el API de la tienda en el `8080` y corre las pruebas de `e2e/tienda` |
+
+`build.yml` genera los instaladores (ver *Instaladores en el CI*).
 
 ### QA
 
@@ -335,6 +359,7 @@ npm run format           # Prettier
 npm run dev:tienda       # tienda en línea en modo desarrollo (5174)
 npm run build:tienda     # compila la tienda en dist-tienda/
 npm run test:e2e:tienda  # pruebas de la tienda en el navegador (con Docker levantado)
+npm run test:e2e:sgt     # pruebas de la app de escritorio (compila la app; ver Pruebas)
 docker-compose down      # detener contenedores (los datos persisten)
 docker-compose down -v   # detener y borrar el volumen de base de datos
 ```
