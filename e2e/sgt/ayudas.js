@@ -58,6 +58,14 @@ export const test = base.extend({
     execFileSync('php', [path.join(import.meta.dirname, 'base-de-datos.php')], {
       env: { ...process.env, ...BASE_DE_DATOS },
     })
+    // La app abre cada ticket y reporte con el visor del sistema (xdg-open). Un visor real se queda con la salida
+    // de Electron y Playwright espera a que se cierre al terminar el worker (en el CI, 2 minutos): en su lugar,
+    // un xdg-open que solo anota qué archivo se pidió abrir (ver archivosAbiertos)
+    const bin = path.join(carpeta, 'bin')
+    fs.mkdirSync(bin)
+    fs.writeFileSync(path.join(bin, 'xdg-open'), '#!/bin/sh\necho "$1" >> "$HOME/abiertos.txt"\n', {
+      mode: 0o755,
+    })
     // Los datos demo y no el catálogo de la tienda, aunque haya un .env de Docker (SEED_TIENDA=1)
     const env = {
       ...process.env,
@@ -66,6 +74,7 @@ export const test = base.extend({
       SEED_TIENDA: '0',
       HOME: carpeta,
       TZ: ZONA,
+      PATH: `${bin}${path.delimiter}${process.env.PATH}`,
     }
     delete env.XDG_CONFIG_HOME
     delete env.ELECTRON_RENDERER_URL
@@ -181,6 +190,14 @@ export function archivoPDF(carpeta, subcarpeta, nombre) {
   return [path.join(carpeta, 'Documents', 'SGT'), path.join(carpeta, 'SGT')]
     .map((sgt) => path.join(sgt, subcarpeta, `${nombre}.pdf`))
     .find((archivo) => fs.existsSync(archivo))
+}
+
+// Archivos que la app pidió abrir con el visor del sistema
+export function archivosAbiertos(carpeta) {
+  const registro = path.join(carpeta, 'abiertos.txt')
+  return fs.existsSync(registro)
+    ? fs.readFileSync(registro, 'utf8').split('\n').filter(Boolean)
+    : []
 }
 
 export const textoPDF = (archivo) => execFileSync('pdftotext', ['-layout', archivo, '-']).toString()

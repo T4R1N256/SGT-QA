@@ -6,6 +6,7 @@ import {
   abrirCaja,
   agregar,
   archivoPDF,
+  archivosAbiertos,
   cerrarCaja,
   cobrar,
   expect,
@@ -18,6 +19,7 @@ import {
 
 test('la configuración de la tienda sale en el login y en el ticket; venta en efectivo con búsqueda y reimpresión', async ({
   page,
+  carpeta,
 }) => {
   await expect(page.getByText('Abarrotes "La bamba"')).toBeVisible()
   await iniciarSesion(page, ADMIN)
@@ -46,6 +48,11 @@ test('la configuración de la tienda sale en el login y en el ticket; venta en e
   const ticket = aviso.match(/Ticket: (\S+\.pdf)/)?.[1] ?? ''
   expect(ticket.endsWith(path.join('SGT', 'Tickets', 'ticket-000001.pdf')), ticket).toBe(true)
   expect(fs.existsSync(ticket), 'el ticket PDF se genera al cobrar').toBe(true)
+  await expect
+    .poll(() => archivosAbiertos(carpeta), {
+      message: 'el ticket se abre con el visor del sistema',
+    })
+    .toContain(ticket)
   const texto = textoPDF(ticket)
   for (const fragmento of [
     'Abarrotes "La bamba"',
