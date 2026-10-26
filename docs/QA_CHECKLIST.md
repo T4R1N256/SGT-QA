@@ -81,6 +81,17 @@ Leyenda: ✅ verificado · ⏳ pendiente de verificar en el entorno indicado · 
 |---|---|---|
 | Los formularios de SGT pasaban el texto por DOMPurify (`sanitize`). Con un `<` en el texto lo devolvía como HTML y borraba lo que pareciera etiqueta: "Pan & Cía <grande>" se guardaba como "Pan &amp; Cía ". La pantalla de Login también lo aplicaba a la contraseña, así que un usuario con `<` en su contraseña no podía entrar. | El texto solo se recorta (`utils/texto.js`) y se guarda tal cual; React lo escapa al mostrarlo. Se quitó DOMPurify. La migración 007 regresa `&amp;`, `&lt;`, `&gt;` y `&nbsp;` a su texto original en las columnas que llenan esos formularios (lo que DOMPurify borró no se puede recuperar). | PHPUnit `TextoEscapadoTest`; Vitest `texto.test.js`; E2E en la app compilada: entrar con la contraseña `Clave&2025<x>` y guardar "Pan & Cía <grande>" y "Frutas & Verduras <3" |
 
+### Categorías y proveedores (QA de SGT, 26-oct-2026)
+
+Las rutas de Categorías y Proveedores no tenían pruebas. Al revisarlas por el API y en la app se encontraron estos problemas; las decisiones son del equipo.
+
+| Hallazgo | Corrección | Evidencia |
+|---|---|---|
+| Se aceptaban categorías y proveedores con un nombre que ya existía ("Abarrotes" dos veces) | Se rechazan con 409 y el mensaje "Ya existe una categoría llamada «…»", sin distinguir mayúsculas ni acentos, también contra las inactivas (el mensaje sugiere volver a activarla). Un repetido de antes no impide cambiar el estado o el teléfono. | PHPUnit `CategoriasTest`, `ProveedoresTest`; E2E en la app compilada |
+| El teléfono del proveedor aceptaba cualquier texto (`hola`) | Opcional y, si se escribe, de 10 o 12 dígitos: la misma regla que Usuarios, en la pantalla y en el API | PHPUnit `ProveedoresTest`; Vitest `catalogos.test.js`; E2E |
+| Desactivar una categoría con productos activos no avisaba: la tienda en línea los ocultaba y SGT los seguía vendiendo | El API la bloquea (409, con cuántos productos activos tiene) hasta que el admin confirma. La pantalla avisa que la tienda en línea dejará de mostrarlos y pide "Desactivar de todas formas", desde el botón y desde Editar | PHPUnit `CategoriasTest`; Vitest `catalogos.test.js`; E2E |
+| Las pantallas de Categorías y Proveedores mostraban "—" en Estado y Productos, el estado elegido en Editar no se guardaba y una categoría o proveedor desactivado desaparecía sin forma de volver a activarlo | El API manda el estado y los productos activos, y con `?todas=1` / `?todos=1` también los inactivos. Editar guarda el estado, así que se pueden volver a activar. Inventario y Surtir siguen ofreciendo solo los activos. | PHPUnit `CategoriasTest`, `ProveedoresTest`; E2E |
+
 ## Pendiente
 
 | Qué | Dónde | Cómo |

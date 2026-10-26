@@ -11,9 +11,11 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
 
     $data = leerJson();
     $Nombre_Proveedor = campoTexto($data, 'Nombre_Proveedor');
-    $Telefono = campoTexto($data, 'Telefono', false, 20) ?? '';
+    $Telefono = campoTelefono($data) ?? '';
 
     require_once __DIR__ . ('/../models/proveedor.php');
+
+    Proveedor::validarNombreLibre($Nombre_Proveedor);
 
     $res = Proveedor::createProveedor($Nombre_Proveedor, $Telefono);
 
@@ -37,7 +39,8 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
 
     require_once __DIR__ . '/../models/proveedor.php';
 
-    $res = Proveedor::readAllProveedores();
+    // ?todos=1: también los inactivos (pantalla de Proveedores); sin él, solo los activos (Inventario y Surtir)
+    $res = Proveedor::readAllProveedores(($_GET['todos'] ?? '') === '1');
 
     if (!$res) {
         http_response_code(404);
@@ -89,7 +92,8 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
     $data = leerJson();
     $ID_Proveedor = campoEntero($data, 'ID_Proveedor', true, 1);
     $Nombre_Proveedor = campoTexto($data, 'Nombre_Proveedor', false) ?: null;
-    $Telefono = campoTexto($data, 'Telefono', false, 20);
+    $Telefono = campoTelefono($data);
+    $Estado = campoOpcion($data, 'Estado', ['activo', 'inactivo'], false);
 
     require_once __DIR__ . '/../models/proveedor.php';
 
@@ -101,10 +105,18 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
         return;
     }
 
+    // El nombre solo se revisa si cambia: un repetido de antes no impide cambiar el teléfono o el estado
+    if ($Nombre_Proveedor !== null && $Nombre_Proveedor !== $infoActual['Nombre_Proveedor']) {
+        Proveedor::validarNombreLibre($Nombre_Proveedor, $ID_Proveedor);
+    }
+
     $Nombre_Proveedor = $Nombre_Proveedor ?? $infoActual['Nombre_Proveedor'];
     $Telefono = $Telefono ?? $infoActual['Telefono'];
 
     $res = Proveedor::updateProveedor($ID_Proveedor, $Nombre_Proveedor, $Telefono);
+    if ($res === 1 && $Estado !== null) {
+        $res = Proveedor::cambiarEstado($ID_Proveedor, $Estado);
+    }
 
     if ($res !== 1) {
         http_response_code(404);
@@ -131,7 +143,7 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
 
     require_once __DIR__ . '/../models/proveedor.php';
 
-    $res = Proveedor::desactivarProveedor($ID_Proveedor, 'inactivo');
+    $res = Proveedor::cambiarEstado($ID_Proveedor, 'inactivo');
 
     if ($res !== 1) {
         http_response_code(404);
@@ -139,7 +151,7 @@ if ($path === '/api/createSupplier') { // Ruta para crear proveedor
         return;
     } else {
         http_response_code(200);
-        echo json_encode(['ok' => true, 'mensaje' => 'Proveedor eliminado correctamente']);
+        echo json_encode(['ok' => true, 'mensaje' => 'Proveedor desactivado correctamente']);
     }
 
     //-- Termina ruta deleteSupplier

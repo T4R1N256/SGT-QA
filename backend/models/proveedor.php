@@ -3,11 +3,12 @@
 // Clase con CRUD para proveedores
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/validar.php';
 
 class Proveedor
 {
     const TABLE = "Proveedor";
-    // ID_Proveedor, Nombre_Proveedor, Telefono
+    // ID_Proveedor, Nombre_Proveedor, Telefono, Estado
 
     // Funcion para crear un nuevo proveedor
     public static function createProveedor($Nombre_Proveedor, $Telefono)
@@ -32,16 +33,15 @@ class Proveedor
         }
     }//-- Fin funcion crear proveedor
 
-    // Funcion para leer todos los proveedores
-    public static function readAllProveedores()
+    // Funcion para leer los proveedores con su estado
+    // Solo los activos (Inventario, Surtir) o todos ($todos, la pantalla de Proveedores, que permite volver a activarlos)
+    public static function readAllProveedores(bool $todos = false)
     {
         try {
-            $Estado = 'activo';
             $connection = new Conexion();
 
-            $sql = $connection->prepare('SELECT ID_Proveedor, Nombre_Proveedor, Telefono FROM ' . self::TABLE .
-                ' WHERE Estado = :Estado');
-            $sql->bindValue(':Estado', $Estado);
+            $sql = $connection->prepare('SELECT ID_Proveedor, Nombre_Proveedor, Telefono, Estado FROM ' . self::TABLE .
+                ($todos ? '' : " WHERE Estado = 'activo'") . ' ORDER BY ID_Proveedor');
             $sql->execute();
             $proveedores = $sql->fetchAll();
 
@@ -111,8 +111,8 @@ class Proveedor
         }
     }//-- Fin funcion modificar proveedor
 
-    // Funcion para modificar el estado de un proveedor 
-    public static function desactivarProveedor($ID_Proveedor, $Estado)
+    // Funcion para activar o desactivar un proveedor (no se borra)
+    public static function cambiarEstado($ID_Proveedor, $Estado)
     {
         try {
 
@@ -131,4 +131,24 @@ class Proveedor
             throw new Exception("Hubo un error: " . $e->getMessage());
         }
     }//-- Fin funcion modificar estado
+
+
+    // No puede haber dos proveedores con el mismo nombre, activos o no
+    // La intercalación de la tabla (utf8mb4_unicode_ci) no distingue mayúsculas ni acentos
+    public static function validarNombreLibre(string $Nombre_Proveedor, ?int $excepto = null): void
+    {
+        $connection = new Conexion();
+        $sql = $connection->prepare('SELECT Nombre_Proveedor, Estado FROM ' . self::TABLE . '
+            WHERE Nombre_Proveedor = :Nombre_Proveedor AND ID_Proveedor <> :excepto LIMIT 1');
+        $sql->execute([':Nombre_Proveedor' => $Nombre_Proveedor, ':excepto' => $excepto ?? 0]);
+        $otro = $sql->fetch();
+
+        if ($otro) {
+            $mensaje = "Ya existe un proveedor llamado «{$otro['Nombre_Proveedor']}»";
+            if ($otro['Estado'] === 'inactivo') {
+                $mensaje .= '. Está inactivo: puedes volver a activarlo';
+            }
+            throw new ErrorDatos($mensaje, 409, ['campo' => 'Nombre_Proveedor']);
+        }
+    }//-- Fin funcion validar nombre libre
 }

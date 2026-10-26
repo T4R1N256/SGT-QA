@@ -14,6 +14,8 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
 
     require_once __DIR__ . ('/../models/categoria.php');
 
+    Categoria::validarNombreLibre($Nombre_Categoria);
+
     $res = Categoria::createCategoria($Nombre_Categoria);
 
     if ($res) {
@@ -36,7 +38,8 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
 
     require_once __DIR__ . '/../models/categoria.php';
 
-    $res = Categoria::readAllCategoria();
+    // ?todas=1: también las inactivas (pantalla de Categorías); sin él, solo las activas (Inventario)
+    $res = Categoria::readAllCategoria(($_GET['todas'] ?? '') === '1');
 
     if (!$res) {
         http_response_code(404);
@@ -88,6 +91,7 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
     $data = leerJson();
     $ID_Categoria = campoEntero($data, 'ID_Categoria', true, 1);
     $Nombre_Categoria = campoTexto($data, 'Nombre_Categoria', false, 50) ?: null;
+    $Estado = campoOpcion($data, 'Estado', ['activo', 'inactivo'], false);
 
     require_once __DIR__ . '/../models/categoria.php';
 
@@ -99,9 +103,20 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
         return;
     }
 
+    // El nombre solo se revisa si cambia: un repetido de antes no impide cambiar el estado
+    if ($Nombre_Categoria !== null && $Nombre_Categoria !== $infoActual['Nombre_Categoria']) {
+        Categoria::validarNombreLibre($Nombre_Categoria, $ID_Categoria);
+    }
+    if ($Estado === 'inactivo' && $infoActual['Estado'] !== 'inactivo') {
+        Categoria::validarDesactivar($ID_Categoria, $infoActual['Nombre_Categoria'], ($data['Confirmar'] ?? false) === true);
+    }
+
     $Nombre_Categoria = $Nombre_Categoria ?? $infoActual['Nombre_Categoria'];
 
     $res = Categoria::updateCategoria($ID_Categoria, $Nombre_Categoria);
+    if ($res === 1 && $Estado !== null) {
+        $res = Categoria::cambiarEstado($ID_Categoria, $Estado);
+    }
 
     if ($res !== 1) {
         http_response_code(404);
@@ -128,7 +143,20 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
 
     require_once __DIR__ . '/../models/categoria.php';
 
-    $res = Categoria::desactivarCategoria($ID_Categoria, 'inactivo');
+    $infoActual = Categoria::readCategoria($ID_Categoria);
+
+    if (!$infoActual) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'mensaje' => 'No se encontró la categoria']);
+        return;
+    }
+
+    // Con productos activos se necesita {"Confirmar": true}
+    if ($infoActual['Estado'] !== 'inactivo') {
+        Categoria::validarDesactivar($ID_Categoria, $infoActual['Nombre_Categoria'], ($data['Confirmar'] ?? false) === true);
+    }
+
+    $res = Categoria::cambiarEstado($ID_Categoria, 'inactivo');
 
     if ($res !== 1) {
         http_response_code(404);
@@ -136,7 +164,7 @@ if ($path === '/api/createCategory') { // Ruta para crear categoria
         return;
     } else {
         http_response_code(200);
-        echo json_encode(['ok' => true, 'mensaje' => 'Categoria eliminada correctamente']);
+        echo json_encode(['ok' => true, 'mensaje' => 'Categoría desactivada correctamente']);
     }
 
     //-- Termina ruta deleteCategory

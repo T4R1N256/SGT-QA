@@ -85,6 +85,19 @@ function campoTexto(array $data, string $campo, bool $requerido = true, int $max
 }
 
 
+// Teléfono opcional: 10 o 12 dígitos, la misma regla que el formulario de Usuarios
+// Si no viene regresa null; si viene vacío regresa '' (para poder borrarlo)
+function campoTelefono(array $data, string $campo = 'Telefono'): ?string
+{
+    $valor = campoTexto($data, $campo, false, 20);
+
+    if ($valor !== null && $valor !== '' && !preg_match('/^(\d{10}|\d{12})$/', $valor)) {
+        throw new ErrorValidacion('El teléfono debe tener 10 o 12 dígitos numéricos');
+    }
+    return $valor;
+}
+
+
 // Contraseña: obligatoria y sin recortar espacios
 function campoPassword(array $data, string $campo = 'Password'): string
 {
