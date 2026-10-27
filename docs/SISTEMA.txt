@@ -1,0 +1,318 @@
+SGT - SISTEMA DE GESTIÓN DE TIENDA
+Documento general del sistema
+Versión 1.0.0 - 27 de octubre de 2026
+
+
+========================================================================
+1. DE QUÉ TRATA EL SISTEMA
+========================================================================
+
+SGT es un sistema para administrar una tienda pequeña (por ejemplo, una
+tienda de abarrotes). Tiene dos partes que comparten el mismo backend y la
+misma base de datos:
+
+  a) SGT de escritorio
+     Aplicación que se instala en la computadora de la tienda. Es el punto
+     de venta y el sistema administrativo: ventas, caja, inventario,
+     reabastecimiento, historial, reportes, catálogos y usuarios.
+     Funciona sin internet.
+
+  b) Tienda en línea
+     Sitio web para los clientes. Permite explorar el catálogo, armar un
+     carrito, registrarse, capturar los datos de entrega y revisar la
+     compra hasta llegar a la pantalla de pago. El pago en línea no está
+     disponible: el pedido queda "pendiente de pago".
+
+Usuarios del sistema
+
+  - Administrador (dueño): usa todos los módulos de SGT.
+  - Empleado (cajero): inicia sesión, abre y cierra caja y registra ventas.
+  - Cliente: usa la tienda en línea desde el navegador con su propia
+    cuenta, independiente de los usuarios de SGT.
+
+Tecnología
+
+  - Escritorio: Electron + React. El instalador incluye PHP y MariaDB, así
+    que no hay que instalar nada más.
+  - Backend: PHP 8 con base de datos MariaDB/MySQL y migraciones
+    versionadas.
+  - Tienda en línea: React en el navegador, publicada con Docker.
+  - Control de versiones con Git y pruebas automáticas en el CI de GitHub.
+
+
+========================================================================
+2. REQUISITOS RECOLECTADOS
+========================================================================
+
+Fuentes
+
+  - SRS "Sistema de Gestión de Tienda" v1.1 (20 de mayo de 2026):
+    requisitos de SGT de escritorio.
+  - Enunciado del profesor "Tienda a realizar": requisitos de la tienda en
+    línea.
+  - Decisiones del equipo del 25 de octubre de 2026 para los puntos que el
+    SRS y el enunciado no definían.
+
+
+2.1 Requisitos funcionales de SGT (SRS)
+---------------------------------------
+
+  RF01  Iniciar sesión con ID de usuario y contraseña.
+  RF02  Registrar ventas: productos, cantidades, fecha, hora y monto.
+  RF03  Buscar productos por nombre o por categoría.
+  RF04  Registrar el pago: forma de pago, monto recibido y cambio.
+  RF05  Actualizar el inventario después de cada venta y de cada compra a
+        proveedores (surtido).
+  RF06  Registrar y eliminar productos.
+  RF07  Modificar productos.
+  RF08  Consultar productos.
+  RF09  Abrir caja con un monto inicial.
+  RF10  Cerrar caja (corte) comparando el efectivo contado con el esperado.
+  RF11  Generar reportes del día, la semana y el mes.
+  RF12  Cancelar una venta.
+  RF13  Administrar usuarios: alta, modificación y baja.
+
+
+2.2 Reglas de negocio (SRS)
+---------------------------
+
+  1. No se vende un producto sin existencia suficiente.
+  2. Sin caja abierta no hay ventas.
+  3. El empleado no modifica productos ni inventario.
+  4. El sistema no se puede cerrar con la caja abierta.
+  5. Solo el dueño genera reportes (incluido el de stock bajo o agotado).
+  6. El inventario no puede ser negativo.
+  7. Los productos deben estar bien definidos (datos obligatorios
+     completos).
+  8. Cada venta genera un ticket.
+  9. Todas las ventas registran fecha y hora.
+
+
+2.3 Requisitos no funcionales, legales y técnicos (SRS)
+-------------------------------------------------------
+
+  RNF01      Fácil de instalar y configurar.
+  RNF02      Integridad de los datos.
+  RNF03      Acceso solo con credenciales.
+  RNF04      Protección de los datos personales (RL01, LFPDPPP).
+  RNF05      Funcionar en distintos sistemas operativos.
+  RNF06      Fácil de usar.
+  RNF07      Disponible durante la jornada.
+  RNF08      Funcionar sin internet.
+  RNF09      Interfaz intuitiva.
+  RNF10      Poder crecer (escalabilidad).
+  RT01-RT05  MySQL, PHP, Electron + React, Tailwind + Vite y Git.
+
+
+2.4 Requisitos de la tienda en línea (enunciado)
+------------------------------------------------
+
+  Funcionales
+
+  R01  Usarse desde un navegador, sin instalar nada.
+  R02  Explorar el catálogo por categorías.
+  R03  Buscar productos por texto, con filtros y orden.
+  R04  Ver la información de cada producto: nombre, descripción, precio,
+       categoría y disponibilidad.
+  R05  Elegir cuántas unidades se quieren de cada producto.
+  R06  Administrar el carrito: cambiar cantidades, quitar y vaciar. El
+       carrito se conserva al recargar la página.
+  R07  Respetar la existencia limitada y avisar claramente cuando no
+       alcanza.
+  R08  Manejar con mensajes claros las acciones sin sentido: cantidades
+       inválidas, carrito vacío, saltarse pasos, doble envío, productos
+       que ya no existen y precios alterados desde el navegador.
+  R09  Revisar la compra: importe por producto, subtotal, impuestos y
+       total.
+  R10  Calcular el total con impuestos (IVA) en el servidor.
+  R11  Capturar los datos del cliente y de entrega.
+  R12  Validar esos datos con un mensaje por campo, en el navegador y en
+       el servidor.
+  R13  Mostrar un resumen final antes de pagar, con opción de corregir.
+  R14  Mostrar una pantalla de pago que avise que el pago no está
+       disponible, sin conexión con bancos ni captura de tarjetas.
+  R15  Todo el proceso anterior al pago debe funcionar.
+
+  De desarrollo
+
+  R16  Analizar antes de programar: comportamiento normal y casos
+       problemáticos.
+  R17  Organizar el código en partes que se puedan revisar y probar por
+       separado.
+  R18  Conservar la información de los productos (base de datos).
+  R19  Tener un catálogo amplio para probar de forma realista.
+  R20  Mantener un alcance pequeño.
+
+
+2.5 Decisiones del equipo
+-------------------------
+
+  SGT de escritorio
+  - El ticket se genera en PDF de 80 mm y se puede reimprimir.
+  - Los reportes cubren ventas, surtidos y compras, stock y un resumen del
+    periodo, y se exportan a PDF.
+  - El corte de caja cuenta solo el efectivo.
+  - Surtir entra en la entrega y guarda el costo de compra aparte del
+    precio de venta.
+  - El historial muestra ventas pasadas y cortes de caja.
+  - Eliminar un producto es una baja lógica: no se borra, deja de venderse.
+  - No se usa lector de código de barras.
+  - Los precios ya incluyen impuestos.
+  - Inventario, Surtir, Historial, Reportes, Categorías, Proveedores,
+    Usuarios y Configuración son solo para el administrador.
+  - El correo se valida solo por su formato (sin consultar internet).
+
+  Tienda en línea
+  - Es un módulo dentro de SGT: mismo backend y misma base de datos. SGT
+    funciona como el sistema administrativo del catálogo.
+  - Los precios incluyen IVA; la tienda lo desglosa en subtotal, IVA y
+    total.
+  - El envío no se cobra.
+  - Para comprar se necesita una cuenta de cliente.
+  - El pedido se guarda "pendiente de pago", con folio, y no aparta
+    existencias.
+  - La pantalla de pago solo muestra los métodos y el botón "Pagar".
+  - Sin imágenes de productos; pensada para el navegador de escritorio.
+  - Se evalúa levantándola con Docker (docker compose up).
+
+
+========================================================================
+3. QUÉ SE ESPERA DEL SISTEMA
+========================================================================
+
+3.1 SGT de escritorio
+---------------------
+
+Jornada normal
+
+  1. El empleado inicia sesión y abre la caja con un monto inicial (puede
+     ser $0).
+  2. En Ventas busca productos por nombre o categoría (sin importar los
+     acentos), arma el carrito y cobra en efectivo, con tarjeta o con
+     transferencia. En efectivo se registran el pago recibido y el cambio.
+  3. Cada venta descuenta el inventario y genera su ticket en PDF.
+  4. Al terminar el día hace el corte: captura el efectivo contado y el
+     sistema lo compara con el esperado (monto inicial + ventas en
+     efectivo). La caja queda "cuadrada" o "descuadrada".
+
+Administración (solo el administrador)
+
+  - Inventario: alta, edición y baja lógica de productos. El estado
+    (Disponible, Stock bajo, Agotado) se calcula con la existencia y la
+    cantidad mínima.
+  - Surtir: registrar lo que llega de un proveedor con su costo. Sugiere
+    los productos en stock bajo o agotados y suma al inventario.
+  - Historial: ventas pasadas con su detalle y reimpresión del ticket, y
+    cortes de caja anteriores.
+  - Reportes: ventas, surtidos y compras, stock y resumen del periodo
+    (día, semana, mes o rango), exportables a PDF.
+  - Categorías, Proveedores y Usuarios: alta, edición, activación y
+    desactivación. No se aceptan nombres repetidos.
+  - Configuración: datos de la tienda que aparecen en el ticket.
+
+Situaciones que el sistema debe controlar
+
+  - Vender más de lo que hay en existencia: se rechaza, aunque dos cobros
+    ocurran al mismo tiempo.
+  - Vender sin caja abierta: no se permite.
+  - Cerrar la ventana con la caja abierta: no se permite y se avisa.
+  - Montos con centavos: se calculan sin errores de redondeo, así que una
+    caja con el efectivo correcto siempre cuadra.
+  - Un empleado intenta entrar a un módulo de administrador: no puede, ni
+    desde el menú ni llamando directamente al servidor.
+  - Usuario no autorizado o contraseña incorrecta: no entra.
+  - Desactivar una categoría con productos activos: se pide confirmar,
+    porque la tienda en línea dejaría de mostrarlos.
+  - Datos inválidos (campos vacíos, cantidades negativas, teléfonos mal
+    escritos): se rechazan con un mensaje claro.
+
+
+3.2 Tienda en línea
+-------------------
+
+Condiciones normales
+
+  N1   El cliente entra y ve las categorías y los productos destacados sin
+       iniciar sesión.
+  N2   Elige una categoría y ve sus productos paginados, con precio y
+       disponibilidad.
+  N3   Busca "azucar" (sin acento) y encuentra "Azúcar".
+  N4   Abre un producto y ve nombre, descripción, precio, categoría y
+       disponibilidad.
+  N5   Agrega 3 piezas de un producto con 10 en existencia; el carrito y el
+       total se actualizan.
+  N6   Cambia cantidades o quita productos; los totales se actualizan.
+  N7   Recarga la página y el carrito sigue igual.
+  N8   En la revisión ve el importe por producto, el subtotal, el IVA y el
+       total.
+  N9   Llena sus datos de entrega y pasa al resumen final.
+  N10  Desde el resumen puede regresar a corregir sus datos.
+  N11  En el pago pulsa "Pagar" y ve que el pago en línea no está
+       disponible. No se cobra nada.
+
+Situaciones problemáticas
+
+  P1   Pide más piezas de las que hay: no se acepta y se dice cuántas hay.
+  P2   Cantidad 0, negativa, decimal o texto: no se acepta.
+  P3   Producto agotado: no se puede agregar.
+  P4   La existencia baja mientras el producto está en el carrito: se avisa
+       y se ajusta la cantidad.
+  P5   El producto se da de baja o cambia de precio: se avisa y el total
+       usa el precio vigente.
+  P6   Continuar con el carrito vacío: no se permite.
+  P7   Entrar directo a un paso sin haber hecho el anterior: se regresa al
+       paso que falta.
+  P8   Campos obligatorios vacíos o solo con espacios: mensaje en cada
+       campo.
+  P9   Correo, teléfono (10 dígitos) o código postal (5 dígitos) mal
+       escritos: mensaje específico.
+  P10  Textos muy largos o con HTML: se rechazan o se muestran como texto,
+       sin ejecutarse.
+  P11  Precios o cantidades alterados desde el navegador: el servidor
+       recalcula con sus propios datos.
+  P12  Doble clic en "Confirmar": no se duplica el pedido.
+  P13  Botones Atrás y Adelante del navegador: el flujo sigue siendo
+       coherente.
+  P14  Producto o página inexistente: se muestra "no encontrado".
+  P15  El servidor no responde: mensaje de error y opción de reintentar,
+       sin dejar la pantalla en blanco.
+
+
+3.3 Calidad esperada
+--------------------
+
+  - Los totales y el inventario siempre son consistentes: una venta se
+    guarda completa o no se guarda.
+  - El servidor exige sesión en todas sus rutas, salvo el catálogo público
+    de la tienda y los datos de la tienda que se muestran en el inicio de
+    sesión. Cada usuario solo ve lo que le corresponde.
+  - Las contraseñas se guardan cifradas. La base de datos de la app
+    instalada usa contraseñas al azar y solo acepta conexiones locales.
+  - SGT de escritorio funciona sin internet.
+  - El instalador incluye todo lo necesario (Windows y Linux).
+  - Cada cambio pasa por pruebas automáticas antes de integrarse: pruebas
+    del servidor, de las utilidades del frontend y de punta a punta en la
+    app de escritorio y en la tienda.
+
+
+3.4 Fuera de alcance
+--------------------
+
+  - Pagos reales, facturación y seguimiento de envíos.
+  - Instalador para macOS.
+  - Aviso de privacidad y respaldos automáticos de la base de datos.
+  - Lector de código de barras.
+  - Imágenes de productos y versión de la tienda para celular.
+
+
+========================================================================
+4. ESTADO ACTUAL (VERSIÓN 1.0.0)
+========================================================================
+
+  - Se cumplen los 13 requisitos funcionales y las 9 reglas de negocio de
+    SGT, y los requisitos R01 a R20 de la tienda en línea.
+  - De los requisitos no funcionales quedan dos parciales, por decisión de
+    alcance: el aviso de privacidad (RNF04) y el instalador para macOS
+    (RNF05).
+  - El detalle de cada verificación está en docs/QA_CHECKLIST.md (SGT) y
+    en docs/QA_TIENDA.md (tienda en línea).
